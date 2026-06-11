@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Suky">
+  <meta name="theme-color" content="#185FA5">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
+  <title>KAR / DAB — Měření suků</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+
+  <!-- API endpoint — změň na URL svého serveru -->
+  <script>window.API_BASE = '';</script>
+</head>
+<body>
+
+<div class="offline-bar" id="offline-bar">Offline — data se uloží lokálně</div>
+
+<div class="topbar">
+  <h1>KAR / DAB</h1>
+  <span class="sync-status" id="sync-status"></span>
+  <button class="sync-btn" id="sync-btn" aria-label="Synchronizovat na server">
+    <i class="ti ti-cloud-upload"></i>
+  </button>
+</div>
+
+<!-- Board config -->
+<div class="card">
+  <div class="card-title">Parametry desky</div>
+  <div class="board-row">
+    <div class="fld wide"><label>Deska (ID)</label><input id="cid" value="57P" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+    <div class="fld"><label>Šířka b (mm)</label><input id="clen" type="number" value="156" min="1" inputmode="decimal"></div>
+    <div class="fld"><label>Výška d (mm)</label><input id="cwid" type="number" value="48"  min="1" inputmode="decimal" step="0.1"></div>
+  </div>
+</div>
+
+<!-- Metrics -->
+<div class="metrics-row">
+  <div class="metric">
+    <div class="metric-label">KAR</div>
+    <div class="metric-val kar" id="kar-val">—</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">DAB</div>
+    <div class="metric-val dab" id="dab-val">—</div>
+    <div class="metric-sub" id="dab-sub"></div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Třída</div>
+    <div id="grade-wrap"><span class="grade-pill grade-na">—</span></div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Suků</div>
+    <div class="metric-val" id="knot-count">0</div>
+  </div>
+</div>
+
+<!-- Canvas -->
+<div class="canvas-row">
+  <div class="cv-card">
+    <div class="cv-label">jednotlivé suky</div>
+    <canvas id="cv1" role="img" aria-label="Průřez desky s vyznačenými suky"></canvas>
+  </div>
+  <div class="cv-card">
+    <div class="cv-label">sjednocení</div>
+    <canvas id="cv2" role="img" aria-label="Sjednocení ploch suků"></canvas>
+  </div>
+</div>
+
+<!-- Edit banner -->
+<div class="edit-banner" id="edit-banner">
+  <i class="ti ti-edit" style="font-size:15px"></i>
+  <span>Upravuješ <strong id="edit-label">—</strong></span>
+  <button class="banner-cancel" id="btn-cancel">Zrušit</button>
+</div>
+
+<!-- Face inputs -->
+<div class="face-grid">
+  <div class="face-card" id="card-a">
+    <div class="face-title">A — horní (osa b)</div>
+    <div class="inp-row">
+      <div class="ic"><span>AS1</span><input id="as1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+      <div class="ic"><span>AS2</span><input id="as2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+    </div>
+  </div>
+  <div class="face-card" id="card-b">
+    <div class="face-title">B — levá (osa d)</div>
+    <div class="inp-row">
+      <div class="ic"><span>BS1</span><input id="bs1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+      <div class="ic"><span>BS2</span><input id="bs2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+    </div>
+  </div>
+  <div class="face-card" id="card-c">
+    <div class="face-title">C — dolní (osa b)</div>
+    <div class="inp-row">
+      <div class="ic"><span>CS1</span><input id="cs1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+      <div class="ic"><span>CS2</span><input id="cs2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+    </div>
+  </div>
+  <div class="face-card" id="card-d">
+    <div class="face-title">D — pravá (osa d)</div>
+    <div class="inp-row">
+      <div class="ic"><span>DS1</span><input id="ds1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+      <div class="ic"><span>DS2</span><input id="ds2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="tbl-section">
+  <div class="tbl-header">
+    <span class="tbl-title">Zadané suky</span>
+    <button class="act-btn blue" id="btn-export" style="font-size:13px;padding:4px 10px;border-radius:6px;border:1px solid #B5D4F4;background:#E6F1FB;color:#185FA5">
+      <i class="ti ti-download"></i> Excel
+    </button>
+  </div>
+  <div id="empty-state" class="empty-state">
+    <span class="icon"><i class="ti ti-trees"></i></span>
+    <p>Zadej první suk</p>
+  </div>
+  <div class="tbl-wrap" id="tbl-wrap" style="display:none">
+    <table>
+      <thead><tr>
+        <th style="text-align:left">Deska</th>
+        <th style="text-align:left">#</th>
+        <th>AS1</th><th>AS2</th><th>BS1</th><th>BS2</th>
+        <th>CS1</th><th>CS2</th><th>DS1</th><th>DS2</th>
+        <th>mm²</th><th>a_i</th><th>KAR%</th><th>DAB</th><th>Třída</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bottom-spacer"></div>
+
+<!-- Sticky action bar -->
+<div class="action-bar">
+  <button class="btn-add" id="btn-add">+ Přidat suk</button>
+  <button class="btn-sec amber" id="btn-new"><i class="ti ti-arrow-right"></i> Nová deska</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
