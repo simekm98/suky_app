@@ -67,6 +67,14 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F5
 .gp{display:inline-block;font-size:11px;font-weight:800;padding:2px 6px;border-radius:20px;margin-top:1px}
 .gs13{background:var(--grl);color:var(--gr)}.gs10{background:var(--bll);color:#0C447C}
 .gs7{background:var(--aml);color:#633806}.grej{background:var(--rl);color:var(--rd)}.gna{background:var(--g1);color:var(--g5)}.gok{background:#EAF3DE;color:#27500A}
+.vg-btn{flex:1;padding:9px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:15px;font-weight:700;cursor:pointer;-webkit-appearance:none;transition:all .15s}
+.vg-btn.selected{background:var(--br);border-color:var(--br);color:#fff}
+.vg-btn:active{opacity:.7}
+
+.vg-btn{flex:1;padding:8px 4px;font-size:14px;font-weight:700;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);cursor:pointer;-webkit-appearance:none;transition:all .15s}
+.vg-btn.selected{background:var(--br);border-color:var(--br);color:#fff}
+.vg-btn:active{opacity:.7}
+
 
 /* canvas */
 .crow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
@@ -163,7 +171,7 @@ canvas{display:block;width:100%;height:72px}
 <div class="screen active" id="s-entry">
   <div class="topbar">
     <h1>WoodGrader <sup>26</sup></h1>
-    <button class="tbtn" id="btn-fft-open" aria-label="FFT analýza" style="font-size:12px;font-weight:800;letter-spacing:-.3px">FFT</button><button class="tbtn" id="btn-metodika" aria-label="Metodika" style="font-size:18px;font-weight:800">ⓘ</button><button class="tbtn" id="btn-settings" aria-label="Nastavení">⚙️</button>
+    <button class="tbtn" id="btn-fft-open" aria-label="FFT analýza" style="font-size:12px;font-weight:800;letter-spacing:-.3px">FFT</button><button class="tbtn" id="btn-metodika" aria-label="Metodika" style="font-size:18px;font-weight:800">ⓘ</button><button class="tbtn" id="btn-settings" aria-label="Nastavení"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <button class="tbtn" id="btn-list" aria-label="Seznam desek">☰</button>
   </div>
   <div class="sbody" id="entry-body">
@@ -181,8 +189,15 @@ canvas{display:block;width:100%;height:72px}
       </div>
       <div class="frow" style="margin-top:8px" id="row-extra">
         <div class="fld opt-field" data-opt="moisture"><label>Vlhkost w (%)</label><input id="p-moist" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="vg"><label>Viz. třída VG</label>
-          <select id="p-vg"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
+          <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px">Viz. třída VG</label>
+          <div style="display:flex;gap:6px" id="vg-row">
+            <button class="vg-btn" data-vg="1" data-act="setvg">1</button>
+            <button class="vg-btn" data-vg="2" data-act="setvg">2</button>
+            <button class="vg-btn" data-vg="3" data-act="setvg">3</button>
+            <button class="vg-btn" data-vg="4" data-act="setvg">4</button>
+          </div>
+          <input type="hidden" id="p-vg" value="">
         </div>
         <div class="cb-wrap opt-field" data-opt="screw" style="flex:.55;min-width:50px">
           <label>Vrut</label>
@@ -198,6 +213,38 @@ canvas{display:block;width:100%;height:72px}
       <div class="met" id="met-den"><div class="ml">Hustota</div><div class="mv den" id="v-den">—</div><div class="ms">kg/m³</div></div>
       <div class="met"><div class="ml">Třída</div><div id="v-grade"><span class="gp gna">—</span></div></div>
       <div class="met"><div class="ml">Suků</div><div class="mv" id="v-cnt">0</div></div>
+    </div>
+    <!-- MOED metriky - zobrazí se po FFT měření -->
+    <div id="moed-row" style="display:none;margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div class="met" style="background:#FDF3E3;border:.5px solid var(--brm)">
+          <div class="ml" style="color:var(--brm)">MOE<sub>D,L</sub></div>
+          <div class="mv den" id="v-moed-l">—</div>
+          <div class="ms">MPa · podélný</div>
+        </div>
+        <div class="met" style="background:#FDF3E3;border:.5px solid var(--brm)">
+          <div class="ml" style="color:var(--brm)">MOE<sub>D,B</sub></div>
+          <div class="mv den" id="v-moed-b">—</div>
+          <div class="ms">MPa · ohybový</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOED výsledky -->
+    <div id="moed-row" style="display:none;background:#fff;border-radius:var(--rads);padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--g5);margin-bottom:8px">Dynamické moduly pružnosti</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--brl);border-radius:8px;padding:8px 10px">
+          <div style="font-size:10px;font-weight:700;color:var(--brm);margin-bottom:2px">MOED<sub>L</sub></div>
+          <div style="font-size:16px;font-weight:800;color:var(--br)" id="v-moedl">—</div>
+          <div style="font-size:10px;color:var(--g5)">MPa (podélný)</div>
+        </div>
+        <div style="background:var(--bll);border-radius:8px;padding:8px 10px">
+          <div style="font-size:10px;font-weight:700;color:var(--blm);margin-bottom:2px">MOED<sub>B</sub></div>
+          <div style="font-size:16px;font-weight:800;color:var(--bl)" id="v-moedb">—</div>
+          <div style="font-size:10px;color:var(--g5)">MPa (ohybový)</div>
+        </div>
+      </div>
     </div>
 
     <!-- Canvas -->
@@ -327,6 +374,13 @@ canvas{display:block;width:100%;height:72px}
       <span>Aktivní pole</span>
       <button class="modal-close" id="modal-close">✕</button>
     </div>
+    <!-- Záloha dat -->
+    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1);display:flex;gap:8px">
+      <button onclick="exportBackup()" style="flex:1;padding:10px;border:1.5px solid var(--brm);border-radius:10px;background:var(--brl);color:var(--br);font-size:13px;font-weight:700;cursor:pointer">⬇ Záloha JSON</button>
+      <label style="flex:1;padding:10px;border:1.5px solid var(--g3);border-radius:10px;background:#fff;color:var(--g7);font-size:13px;font-weight:700;cursor:pointer;text-align:center">
+        ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
+      </label>
+    </div>
     <div class="setting-section">Rozměry suků</div>
     <div class="setting-row">
       <div class="setting-lbl">Délkové pozice L<small>AL1/AL2, BL1/BL2, CL1/CL2, DL1/DL2</small></div>
@@ -367,6 +421,21 @@ var ALLK=SIDS.concat(LIDS);
 var DB='wg26_v2';
 var allBoards=[],knots=[],editState=null,drawPending=false;
 var boardScrew=false;
+var boardVG=null; // aktuální VG hodnota
+
+function setVG(v){
+  boardVG=(boardVG===v)?null:v;
+  document.querySelectorAll('[data-vg]').forEach(function(b){
+    b.classList.toggle('selected', parseInt(b.getAttribute('data-vg'))===boardVG);
+  });
+  var hid=document.getElementById('p-vg');
+  if(hid) hid.value=boardVG||'';
+}
+function resetVG(){
+  boardVG=null;
+  document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
+}
+
 var detailBi=-1; // index desky v detail screenu
 var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true};
 
@@ -375,9 +444,16 @@ function gs(id){var v=document.getElementById(id).value;return v||null;}
 function getB(){return parseFloat(document.getElementById('clen').value)||157;}
 function getD(){return parseFloat(document.getElementById('cwid').value)||50;}
 function getId(){return document.getElementById('cid').value||'?';}
+
+function setVGDisplay(val){
+  document.getElementById('p-vg').value=val||'';
+  document.querySelectorAll('.vg-btn').forEach(function(b){
+    b.classList.toggle('selected',b.getAttribute('data-vg')===(val||''));
+  });
+}
 function getBoardExtra(){
   return{length:opts.length?gn('p-length'):null,mass:opts.mass?gn('p-mass'):null,
-    moisture:opts.moisture?gn('p-moist'):null,vg:opts.vg?gs('p-vg'):null,screw:opts.screw?boardScrew:false};
+    moisture:opts.moisture?gn('p-moist'):null,vg:opts.vg?boardVG:null,screw:opts.screw?boardScrew:false};
 }
 function curK(){
   var k={};
@@ -437,6 +513,47 @@ function grade(kar,dv,nKnots){
   if(r<=.2&&dv<=.2)return'S13';if(r<=1/3&&dv<=1/3)return'S10';if(r<=.5&&dv<=.5)return'S7';return'Reject';
 }
 function gcls(g){return{S13:'gs13',S10:'gs10',S7:'gs7',Reject:'grej',OK:'gok'}[g]||'gna';}
+
+// ── MOED výpočet dle rovnic (1) a (2) ────────────────────
+// MOED_L = 4 * fL^2 * L^2 * rho           [Pa] → /1e6 = MPa
+// MOED_B = (2*fB / (2.5*pi))^2 * (m*L^3 / I)
+// I = b*d^3/12  (průřez b×d v metrech)
+function calcMOED(board){
+  var fL=board.fft&&board.fft[0]?board.fft[0]:null;
+  var fB=board.fft&&board.fft[1]?board.fft[1]:null;
+  var L=board.length?board.length/1000:null;   // mm → m
+  var b2=board.b?board.b/1000:null;            // mm → m
+  var d2=board.d?board.d/1000:null;            // mm → m
+  var mass=board.mass?board.mass/1000:null;    // g → kg
+  var den=calcDensity(board.mass,board.length,board.b,board.d); // kg/m3
+
+  var moedL=null, moedB=null;
+  if(fL&&L&&den){
+    moedL=4*fL*fL*L*L*den; // Pa
+    moedL=Math.round(moedL/1e6*10)/10; // MPa
+  }
+  if(fB&&L&&mass&&b2&&d2){
+    var I=(b2*d2*d2*d2)/12; // m^4
+    if(I>0){
+      moedB=Math.pow(2*fB/(2.5*Math.PI),2)*(mass*L*L*L/I); // Pa
+      moedB=Math.round(moedB/1e6*10)/10; // MPa
+    }
+  }
+  return{moedL:moedL,moedB:moedB};
+}
+
+function updateMOEDDisplay(board){
+  var res=calcMOED(board);
+  var row=document.getElementById('moed-row');
+  if(!row) return;
+  if(res.moedL!=null||res.moedB!=null){
+    row.style.display='';
+    document.getElementById('v-moed-l').textContent=res.moedL!=null?res.moedL+' MPa':'—';
+    document.getElementById('v-moed-b').textContent=res.moedB!=null?res.moedB+' MPa':'—';
+  } else {
+    row.style.display='none';
+  }
+}
 function calcDensity(mass,length,b,d){
   if(!mass||!length||!b||!d)return null;
   var vol=(length/1000)*(b/1000)*(d/1000);
@@ -465,6 +582,10 @@ function doRedraw(){
   // hustota
   var den=calcDensity(gn('p-mass'),gn('p-length'),b,d);
   document.getElementById('v-den').textContent=den!=null?String(den):'—';
+  // MOED pro aktuální desku (sestavíme temp board)
+  var _tmpBoard={fft:window.wgPendingFft||null,length:gn('p-length'),mass:gn('p-mass'),b:b,d:d};
+  if(allBoards.length&&!_tmpBoard.fft) _tmpBoard=allBoards[allBoards.length-1];
+  updateMOEDDisplay(_tmpBoard);
 }
 
 function paintCv(cvId,wrapId,b,d,saved,cp,isUnion){
@@ -604,7 +725,7 @@ function newBoard(){
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
   ['p-length','p-mass','p-moist'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('p-vg').value='';
+  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
   var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
   if(editState)cancelEdit();
   save();schedDraw();renderKlist();renderBlist();toast('Deska uložena ✓');
@@ -642,6 +763,12 @@ function renderDetailBody(bi){
   html+='<div class="ds"><div class="ds-lbl">DAB</div><div class="ds-val" style="color:var(--am)">'+dv.toFixed(3)+'</div></div>';
   html+='<div class="ds"><div class="ds-lbl">Třída</div><div><span class="gp '+gcls(gr)+'" style="font-size:16px">'+gr+'</span></div></div>';
   if(den!=null)html+='<div class="ds"><div class="ds-lbl">Hustota</div><div class="ds-val">'+den+' <span style="font-size:11px">kg/m³</span></div></div>';
+  var moedRes=calcMOED(bd);
+  if(moedRes.moedL||moedRes.moedB){
+    html+='</div><div class="detail-stat" style="margin-top:8px">';
+    if(moedRes.moedL) html+='<div class="ds"><div class="ds-lbl" style="color:var(--brm)">MOED<sub>L</sub></div><div class="ds-val" style="color:var(--br)">'+moedRes.moedL+'<span style="font-size:10px"> MPa</span></div></div>';
+    if(moedRes.moedB) html+='<div class="ds"><div class="ds-lbl" style="color:var(--blm)">MOED<sub>B</sub></div><div class="ds-val" style="color:var(--bl)">'+moedRes.moedB+'<span style="font-size:10px"> MPa</span></div></div>';
+  }
   html+='</div>';
   // tags
   html+='<div class="detail-extra">';
@@ -762,7 +889,7 @@ function doExport(){
   var boards=allBoards.slice();
   if(knots.length){var ex=getBoardExtra();boards.push({id:getId(),b:getB(),d:getD(),length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,knots:knots.slice()});}
   if(!boards.length){toast('Žádná data');return;}
-  var hdrs=['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','moisture_%','VG','screw','f1_Hz','f2_Hz','f3_Hz','knot',
+  var hdrs=['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','moisture_%','VG','screw','f1_Hz','f2_Hz','f3_Hz','MOED_L_MPa','MOED_B_MPa','knot',
     'AS1','AS2','AL1','AL2','BS1','BS2','BL1','BL2','CS1','CS2','CL1','CL2','DS1','DS2','DL1','DL2',
     'area_mm2','a_i_mm','KAR_%','DAB','třída'];
   var rows=[];
@@ -775,7 +902,11 @@ function doExport(){
       var isL=ki===bd.knots.length-1;
       rows.push([bd.id,bd.b,bd.d,
         isL?bd.length||'':'',isL?bd.mass||'':'',isL?den!=null?den:'':'',
+        (function(){var mr=calcMOED(bd);return isL?mr.moedL!=null?mr.moedL:'':'';})(),
+        (function(){var mr=calcMOED(bd);return isL?mr.moedB!=null?mr.moedB:'':'';})(),
         isL?bd.moisture!=null?bd.moisture:'':'',isL?bd.vg||'':'',isL?bd.screw?'ano':'':'',isL?(bd.fft&&bd.fft[0]!=null?bd.fft[0]:''):'',isL?(bd.fft&&bd.fft[1]!=null?bd.fft[1]:''):'',isL?(bd.fft&&bd.fft[2]!=null?bd.fft[2]:''):'',
+        (function(){var m=calcMOED(bd);return isL&&m.moedL!=null?m.moedL:'';})(),
+        (function(){var m=calcMOED(bd);return isL&&m.moedB!=null?m.moedB:'';})(),
         ki+1,
         k.as1!=null?k.as1:'',k.as2!=null?k.as2:'',k.al1!=null?k.al1:'',k.al2!=null?k.al2:'',
         k.bs1!=null?k.bs1:'',k.bs2!=null?k.bs2:'',k.bl1!=null?k.bl1:'',k.bl2!=null?k.bl2:'',
@@ -811,6 +942,7 @@ document.addEventListener('click',function(e){
   var act=btn.getAttribute('data-act');
   var ki=parseInt(btn.getAttribute('data-ki'));
   var bi=parseInt(btn.getAttribute('data-bi'));
+  if(act==='setvg'){var vgVal=parseInt(btn.getAttribute('data-vg'));setVG(vgVal);return;}
   if(act==='edit')enterEdit(ki);
   else if(act==='del')delKnot(ki);
   else if(act==='delb'){e.stopPropagation();delBoard(bi);}
@@ -868,6 +1000,24 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
 document.getElementById('btn-detail-back').addEventListener('click',function(){showScreen('s-list');});
 document.getElementById('btn-detail-save').addEventListener('click',saveDetailBoard);
 
+
+// VG tlačítka
+document.getElementById('vg-row').addEventListener('click',function(e){
+  var btn=e.target.closest('.vg-btn');if(!btn)return;
+  var val=btn.getAttribute('data-vg');
+  var current=document.getElementById('p-vg').value;
+  if(current===val){
+    // odznačit
+    document.getElementById('p-vg').value='';
+    document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
+  } else {
+    document.getElementById('p-vg').value=val;
+    document.querySelectorAll('.vg-btn').forEach(function(b){
+      b.classList.toggle('selected',b.getAttribute('data-vg')===val);
+    });
+  }
+});
+
 document.getElementById('cb-screw').addEventListener('click',function(){
   boardScrew=!boardScrew;this.textContent=boardScrew?'✓':'—';this.classList.toggle('checked',boardScrew);
 });
@@ -882,6 +1032,7 @@ document.querySelectorAll('.toggle').forEach(function(btn){
 ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.addEventListener('input',schedDraw);});
 ['cid','clen','cwid'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){save();schedDraw();});});
 ['p-mass','p-length','clen','cwid'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){
+  if(window.updateMoedDisplay) setTimeout(window.updateMoedDisplay,100);
   var den=calcDensity(gn('p-mass'),gn('p-length'),getB(),getD());
   document.getElementById('v-den').textContent=den!=null?String(den):'—';
 });});
@@ -904,8 +1055,119 @@ document.addEventListener('focusin', function(e) {
   }
 });
 
+
+// ── Výpočet dynamických modulů pružnosti ────────────────
+function calcMOED(board){
+  var fft=board.fft||null;
+  var L=board.length?board.length/1000:null; // mm -> m
+  var b=board.b?board.b/1000:null;           // mm -> m
+  var d=board.d?board.d/1000:null;           // mm -> m
+  var mass=board.mass?board.mass/1000:null;  // g -> kg
+  var den=calcDensity(board.mass,board.length,board.b,board.d); // kg/m3
+
+  var moedL=null, moedB=null;
+
+  // MOED_L = 4 * fL^2 * L^2 * rho  [Pa] -> /1e6 -> MPa
+  // fL = první frekvence z FFT (podélná)
+  if(fft&&fft[0]&&L&&den){
+    var fL=fft[0]; // Hz
+    moedL=4*fL*fL*L*L*den/1e6; // MPa
+    moedL=Math.round(moedL);
+  }
+
+  // MOED_B = (2*fB / (2.5*pi))^2 * (m*L^3 / I)  [Pa] -> MPa
+  // I = b*d^3/12
+  // fB = frekvence ohybová (pokud měřena)
+  // Pokud máme jen podélné měření, MOED_B nelze spočítat
+  if(fft&&fft[1]&&L&&b&&d&&mass){
+    var fB=fft[1]; // Hz — druhý mód (ohybový)
+    var I=(b*d*d*d)/12; // m^4
+    var coeff=(2*fB/(2.5*Math.PI));
+    moedB=coeff*coeff*(mass*L*L*L/I)/1e6; // MPa
+    moedB=Math.round(moedB);
+  }
+
+  return{moedL:moedL, moedB:moedB};
+}
+
+function updateMoedDisplay(){
+  // Zobraz MOED pro aktuální desku (po uložení FFT)
+  var boards=window.wgGetAllBoards?window.wgGetAllBoards():[];
+  var board=null;
+  if(boards.length) board=boards[boards.length-1];
+  // Nebo sestavit dočasný objekt z aktuálních polí
+  var tmpBoard={
+    length:gn('p-length'),mass:gn('p-mass'),
+    b:getB(),d:getD(),
+    fft:window.wgPendingFft||(board?board.fft:null)
+  };
+  var r=calcMOED(tmpBoard);
+  var row=document.getElementById('moed-row');
+  var elL=document.getElementById('v-moedl');
+  var elB=document.getElementById('v-moedb');
+  if(r.moedL!=null||r.moedB!=null){
+    if(row) row.style.display='';
+    if(elL) elL.textContent=r.moedL!=null?r.moedL+' MPa':'—';
+    if(elB) elB.textContent=r.moedB!=null?r.moedB+' MPa':'—';
+  }
+}
+window.updateMoedDisplay=updateMoedDisplay;
+
+
+// ── JSON záloha a obnova ───────────────────────────────
+function exportBackup(){
+  var boards=window.wgGetAllBoards?window.wgGetAllBoards():[];
+  var knots=window.wgGetKnots?window.wgGetKnots():[];
+  var data={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    allBoards:boards,
+    currentKnots:knots
+  };
+  var json=JSON.stringify(data,null,2);
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='woodgrader_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Záloha stažena ✓');
+}
+
+function importBackup(input){
+  var file=input.files[0];
+  if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!data.version||!data.allBoards) throw new Error('Neplatný formát');
+      if(!confirm('Obnovit '+data.allBoards.length+' desek? Aktuální data budou nahrazena.')) return;
+      // Nastav data přes globální reference
+      var boards=window.wgGetAllBoards?window.wgGetAllBoards():[];
+      boards.splice(0,boards.length,...data.allBoards);
+      if(window.wgSave) window.wgSave();
+      if(window.renderBlistGlobal) window.renderBlistGlobal();
+      showToast('Obnoveno '+data.allBoards.length+' desek ✓');
+      document.getElementById('modal-settings').classList.remove('open');
+    } catch(err){
+      showToast('Chyba importu: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  if(!t) return;
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2400);
+}
+
 // ── export referencí pro FFT modul ──
 window.wgGetKnots = function(){ return knots; };
+window.renderBlistGlobal = renderBlist;
 window.wgGetAllBoards = function(){ return allBoards; };
 window.wgSchedDraw = schedDraw;
 window.wgSave = save;
@@ -1167,11 +1429,11 @@ document.addEventListener('click',function(e){
       <div class="clbl">Nastavení analýzy</div>
       <div class="frow">
         <div class="fld"><label>Typ kmitání</label>
-          <select id="fft-type">
-            <option value="any">Jakýkoli</option>
-            <option value="bending">Ohybový</option>
-            <option value="longitudinal">Podélný</option>
-          </select>
+          <div style="display:flex;gap:6px">
+            <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:13px" onclick="setFftType('longitudinal')">📏 Podélné</button>
+            <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:13px" onclick="setFftType('bending')">〜 Ohybové</button>
+          </div>
+          <input type="hidden" id="fft-type" value="bending">
         </div>
         <div class="fld"><label>Okno</label>
           <select id="fft-window">
@@ -1210,6 +1472,28 @@ document.addEventListener('click',function(e){
 // ══════════════════════════════════════════════════════════
 (function(){
 'use strict';
+
+
+var fftVibType='longitudinal'; // 'longitudinal' | 'bending'
+
+function setFftType(t){
+  fftVibType=t;
+  var btnL=document.getElementById('fft-type-L');
+  var btnB=document.getElementById('fft-type-B');
+  if(btnL) btnL.classList.toggle('selected',t==='longitudinal');
+  if(btnB) btnB.classList.toggle('selected',t==='bending');
+  // Přenastav frekvenční rozsah
+  if(t==='longitudinal'){
+    document.getElementById('fft-fmin').value='200';
+    document.getElementById('fft-fmax').value='5000';
+  } else {
+    document.getElementById('fft-fmin').value='20';
+    document.getElementById('fft-fmax').value='1000';
+  }
+  zoomStart=parseFloat(document.getElementById('fft-fmin').value);
+  zoomEnd=parseFloat(document.getElementById('fft-fmax').value);
+  if(fftData){detectPeaks();drawFFT();renderModes();}
+}
 
 var audioCtx = null;
 var audioBuffer = null;
@@ -1508,7 +1792,7 @@ function runFFT(buffer){
   var freqs=new Float32Array(halfN);
   for(var i=0;i<halfN;i++) freqs[i]=i*dfVal;
 
-  fftData={freqs:freqs,mags:avgMags,df:dfVal,sampleRate:fs,timePeaks:timePeaks.length};
+  fftData={freqs:freqs,mags:avgMags,df:dfVal,sampleRate:fs,timePeaks:timePeaks.length};window._fftData=fftData;
 
   // Nastav zoom
   zoomStart=parseFloat(document.getElementById('fft-fmin').value)||20;
@@ -1775,10 +2059,24 @@ function renderModes(){
   detectedModes.forEach(function(m,i){
     var inp=document.getElementById('fft-hz-'+i);
     if(inp){
-      inp.addEventListener('input',function(){
-        var v=parseFloat(this.value);
-        if(!isNaN(v)){detectedModes[i].hz=v;detectedModes[i].userEdited=true;drawFFT();}
-      });
+      (function(ii){
+        inp.addEventListener('input',function(){
+          var v=parseFloat(this.value);
+          if(!isNaN(v)){
+            detectedModes[ii].hz=v;detectedModes[ii].userEdited=true;
+            // Přepočítej half-power pro novou frekvenci
+            if(fftData){
+              var iNew=Math.round(v/fftData.df);
+              if(iNew>0&&iNew<fftData.mags.length){
+                var res=halfPowerMethod(iNew,fftData.mags[iNew],fftData);
+                detectedModes[ii].bw=res.bw;detectedModes[ii].damping=res.damping;
+                detectedModes[ii].fLeft=res.fLeft;detectedModes[ii].fRight=res.fRight;
+              }
+            }
+            drawFFT();
+          }
+        });
+      })(i);
       inp.addEventListener('focusin',function(){setTimeout(function(){inp.select();},10);});
     }
     // Klik na řádek = výběr módu
@@ -1853,8 +2151,9 @@ function setupChartInteraction(){
     var x=e.clientX-rect.left-PL;
     if(x>=0&&x<=PW3){
       var hz=zoomStart+(x/PW3)*(zoomEnd-zoomStart);
+      var snHz=findNearestPeak(hz);
       var info=document.getElementById('fft-cursor-info');
-      if(info){info.style.display='';info.textContent=hz.toFixed(1)+' Hz';}
+      if(info){info.style.display='';info.textContent=snHz.toFixed(1)+' Hz ●';}
     }
   });
   cv.addEventListener('mouseup',function(e){
@@ -1881,20 +2180,55 @@ function setupChartInteraction(){
   },{passive:false});
 }
 
+function snapToNearestPeak(hz){
+  // Najdi nejbližší lokální maximum v okně ±5% od hz
+  if(!fftData) return hz;
+  var freqs=fftData.freqs, mags=fftData.mags, df=fftData.df;
+  var window_hz=Math.max(50,(zoomEnd-zoomStart)*0.05);
+  var iL=Math.max(0,Math.round((hz-window_hz)/df));
+  var iR=Math.min(freqs.length-1,Math.round((hz+window_hz)/df));
+  var bestIdx=-1, bestMag=0;
+  for(var i=iL+1;i<iR-1;i++){
+    if(mags[i]>mags[i-1]&&mags[i]>mags[i+1]&&mags[i]>bestMag){
+      bestMag=mags[i];bestIdx=i;
+    }
+  }
+  if(bestIdx>=0&&bestMag>0.05) return freqs[bestIdx];
+  return hz;
+}
+
 function handleTap(clientX,cv){
-  if(!fftData||detectedModes.length===0) return;
+  if(!fftData) return;
   var rect=cv.getBoundingClientRect();
   var PL=38,PW=cv.offsetWidth-48;
   var x=clientX-rect.left-PL;
   if(x<0||x>PW) return;
   var hz=zoomStart+(x/PW)*(zoomEnd-zoomStart);
+  // Snap na nejbližší lokální pík
+  hz=snapToNearestPeak(hz);
+  hz=Math.round(hz*10)/10;
+  // Pokud nejsou módy, přidej nový
+  if(detectedModes.length===0){
+    detectedModes=[{hz:hz,amp:1,bw:NaN,damping:NaN,fLeft:NaN,fRight:NaN,userEdited:true,label:'Mód 1'}];
+    selectedModeIdx=0;
+    renderModes();drawFFT();return;
+  }
   // Nastav frekvenci vybraného módu
   if(selectedModeIdx<detectedModes.length){
-    detectedModes[selectedModeIdx].hz=Math.round(hz*10)/10;
+    detectedModes[selectedModeIdx].hz=hz;
     detectedModes[selectedModeIdx].userEdited=true;
+    // Přepočítej half-power
+    var iSnap=Math.round(hz/fftData.df);
+    if(iSnap>0&&iSnap<fftData.mags.length){
+      var res=halfPowerMethod(iSnap,fftData.mags[iSnap],fftData);
+      detectedModes[selectedModeIdx].bw=res.bw;
+      detectedModes[selectedModeIdx].damping=res.damping;
+      detectedModes[selectedModeIdx].fLeft=res.fLeft;
+      detectedModes[selectedModeIdx].fRight=res.fRight;
+    }
     var inp=document.getElementById('fft-hz-'+selectedModeIdx);
-    if(inp) inp.value=detectedModes[selectedModeIdx].hz.toFixed(1);
-    drawFFT();
+    if(inp) inp.value=hz.toFixed(1);
+    renderModes();drawFFT();
   }
 }
 
@@ -1909,9 +2243,11 @@ function saveFftToBoard(){
     last.fft=modes;
     if(window.wgSave) window.wgSave();
     showToast('Frekvence uloženy do '+last.id+' ✓');
+  if(window.updateMoedDisplay) window.updateMoedDisplay();
   } else {
     window.wgPendingFft=modes;
     showToast('Frekvence uloženy ✓ — uloží se s příští deskou');
+  if(window.updateMoedDisplay) window.updateMoedDisplay();
   }
 }
 
@@ -1954,7 +2290,29 @@ function initFFT(){
   });
   var btnSave=document.getElementById('btn-fft-save');
   if(btnSave) btnSave.addEventListener('click',saveFftToBoard);
-  ['fft-fmin','fft-fmax','fft-nmodes'].forEach(function(id){
+  
+// FFT typ přepínač
+document.querySelectorAll('[data-ftype]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('[data-ftype]').forEach(function(b){b.classList.remove('selected');});
+    this.classList.add('selected');
+    document.getElementById('fft-type').value=this.getAttribute('data-ftype');
+    // Uprav rozsah frekvencí dle typu
+    var tp=this.getAttribute('data-ftype');
+    if(tp==='longitudinal'){
+      document.getElementById('fft-fmin').value=20;
+      document.getElementById('fft-fmax').value=8000;
+      document.getElementById('fft-nmodes').value=1;
+    } else {
+      document.getElementById('fft-fmin').value=20;
+      document.getElementById('fft-fmax').value=2000;
+      document.getElementById('fft-nmodes').value=3;
+    }
+    if(window._fftData){window._detectPeaks();window._drawFFT();window._renderModes();}
+  });
+});
+
+['fft-fmin','fft-fmax','fft-nmodes'].forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.addEventListener('change',function(){
       if(fftData){detectPeaks();drawFFT();renderModes();}
@@ -1963,6 +2321,10 @@ function initFFT(){
   setupChartInteraction();
 }
 
+window._fftData=null;  // ref na fftData pro ext. přístup
+window._detectPeaks=detectPeaks;
+window._drawFFT=drawFFT;
+window._renderModes=renderModes;
 window.wgFFTInit=initFFT;
 window.wgFFTSave=saveFftToBoard;
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initFFT);}else{initFFT();}
