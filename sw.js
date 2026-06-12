@@ -1,30 +1,41 @@
-const CACHE = 'suk-v1';
-const ASSETS = ['/', '/index.html', '/app.js', '/style.css', '/manifest.json'];
+// WoodGrader 26 — Service Worker
+const CACHE = 'wg26-v1';
+
+// Cachujeme jen index.html — všechno ostatní je inline nebo CDN
+const ASSETS = ['./index.html', './manifest.json', './icons/icon-192.svg', './icons/icon-512.svg'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(
+    caches.open(CACHE).then(c => {
+      // addAll selže pokud jeden soubor chybí — proto fetchujeme jednotlivě
+      return Promise.all(
+        ASSETS.map(url =>
+          fetch(url).then(r => r.ok ? c.put(url, r) : null).catch(() => null)
+        )
+      );
+    })
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-  ));
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
+  );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (url.pathname.startsWith('/api/')) {
+  // Pro navigaci (HTML) vždy zkusíme síť, fallback na cache
+  if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).catch(() =>
-        new Response(JSON.stringify({ error: 'offline' }), {
-          headers: { 'Content-Type': 'application/json' }
-        })
-      )
+      fetch(e.request).catch(() => caches.match('./index.html'))
     );
     return;
   }
+  // Ostatní — cache first, pak síť
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
