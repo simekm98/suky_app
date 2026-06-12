@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="WoodGrader">
-<meta name="theme-color" content="#5C3A1E">
+<meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.svg">
 <title>WoodGrader 26</title>
@@ -943,6 +943,7 @@ document.addEventListener('click',function(e){
   var ki=parseInt(btn.getAttribute('data-ki'));
   var bi=parseInt(btn.getAttribute('data-bi'));
   if(act==='setvg'){var vgVal=parseInt(btn.getAttribute('data-vg'));setVG(vgVal);return;}
+  if(act==='setffttype'){setFftType(btn.getAttribute('data-ftype'));return;}
   if(act==='edit')enterEdit(ki);
   else if(act==='del')delKnot(ki);
   else if(act==='delb'){e.stopPropagation();delBoard(bi);}
@@ -1430,8 +1431,8 @@ document.addEventListener('click',function(e){
       <div class="frow">
         <div class="fld"><label>Typ kmitání</label>
           <div style="display:flex;gap:6px">
-            <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:13px" onclick="setFftType('longitudinal')">📏 Podélné</button>
-            <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:13px" onclick="setFftType('bending')">〜 Ohybové</button>
+            <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:13px" data-act="setffttype" data-ftype="longitudinal">📏 Podélné</button>
+            <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:13px" data-act="setffttype" data-ftype="bending">〜 Ohybové</button>
           </div>
           <input type="hidden" id="fft-type" value="bending">
         </div>
@@ -1474,7 +1475,7 @@ document.addEventListener('click',function(e){
 'use strict';
 
 
-var fftVibType='longitudinal'; // 'longitudinal' | 'bending'
+var fftVibType='longitudinal';
 
 function setFftType(t){
   fftVibType=t;
@@ -2326,6 +2327,7 @@ window._detectPeaks=detectPeaks;
 window._drawFFT=drawFFT;
 window._renderModes=renderModes;
 window.wgFFTInit=initFFT;
+window.setFftType=setFftType;
 window.wgFFTSave=saveFftToBoard;
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initFFT);}else{initFFT();}
 })();
