@@ -66,7 +66,7 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F5
 .ms{font-size:8px;color:var(--g5);margin-top:2px}
 .gp{display:inline-block;font-size:11px;font-weight:800;padding:2px 6px;border-radius:20px;margin-top:1px}
 .gs13{background:var(--grl);color:var(--gr)}.gs10{background:var(--bll);color:#0C447C}
-.gs7{background:var(--aml);color:#633806}.grej{background:var(--rl);color:var(--rd)}.gna{background:var(--g1);color:var(--g5)}
+.gs7{background:var(--aml);color:#633806}.grej{background:var(--rl);color:var(--rd)}.gna{background:var(--g1);color:var(--g5)}.gok{background:#EAF3DE;color:#27500A}
 
 /* canvas */
 .crow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
@@ -431,11 +431,12 @@ function calcUA(polys,b,d){
   return f/(R*R);
 }
 function mkPolys(ks,b,d){return ks.map(function(k){return kPts(k,b,d);}).filter(Boolean);}
-function grade(kar,dv){
+function grade(kar,dv,nKnots){
+  if(nKnots===0)return'OK'; // deska bez suků
   var r=kar/100;
   if(r<=.2&&dv<=.2)return'S13';if(r<=1/3&&dv<=1/3)return'S10';if(r<=.5&&dv<=.5)return'S7';return'Reject';
 }
-function gcls(g){return{S13:'gs13',S10:'gs10',S7:'gs7',Reject:'grej'}[g]||'gna';}
+function gcls(g){return{S13:'gs13',S10:'gs10',S7:'gs7',Reject:'grej',OK:'gok'}[g]||'gna';}
 function calcDensity(mass,length,b,d){
   if(!mass||!length||!b||!d)return null;
   var vol=(length/1000)*(b/1000)*(d/1000);
@@ -455,7 +456,7 @@ function doRedraw(){
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
   var dv=calcDAB(allK,b);
-  var gr=allK.length?grade(kar,dv):'—';
+  var gr=grade(kar,dv,allK.length);
   document.getElementById('v-kar').textContent=kar.toFixed(2)+'%';
   document.getElementById('v-dab').textContent=dv.toFixed(3);
   document.getElementById('v-dabs').textContent=(dv*2*b).toFixed(1)+'/(2×'+b+')';
@@ -590,9 +591,14 @@ function delKnot(ki){
   knots.splice(ki,1);save();schedDraw();renderKlist();toast('Suk smazán');
 }
 function newBoard(){
-  if(!knots.length){toast('Žádné suky');return;}
+  // Deska může být uložena i bez suků
+  if(!knots.length){
+    // Potvrzení pro prázdnou desku
+    if(!confirm('Deska nemá žádné suky. Uložit i tak?')) return;
+  }
   var ex=getBoardExtra();
-  allBoards.push({id:getId(),b:getB(),d:getD(),
+  var pendFft=window.wgPendingFft||null;window.wgPendingFft=null;
+  allBoards.push({id:getId(),b:getB(),d:getD(),fft:pendFft,
     length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,
     knots:knots.slice(),savedAt:new Date().toISOString()});
   knots=[];boardScrew=false;
@@ -1138,7 +1144,7 @@ document.addEventListener('click',function(e){
     <!-- FFT výsledky -->
     <div class="card" id="fft-result-card" style="display:none">
       <div class="clbl" style="display:flex;align-items:center;justify-content:space-between">
-        <span>Frekvenční spektrum (dB vs Hz)</span>
+        <span>Frekvenční spektrum — vlastní frekvence</span>
         <span id="fft-zoom-label" style="font-size:11px;color:var(--brm)">Pinch = zoom</span>
       </div>
 
@@ -1198,694 +1204,770 @@ document.addEventListener('click',function(e){
 
 <script>
 // ══════════════════════════════════════════════════════════
-//  FFT ANALÝZA — WoodGrader 26
+//  FFT ANALÝZA — WoodGrader 26 (dle MATLAB Rosta_IGA)
+//  Podélné vibrace, Tukeyho okno, highpass 10Hz,
+//  Half-Power Method, max 3 módy
 // ══════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
-// ── stav ──────────────────────────────────────────────────
 var audioCtx = null;
-var audioBuffer = null;   // zaznamenaný zvuk
-var fftData = null;       // {freqs[], magnitudes[], sampleRate, N}
-var detectedModes = [];   // [{hz, magnitude, label}]
-var recordDuration = 3;   // sekundy
-var zoomStart = 0;        // Hz
-var zoomEnd = 8000;       // Hz
+var audioBuffer = null;
+var fftData = null;       // {freqs, mags, df, sampleRate}
+var detectedModes = [];   // [{hz, amp, bw, damping, userEdited}]
+var recordDuration = 3;
+var zoomStart = 20;
+var zoomEnd = 4000;
 var isDragging = false;
 var lastTouchX = null;
 var pinchStartDist = null;
 var pinchStartZoom = null;
+var selectedModeIdx = 0;  // aktuálně vybraný mód (pro zvýraznění)
 
-// ── inicializace audio kontextu ──────────────────────────
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
   return audioCtx;
 }
 
-// ── nahrávání ────────────────────────────────────────────
-var mediaRecorder = null;
-var chunks = [];
-var recTimer = null;
-var recCountdown = null;
+// ── Nahrávání ─────────────────────────────────────────────
+var mediaRecorder=null, chunks=[], recTimer=null, recCountdown=null;
+var waveAnimId=null, waveAnalyser=null;
 
-function setStatus(msg, cls) {
-  var el = document.getElementById('fft-status');
-  el.textContent = msg;
-  el.className = cls || '';
+function setStatus(msg){
+  var el=document.getElementById('fft-status');
+  if(el) el.textContent=msg;
 }
 
-function startRecording(duration) {
-  recordDuration = duration;
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    setStatus('Mikrofon není dostupný v tomto prohlížeči', 'rec-pulse');
-    return;
-  }
-  navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 44100, channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
-    .then(function(stream) {
-      chunks = [];
-      var options = {};
-      // Preferujeme WAV/PCM pro přesnost, fallback na webm
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=pcm')) options.mimeType = 'audio/webm;codecs=pcm';
-      else if (MediaRecorder.isTypeSupported('audio/webm')) options.mimeType = 'audio/webm';
-
-      mediaRecorder = new MediaRecorder(stream, options);
-      mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
-      mediaRecorder.onstop = function() {
-        stream.getTracks().forEach(function(t) { t.stop(); });
-        var blob = new Blob(chunks, { type: mediaRecorder.mimeType });
-        processAudioBlob(blob);
-      };
-      mediaRecorder.start(100);
-
-      // live waveform vizualizace
-      startWaveformVis(stream);
-
-      // countdown
-      var remaining = duration;
-      var cdEl = document.getElementById('fft-countdown');
-      cdEl.textContent = remaining + ' s';
-      document.getElementById('btn-rec').disabled = true;
-      document.getElementById('btn-rec-5').disabled = true;
-      setStatus('🔴 Nahrávám — udeř 3× do desky!', 'rec-pulse');
-
-      recCountdown = setInterval(function() {
-        remaining--;
-        cdEl.textContent = remaining > 0 ? remaining + ' s' : '';
-        if (remaining <= 0) clearInterval(recCountdown);
-      }, 1000);
-
-      recTimer = setTimeout(function() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-        clearInterval(recCountdown);
-        document.getElementById('btn-rec').disabled = false;
-        document.getElementById('btn-rec-5').disabled = false;
-        document.getElementById('fft-countdown').textContent = '';
-        stopWaveformVis();
-      }, duration * 1000);
-    })
-    .catch(function(err) {
-      setStatus('Chyba mikrofonu: ' + err.message);
-    });
+function startRecording(dur){
+  recordDuration=dur;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('Mikrofon nedostupný');return;}
+  navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}})
+  .then(function(stream){
+    chunks=[];
+    var options={};
+    if(MediaRecorder.isTypeSupported('audio/webm;codecs=pcm')) options.mimeType='audio/webm;codecs=pcm';
+    else if(MediaRecorder.isTypeSupported('audio/webm')) options.mimeType='audio/webm';
+    mediaRecorder=new MediaRecorder(stream,options);
+    mediaRecorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+    mediaRecorder.onstop=function(){
+      stream.getTracks().forEach(function(t){t.stop();});
+      processAudioBlob(new Blob(chunks,{type:mediaRecorder.mimeType}));
+    };
+    mediaRecorder.start(100);
+    startWaveformVis(stream);
+    var rem=dur;
+    var cdEl=document.getElementById('fft-countdown');
+    if(cdEl) cdEl.textContent=rem+' s';
+    document.getElementById('btn-rec').disabled=true;
+    document.getElementById('btn-rec-5').disabled=true;
+    setStatus('🔴 Nahrávám — udeř 3× do konce desky!');
+    recCountdown=setInterval(function(){rem--;if(cdEl)cdEl.textContent=rem>0?rem+' s':'';if(rem<=0)clearInterval(recCountdown);},1000);
+    recTimer=setTimeout(function(){
+      if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop();
+      clearInterval(recCountdown);
+      document.getElementById('btn-rec').disabled=false;
+      document.getElementById('btn-rec-5').disabled=false;
+      if(cdEl) cdEl.textContent='';
+      stopWaveformVis();
+    },dur*1000);
+  })
+  .catch(function(err){setStatus('Chyba mikrofonu: '+err.message);});
 }
 
-function stopRecordingManually() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-    clearTimeout(recTimer);
-    clearInterval(recCountdown);
-    stopWaveformVis();
-    document.getElementById('btn-rec').disabled = false;
-    document.getElementById('btn-rec-5').disabled = false;
-    document.getElementById('fft-countdown').textContent = '';
-  }
+function stopWaveformVis(){if(waveAnimId){cancelAnimationFrame(waveAnimId);waveAnimId=null;}waveAnalyser=null;}
+
+function startWaveformVis(stream){
+  var ctx=getAudioCtx();
+  var src=ctx.createMediaStreamSource(stream);
+  waveAnalyser=ctx.createAnalyser();waveAnalyser.fftSize=256;
+  src.connect(waveAnalyser);drawWaveform();
 }
 
-// ── live waveform ─────────────────────────────────────────
-var waveAnimId = null;
-var waveAnalyser = null;
-
-function startWaveformVis(stream) {
-  var ctx = getAudioCtx();
-  var src = ctx.createMediaStreamSource(stream);
-  waveAnalyser = ctx.createAnalyser();
-  waveAnalyser.fftSize = 256;
-  src.connect(waveAnalyser);
-  drawWaveform();
-}
-
-function stopWaveformVis() {
-  if (waveAnimId) { cancelAnimationFrame(waveAnimId); waveAnimId = null; }
-  waveAnalyser = null;
-}
-
-function drawWaveform() {
-  var cv = document.getElementById('cv-wave');
-  if (!cv) return;
-  var W = cv.parentElement.getBoundingClientRect().width;
-  cv.width = W * (window.devicePixelRatio || 1);
-  cv.height = 48 * (window.devicePixelRatio || 1);
-  cv.style.width = W + 'px'; cv.style.height = '48px';
-  var ctx = cv.getContext('2d');
-  var dpr = window.devicePixelRatio || 1;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  if (!waveAnalyser) { ctx.clearRect(0, 0, W, 48); return; }
-  var buf = new Uint8Array(waveAnalyser.frequencyBinCount);
+function drawWaveform(){
+  var cv=document.getElementById('cv-wave');
+  if(!cv) return;
+  var W=cv.parentElement.getBoundingClientRect().width;
+  var dpr=window.devicePixelRatio||1;
+  cv.width=W*dpr;cv.height=48*dpr;cv.style.width=W+'px';cv.style.height='48px';
+  var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(!waveAnalyser){ctx.clearRect(0,0,W,48);return;}
+  var buf=new Uint8Array(waveAnalyser.frequencyBinCount);
   waveAnalyser.getByteTimeDomainData(buf);
-
-  ctx.clearRect(0, 0, W, 48);
-  ctx.strokeStyle = '#5C3A1E';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  var step = W / buf.length;
-  for (var i = 0; i < buf.length; i++) {
-    var y = ((buf[i] / 128) - 1) * 22 + 24;
-    if (i === 0) ctx.moveTo(i * step, y); else ctx.lineTo(i * step, y);
+  ctx.clearRect(0,0,W,48);
+  ctx.strokeStyle='#5C3A1E';ctx.lineWidth=1.5;ctx.beginPath();
+  var step=W/buf.length;
+  for(var i=0;i<buf.length;i++){
+    var y=((buf[i]/128)-1)*22+24;
+    if(i===0) ctx.moveTo(i*step,y); else ctx.lineTo(i*step,y);
   }
   ctx.stroke();
-  waveAnimId = requestAnimationFrame(drawWaveform);
+  waveAnimId=requestAnimationFrame(drawWaveform);
 }
 
-// ── zpracování audio dat ──────────────────────────────────
-function processAudioBlob(blob) {
-  setStatus('⏳ Zpracovávám FFT…');
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var ctx = getAudioCtx();
-    ctx.decodeAudioData(e.target.result, function(buffer) {
-      audioBuffer = buffer;
-      runFFT(buffer);
-    }, function(err) {
-      setStatus('Chyba dekódování audia: ' + err);
-    });
+// ── Zpracování audia ──────────────────────────────────────
+function processAudioBlob(blob){
+  setStatus('⏳ Zpracovávám…');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    getAudioCtx().decodeAudioData(e.target.result,function(buf){
+      audioBuffer=buf;
+      runFFT(buf);
+    },function(err){setStatus('Chyba dekódování: '+err);});
   };
   reader.readAsArrayBuffer(blob);
 }
 
-// ── FFT ───────────────────────────────────────────────────
-function applyWindow(data, type) {
-  var N = data.length;
-  var out = new Float32Array(N);
-  for (var i = 0; i < N; i++) {
-    var w = 1;
-    if (type === 'hann')    w = 0.5 * (1 - Math.cos(2 * Math.PI * i / (N - 1)));
-    if (type === 'hamming') w = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / (N - 1));
-    out[i] = data[i] * w;
+// ── Highpass filtr (dle MATLAB: highpass 10 Hz) ───────────
+// Butterworth 2. řádu IIR highpass
+function highpassFilter(data, cutoff, fs){
+  var out=new Float32Array(data.length);
+  // Bilinear transform Butterworth 2nd order highpass
+  var w0=2*Math.PI*cutoff/fs;
+  var cosw=Math.cos(w0), sinw=Math.sin(w0);
+  var alpha=sinw/Math.sqrt(2); // Q=0.707
+  var b0=(1+cosw)/2, b1=-(1+cosw), b2=(1+cosw)/2;
+  var a0=1+alpha, a1=-2*cosw, a2=1-alpha;
+  b0/=a0;b1/=a0;b2/=a0;a1/=a0;a2/=a0;
+  var x1=0,x2=0,y1=0,y2=0;
+  for(var i=0;i<data.length;i++){
+    var x0=data[i];
+    var y0=b0*x0+b1*x1+b2*x2-a1*y1-a2*y2;
+    out[i]=y0;x2=x1;x1=x0;y2=y1;y1=y0;
   }
   return out;
 }
 
-// FFT Cooley-Tukey (iterative, in-place)
-function fft(re, im) {
-  var N = re.length;
-  // bit-reversal
-  for (var i = 1, j = 0; i < N; i++) {
-    var bit = N >> 1;
-    for (; j & bit; bit >>= 1) j ^= bit;
-    j ^= bit;
-    if (i < j) {
-      var t = re[i]; re[i] = re[j]; re[j] = t;
-      t = im[i]; im[i] = im[j]; im[j] = t;
-    }
+// ── Tukeyho okno (alpha=0.1, dle MATLAB) ─────────────────
+function tukeyWindow(N, alpha){
+  var w=new Float32Array(N);
+  var half=Math.floor(alpha*N/2);
+  for(var i=0;i<N;i++){
+    if(i<half) w[i]=0.5*(1-Math.cos(Math.PI*i/half));
+    else if(i>=N-half) w[i]=0.5*(1-Math.cos(Math.PI*(N-1-i)/half));
+    else w[i]=1;
   }
-  // FFT
-  for (var len = 2; len <= N; len <<= 1) {
-    var ang = -2 * Math.PI / len;
-    var wRe = Math.cos(ang), wIm = Math.sin(ang);
-    for (var i2 = 0; i2 < N; i2 += len) {
-      var curRe = 1, curIm = 0;
-      for (var j2 = 0; j2 < len / 2; j2++) {
-        var uRe = re[i2 + j2], uIm = im[i2 + j2];
-        var vRe = re[i2 + j2 + len/2] * curRe - im[i2 + j2 + len/2] * curIm;
-        var vIm = re[i2 + j2 + len/2] * curIm + im[i2 + j2 + len/2] * curRe;
-        re[i2 + j2] = uRe + vRe; im[i2 + j2] = uIm + vIm;
-        re[i2 + j2 + len/2] = uRe - vRe; im[i2 + j2 + len/2] = uIm - vIm;
-        var newRe = curRe * wRe - curIm * wIm;
-        curIm = curRe * wIm + curIm * wRe; curRe = newRe;
+  return w;
+}
+
+// ── FFT (Cooley-Tukey iterativní) ─────────────────────────
+function nextPow2(n){var p=1;while(p<n)p<<=1;return p;}
+
+function doFFT(re,im){
+  var N=re.length;
+  for(var i=1,j=0;i<N;i++){
+    var bit=N>>1;
+    for(;j&bit;bit>>=1)j^=bit;
+    j^=bit;
+    if(i<j){var t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}
+  }
+  for(var len=2;len<=N;len<<=1){
+    var ang=-2*Math.PI/len;
+    var wRe=Math.cos(ang),wIm=Math.sin(ang);
+    for(var i2=0;i2<N;i2+=len){
+      var cRe=1,cIm=0;
+      for(var j2=0;j2<len/2;j2++){
+        var uR=re[i2+j2],uI=im[i2+j2];
+        var vR=re[i2+j2+len/2]*cRe-im[i2+j2+len/2]*cIm;
+        var vI=re[i2+j2+len/2]*cIm+im[i2+j2+len/2]*cRe;
+        re[i2+j2]=uR+vR;im[i2+j2]=uI+vI;
+        re[i2+j2+len/2]=uR-vR;im[i2+j2+len/2]=uI-vI;
+        var nR=cRe*wRe-cIm*wIm;cIm=cRe*wIm+cIm*wRe;cRe=nR;
       }
     }
   }
 }
 
-function nextPow2(n) { var p = 1; while (p < n) p <<= 1; return p; }
+// ── Kubická spline interpolace (pro half-power method) ────
+function splineInterp(xArr, yArr, xNew){
+  // Jednoduché kubické spline (natural)
+  var n=xArr.length;
+  var h=new Array(n-1), b=new Array(n-1);
+  for(var i=0;i<n-1;i++){h[i]=xArr[i+1]-xArr[i];b[i]=(yArr[i+1]-yArr[i])/h[i];}
+  var u=new Array(n), v=new Array(n);
+  u[0]=0;v[0]=0;
+  for(var i=1;i<n-1;i++){u[i]=2*(h[i-1]+h[i]);v[i]=6*(b[i]-b[i-1]);}
+  u[n-1]=0;
+  var z=new Array(n).fill(0);
+  for(var i=1;i<n-1;i++){var m=h[i-1]/u[i-1]||0;u[i]-=m*h[i-1];v[i]-=m*v[i-1];z[i]=(v[i]-h[i-1]*z[i-1])/u[i]||0;}
+  // Interpoluj
+  var result=new Float32Array(xNew.length);
+  for(var k=0;k<xNew.length;k++){
+    var x=xNew[k];
+    var seg=0;
+    for(var i=0;i<n-2;i++){if(x>=xArr[i]&&x<=xArr[i+1]){seg=i;break;}if(x>xArr[n-2])seg=n-2;}
+    var dx=x-xArr[seg];
+    var a=(xArr[seg+1]-x)/h[seg], bb=(x-xArr[seg])/h[seg];
+    result[k]=a*yArr[seg]+bb*yArr[seg+1]+((a*a*a-a)*z[seg]+(bb*bb*bb-bb)*z[seg+1])*(h[seg]*h[seg])/6;
+  }
+  return result;
+}
 
-function runFFT(buffer) {
-  var sampleRate = buffer.sampleRate;
-  var raw = buffer.getChannelData(0);
+// ── Linspace helper ───────────────────────────────────────
+function linspace(a,b,n){
+  var arr=new Float32Array(n);
+  var step=(b-a)/(n-1);
+  for(var i=0;i<n;i++) arr[i]=a+i*step;
+  return arr;
+}
 
-  // Ořezání ticha na začátku (threshold)
-  var threshold = 0.01;
-  var startIdx = 0;
-  for (var i = 0; i < raw.length; i++) {
-    if (Math.abs(raw[i]) > threshold) { startIdx = Math.max(0, i - 100); break; }
+// ── Hlavní FFT výpočet ────────────────────────────────────
+function runFFT(buffer){
+  var fs=buffer.sampleRate;
+  var raw=buffer.getChannelData(0);
+
+  // 1. Highpass filtr 10 Hz (dle MATLAB)
+  var filtered=highpassFilter(raw,10,fs);
+
+  // 2. Detekuj 3 nejvyšší píky v časovém signálu (MinPeakDistance=fs)
+  var minDist=fs; // 1 sekunda
+  var timePeaks=[];
+  var threshold=0;
+  // Spočítej RMS pro threshold
+  var rms=0;for(var i=0;i<filtered.length;i++) rms+=filtered[i]*filtered[i];
+  rms=Math.sqrt(rms/filtered.length)*2;
+
+  for(var i=minDist;i<filtered.length-minDist;i++){
+    if(Math.abs(filtered[i])<rms) continue;
+    var isMax=true;
+    for(var k=-20;k<=20;k++){if(Math.abs(filtered[i+k])>Math.abs(filtered[i])){isMax=false;break;}}
+    if(!isMax) continue;
+    if(timePeaks.length===0||i-timePeaks[timePeaks.length-1].idx>minDist){
+      timePeaks.push({idx:i,amp:Math.abs(filtered[i])});
+    }
+  }
+  // Seřaď dle amplitudy, vezmi 3 nejvyšší, pak seřaď časově
+  timePeaks.sort(function(a,b){return b.amp-a.amp;});
+  timePeaks=timePeaks.slice(0,6);
+  timePeaks.sort(function(a,b){return a.idx-b.idx;});
+  timePeaks=timePeaks.slice(0,6);
+
+  // Pokud nenajdeme píky, použij celý signál
+  if(timePeaks.length===0){
+    // Fallback: jeden segment z celého záznamu
+    timePeaks=[{idx:Math.floor(filtered.length/2),amp:1}];
   }
 
-  // Použij maximálně 4s dat od prvního úderu
-  var maxSamples = Math.min(raw.length - startIdx, sampleRate * 4);
-  // Zarovnání na mocninu 2
-  var N = nextPow2(maxSamples);
-  // Omezenost paměti — max 2^17 = 131072
-  if (N > 131072) N = 131072;
+  // 3. Pro každý pík: výřez 1s, Tukeyho okno, FFT → průměrování spekter
+  var halfN=null;
+  var avgMags=null;
+  var dfVal=0;
 
-  var windowType = document.getElementById('fft-window').value;
-  var segment = new Float32Array(N);
-  for (var i2 = 0; i2 < N && (startIdx + i2) < raw.length; i2++) segment[i2] = raw[startIdx + i2];
+  for(var p=0;p<timePeaks.length;p++){
+    var peakIdx=timePeaks[p].idx;
+    var startIdx=Math.max(0,peakIdx-1000);
+    var endIdx=Math.min(filtered.length-1,startIdx+fs-1);
+    var segLen=endIdx-startIdx+1;
 
-  var windowed = applyWindow(segment, windowType);
+    // Vytvoř segment, odeber DC, normalizuj
+    var seg=new Float32Array(segLen);
+    var mean=0;
+    for(var i=0;i<segLen;i++) mean+=filtered[startIdx+i];
+    mean/=segLen;
+    var maxAbs=0;
+    for(var i=0;i<segLen;i++){seg[i]=filtered[startIdx+i]-mean;if(Math.abs(seg[i])>maxAbs)maxAbs=Math.abs(seg[i]);}
+    if(maxAbs>0) for(var i=0;i<segLen;i++) seg[i]/=maxAbs;
 
-  var re = new Float32Array(N), im = new Float32Array(N);
-  for (var i3 = 0; i3 < N; i3++) re[i3] = windowed[i3];
+    // Tukeyho okno alpha=0.1
+    var win=tukeyWindow(segLen,0.1);
+    for(var i=0;i<segLen;i++) seg[i]*=win[i];
 
-  fft(re, im);
+    // FFT
+    var N2=nextPow2(segLen);
+    if(N2>131072) N2=131072;
+    var re=new Float32Array(N2), im=new Float32Array(N2);
+    for(var i=0;i<segLen&&i<N2;i++) re[i]=seg[i];
+    doFFT(re,im);
 
-  // Magnitudy (jen kladné frekvence, dB)
-  var halfN = N / 2;
-  var freqs = new Float32Array(halfN);
-  var mags = new Float32Array(halfN);
-  var maxMag = 0;
-  for (var i4 = 0; i4 < halfN; i4++) {
-    freqs[i4] = i4 * sampleRate / N;
-    var mag = Math.sqrt(re[i4] * re[i4] + im[i4] * im[i4]) / N;
-    mags[i4] = mag;
-    if (mag > maxMag) maxMag = mag;
+    var hN=N2/2;
+    if(!halfN){halfN=hN;avgMags=new Float32Array(hN);dfVal=fs/N2;}
+
+    // Amplituda + korekce (dle MATLAB: P(2:end-1)=2*P(2:end-1))
+    var maxMag=0;
+    var tmpMags=new Float32Array(halfN);
+    for(var i=0;i<hN;i++){
+      var m=Math.sqrt(re[i]*re[i]+im[i]*im[i])/N2;
+      if(i>0&&i<hN-1) m*=2; // korekce amplitudy
+      tmpMags[i]=m;
+      if(m>maxMag) maxMag=m;
+    }
+    // Normalizuj
+    if(maxMag>0) for(var i=0;i<hN;i++) tmpMags[i]/=maxMag;
+    // Přičti k průměru
+    for(var i=0;i<hN;i++) avgMags[i]+=tmpMags[i];
   }
-  // Normalizace + dB
-  var dbMags = new Float32Array(halfN);
-  for (var i5 = 0; i5 < halfN; i5++) {
-    dbMags[i5] = maxMag > 0 ? 20 * Math.log10((mags[i5] / maxMag) + 1e-10) : -120;
-  }
 
-  fftData = { freqs: freqs, mags: dbMags, rawMags: mags, sampleRate: sampleRate, N: N, df: sampleRate / N };
+  // Průměr spekter
+  for(var i=0;i<halfN;i++) avgMags[i]/=timePeaks.length;
+  // Renormalizuj
+  var maxFinal=0;
+  for(var i=0;i<halfN;i++) if(avgMags[i]>maxFinal) maxFinal=avgMags[i];
+  if(maxFinal>0) for(var i=0;i<halfN;i++) avgMags[i]/=maxFinal;
 
-  // Nastav zoom dle nastavení
-  zoomStart = parseFloat(document.getElementById('fft-fmin').value) || 20;
-  zoomEnd   = parseFloat(document.getElementById('fft-fmax').value) || 8000;
+  // Frekvence
+  var freqs=new Float32Array(halfN);
+  for(var i=0;i<halfN;i++) freqs[i]=i*dfVal;
+
+  fftData={freqs:freqs,mags:avgMags,df:dfVal,sampleRate:fs,timePeaks:timePeaks.length};
+
+  // Nastav zoom
+  zoomStart=parseFloat(document.getElementById('fft-fmin').value)||20;
+  zoomEnd=parseFloat(document.getElementById('fft-fmax').value)||4000;
 
   detectPeaks();
   drawFFT();
   renderModes();
-  document.getElementById('fft-result-card').style.display = '';
-  setStatus('✅ Analýza dokončena — ' + (N / sampleRate).toFixed(2) + 's / df=' + (sampleRate/N).toFixed(2) + 'Hz');
+  document.getElementById('fft-result-card').style.display='';
+  setStatus('✅ '+timePeaks.length+' úderů · df='+dfVal.toFixed(2)+' Hz · '+halfN+' bodů');
 }
 
-// ── detekce píků ──────────────────────────────────────────
-function detectPeaks() {
-  if (!fftData) return;
-  var freqs = fftData.freqs, mags = fftData.mags, df = fftData.df;
-  var nModes = parseInt(document.getElementById('fft-nmodes').value) || 3;
-  var fMin = parseFloat(document.getElementById('fft-fmin').value) || 20;
-  var fMax = parseFloat(document.getElementById('fft-fmax').value) || 8000;
+// ── Detekce píků s Half-Power Method ─────────────────────
+function detectPeaks(){
+  if(!fftData) return;
+  var freqs=fftData.freqs, mags=fftData.mags, df=fftData.df;
+  var nModes=parseInt(document.getElementById('fft-nmodes').value)||3;
+  var fMin=parseFloat(document.getElementById('fft-fmin').value)||20;
+  var fMax=parseFloat(document.getElementById('fft-fmax').value)||4000;
+  var iMin=Math.max(1,Math.round(fMin/df));
+  var iMax=Math.min(Math.round(fMax/df),freqs.length-2);
 
-  // Min. vzdálenost píků: 50 Hz nebo 5% fMin
-  var minDistHz = Math.max(50, fMin * 0.3);
-  var minDistBins = Math.max(1, Math.round(minDistHz / df));
-
-  // Najdi všechny lokální maxima v rozsahu
-  var iMin = Math.round(fMin / df), iMax = Math.min(Math.round(fMax / df), freqs.length - 1);
-  var peaks = [];
-  var smooth = 3; // vyhlazení
-  for (var i = iMin + smooth; i < iMax - smooth; i++) {
-    var v = mags[i];
-    var isMax = true;
-    for (var k = -smooth; k <= smooth; k++) { if (mags[i + k] > v + 0.001) { isMax = false; break; } }
-    if (!isMax) continue;
-    // Musí být výrazný pík (min. 6dB nad okolím)
-    var localMin = mags[i];
-    for (var k2 = -20; k2 <= 20; k2++) {
-      var idx2 = i + k2;
-      if (idx2 >= 0 && idx2 < mags.length && mags[idx2] < localMin) localMin = mags[idx2];
-    }
-    if (v - localMin < 3) continue;
-    peaks.push({ idx: i, hz: freqs[i], mag: mags[i] });
+  // Najdi lokální maxima s prahem 0.15 (dle MATLAB: MinPeakHeight=0.15)
+  var peaks=[];
+  var smooth=3;
+  for(var i=iMin+smooth;i<iMax-smooth;i++){
+    if(mags[i]<0.15) continue;
+    var isMax=true;
+    for(var k=-smooth;k<=smooth;k++){if(mags[i+k]>mags[i]+0.001){isMax=false;break;}}
+    if(!isMax) continue;
+    peaks.push({idx:i,hz:freqs[i],amp:mags[i]});
   }
 
-  // Seřadit dle magnitudy, vybrat top s minimální vzdáleností
-  peaks.sort(function(a, b) { return b.mag - a.mag; });
-  var selected = [];
-  peaks.forEach(function(p) {
-    if (selected.length >= nModes * 3) return;
-    var tooClose = selected.some(function(s) { return Math.abs(s.idx - p.idx) < minDistBins; });
-    if (!tooClose) selected.push(p);
+  // Minimální vzdálenost mezi píky
+  var minDistBins=Math.max(5,Math.round(50/df));
+  peaks.sort(function(a,b){return b.amp-a.amp;});
+  var selected=[];
+  peaks.forEach(function(p){
+    if(selected.length>=nModes*2) return;
+    var tooClose=selected.some(function(s){return Math.abs(s.idx-p.idx)<minDistBins;});
+    if(!tooClose) selected.push(p);
+  });
+  // Seřaď dle frekvence
+  selected.sort(function(a,b){return a.hz-b.hz;});
+  selected=selected.slice(0,nModes);
+
+  // Half-Power Method pro každý pík
+  detectedModes=selected.map(function(p,i){
+    var result=halfPowerMethod(p.idx,p.amp,fftData);
+    return {hz:result.fPeak,amp:p.amp,bw:result.bw,damping:result.damping,fLeft:result.fLeft,fRight:result.fRight,userEdited:false,label:'Mód '+(i+1)};
   });
 
-  // Seřadit dle frekvence a vzít první nModes
-  selected.sort(function(a, b) { return a.hz - b.hz; });
-  detectedModes = selected.slice(0, nModes).map(function(p, i) {
-    return { hz: Math.round(p.hz * 10) / 10, mag: p.mag, label: 'Mód ' + (i + 1), userEdited: false };
-  });
+  if(detectedModes.length>0) selectedModeIdx=0;
 }
 
-// ── kreslení FFT grafu ────────────────────────────────────
-var FFT_H = 220;
+function halfPowerMethod(idxMax, maxAmp, data){
+  var freqs=data.freqs, mags=data.mags, df=data.df;
+  var halfPow=maxAmp/Math.sqrt(2);
+  var range=Math.round(100/df); // ±100 Hz kolem píku
+  var iL=Math.max(0,idxMax-range), iR=Math.min(mags.length-1,idxMax+range);
 
-function freqToX(hz, W) {
-  var ratio = (hz - zoomStart) / (zoomEnd - zoomStart);
-  return ratio * W;
+  // Výřez pro zoom
+  var xArr=[], yArr=[];
+  for(var i=iL;i<=iR;i++){xArr.push(freqs[i]);yArr.push(mags[i]);}
+  if(xArr.length<4) return{fPeak:freqs[idxMax],bw:NaN,damping:NaN,fLeft:NaN,fRight:NaN};
+
+  // Interpolace na 2000 bodů (dle MATLAB)
+  var xFine=linspace(xArr[0],xArr[xArr.length-1],2000);
+  var yFine;
+  try{
+    // Převod na plain arrays pro spline
+    var xa=new Float32Array(xArr.length), ya=new Float32Array(yArr.length);
+    for(var i=0;i<xArr.length;i++){xa[i]=xArr[i];ya[i]=yArr[i];}
+    yFine=splineInterp(xa,ya,xFine);
+  } catch(e){
+    yFine=new Float32Array(2000);
+    for(var i=0;i<2000;i++) yFine[i]=yArr[Math.round(i*(yArr.length-1)/1999)]||0;
+  }
+
+  // Najdi maximum na interpolovaném
+  var iMax2=0;
+  for(var i=1;i<yFine.length;i++) if(yFine[i]>yFine[iMax2]) iMax2=i;
+  var fPeak=xFine[iMax2];
+  var halfPow2=yFine[iMax2]/Math.sqrt(2);
+
+  // Levý průsečík
+  var leftIdx=-1;
+  for(var i=iMax2-1;i>=0;i--){if(yFine[i]<=halfPow2){leftIdx=i;break;}}
+  // Pravý průsečík
+  var rightIdx=-1;
+  for(var i=iMax2+1;i<yFine.length;i++){if(yFine[i]<=halfPow2){rightIdx=i;break;}}
+
+  var fLeft=leftIdx>=0?xFine[leftIdx]:NaN;
+  var fRight=rightIdx>=0?xFine[rightIdx]:NaN;
+  var bw=(!isNaN(fLeft)&&!isNaN(fRight))?(fRight-fLeft):NaN;
+  var damping=(!isNaN(bw)&&fPeak>0)?(bw/(2*fPeak)):NaN;
+
+  return{fPeak:Math.round(fPeak*10)/10,bw:bw,damping:damping,fLeft:fLeft,fRight:fRight};
 }
 
-function xToFreq(x, W) {
-  return zoomStart + (x / W) * (zoomEnd - zoomStart);
-}
+// ── Kreslení FFT grafu ────────────────────────────────────
+var FFT_H=240;
 
-function drawFFT() {
-  if (!fftData) return;
-  var cv = document.getElementById('cv-fft');
-  var wrap = document.getElementById('fft-chart-wrap');
-  if (!cv || !wrap) return;
-  var W = wrap.getBoundingClientRect().width;
-  if (W < 10) { setTimeout(drawFFT, 100); return; }
-  var dpr = window.devicePixelRatio || 1;
-  cv.width = Math.round(W * dpr); cv.height = Math.round(FFT_H * dpr);
-  cv.style.width = W + 'px'; cv.style.height = FFT_H + 'px';
-  var ctx = cv.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+function drawFFT(){
+  if(!fftData) return;
+  var cv=document.getElementById('cv-fft');
+  var wrap=document.getElementById('fft-chart-wrap');
+  if(!cv||!wrap) return;
+  var W=wrap.getBoundingClientRect().width;
+  if(W<10){setTimeout(drawFFT,100);return;}
+  var dpr=window.devicePixelRatio||1;
+  var cw=Math.round(W*dpr),ch=Math.round(FFT_H*dpr);
+  if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch;}
+  cv.style.width=W+'px';cv.style.height=FFT_H+'px';
+  var ctx=cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 
-  var PL = 42, PR = 10, PT = 10, PB = 28;
-  var PW = W - PL - PR, PH = FFT_H - PT - PB;
-  var minDb = -80, maxDb = 0;
+  var PL=38,PR=10,PT=12,PB=28;
+  var PW=W-PL-PR,PH=FFT_H-PT-PB;
 
-  function fx(hz) { return PL + freqToX(hz, PW); }
-  function fy(db) { return PT + PH - ((db - minDb) / (maxDb - minDb)) * PH; }
+  function fx(hz){return PL+(hz-zoomStart)/(zoomEnd-zoomStart)*PW;}
+  function fy(amp){return PT+PH*(1-amp);}
 
-  ctx.clearRect(0, 0, W, FFT_H);
+  ctx.clearRect(0,0,W,FFT_H);
 
-  // Background
-  ctx.fillStyle = '#FDF8F4';
-  ctx.fillRect(PL, PT, PW, PH);
+  // Pozadí
+  ctx.fillStyle='#FDF8F4';
+  ctx.fillRect(PL,PT,PW,PH);
 
-  // Grid dB
-  ctx.strokeStyle = 'rgba(0,0,0,.06)'; ctx.lineWidth = 0.5;
-  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'right';
-  [-80, -60, -40, -20, 0].forEach(function(db) {
-    var y = fy(db);
-    ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(PL + PW, y); ctx.stroke();
-    ctx.fillText(db + 'dB', PL - 3, y + 3);
+  // Grid Y (amplituda 0-1)
+  ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=0.5;
+  ctx.font='9px -apple-system,sans-serif';ctx.fillStyle='rgba(0,0,0,.4)';ctx.textAlign='right';
+  [0,0.25,0.5,0.75,1.0].forEach(function(v){
+    var y=fy(v);
+    ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(PL+PW,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),PL-3,y+3);
   });
 
-  // Grid frekvence
-  ctx.textAlign = 'center';
-  var freqTicks = getFreqTicks(zoomStart, zoomEnd);
-  freqTicks.forEach(function(f) {
-    var x = fx(f);
-    if (x < PL || x > PL + PW) return;
-    ctx.strokeStyle = 'rgba(0,0,0,.06)'; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(x, PT); ctx.lineTo(x, PT + PH); ctx.stroke();
-    ctx.fillStyle = 'rgba(0,0,0,.4)';
-    ctx.fillText(f >= 1000 ? (f/1000).toFixed(f%1000===0?0:1)+'k' : f, x, PT + PH + 14);
+  // Grid X
+  ctx.textAlign='center';
+  var ticks=getFreqTicks(zoomStart,zoomEnd);
+  ticks.forEach(function(f){
+    var x=fx(f);if(x<PL||x>PL+PW) return;
+    ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(x,PT);ctx.lineTo(x,PT+PH);ctx.stroke();
+    ctx.fillStyle='rgba(0,0,0,.4)';
+    ctx.fillText(f>=1000?(f/1000).toFixed(1)+'k':f,x,PT+PH+14);
   });
+
+  // Osa Y label
+  ctx.save();ctx.translate(11,PT+PH/2);ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='rgba(0,0,0,.4)';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Norm. amplituda',0,0);ctx.restore();
 
   // Border
-  ctx.strokeStyle = '#5C3A1E'; ctx.lineWidth = 1.5;
-  ctx.strokeRect(PL, PT, PW, PH);
+  ctx.strokeStyle='#5C3A1E';ctx.lineWidth=1.5;
+  ctx.strokeRect(PL,PT,PW,PH);
 
-  // Spektrum — vyplněná plocha
-  var freqs = fftData.freqs, mags = fftData.mags;
-  ctx.beginPath();
-  var started = false;
-  for (var i = 0; i < freqs.length; i++) {
-    var hz = freqs[i];
-    if (hz < zoomStart || hz > zoomEnd) continue;
-    var x = fx(hz), y = fy(Math.max(mags[i], minDb));
-    if (y > PT + PH) y = PT + PH;
-    if (!started) { ctx.moveTo(x, PT + PH); ctx.lineTo(x, y); started = true; }
-    else ctx.lineTo(x, y);
+  // Half-power šedé pásy pro vybraný mód
+  if(detectedModes.length>selectedModeIdx){
+    var m=detectedModes[selectedModeIdx];
+    if(!isNaN(m.fLeft)&&!isNaN(m.fRight)){
+      var x1=Math.max(PL,fx(m.fLeft)),x2=Math.min(PL+PW,fx(m.fRight));
+      ctx.fillStyle='rgba(92,58,30,.08)';
+      ctx.fillRect(x1,PT,x2-x1,PH);
+      // -3dB linka
+      var hpY=fy(m.amp/Math.sqrt(2));
+      ctx.strokeStyle='rgba(92,58,30,.4)';ctx.lineWidth=0.8;ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(x1,hpY);ctx.lineTo(x2,hpY);ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
-  ctx.lineTo(PL + PW, PT + PH);
-  ctx.closePath();
-  var grad = ctx.createLinearGradient(0, PT, 0, PT + PH);
-  grad.addColorStop(0, 'rgba(92,58,30,.55)');
-  grad.addColorStop(1, 'rgba(92,58,30,.05)');
-  ctx.fillStyle = grad; ctx.fill();
+
+  // Spektrum — vyplněná plocha pod křivkou
+  var freqs=fftData.freqs,mags=fftData.mags;
+  ctx.beginPath();
+  var started=false;
+  for(var i=0;i<freqs.length;i++){
+    var hz=freqs[i];
+    if(hz<zoomStart||hz>zoomEnd) continue;
+    var x=fx(hz),y=fy(Math.max(0,Math.min(1,mags[i])));
+    if(!started){ctx.moveTo(x,PT+PH);ctx.lineTo(x,y);started=true;}
+    else ctx.lineTo(x,y);
+  }
+  if(started){
+    ctx.lineTo(fx(Math.min(zoomEnd,freqs[freqs.length-1])),PT+PH);
+    ctx.closePath();
+    var grad=ctx.createLinearGradient(0,PT,0,PT+PH);
+    grad.addColorStop(0,'rgba(92,58,30,.45)');
+    grad.addColorStop(1,'rgba(92,58,30,.05)');
+    ctx.fillStyle=grad;ctx.fill();
+  }
 
   // Spektrum čára
-  ctx.beginPath(); started = false;
-  for (var i2 = 0; i2 < freqs.length; i2++) {
-    var hz2 = freqs[i2];
-    if (hz2 < zoomStart || hz2 > zoomEnd) continue;
-    var x2 = fx(hz2), y2 = fy(Math.max(mags[i2], minDb));
-    if (y2 > PT + PH) y2 = PT + PH;
-    if (!started) { ctx.moveTo(x2, y2); started = true; } else ctx.lineTo(x2, y2);
+  ctx.beginPath();started=false;
+  for(var i=0;i<freqs.length;i++){
+    var hz=freqs[i];
+    if(hz<zoomStart||hz>zoomEnd) continue;
+    var x=fx(hz),y=fy(Math.max(0,Math.min(1,mags[i])));
+    if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
   }
-  ctx.strokeStyle = '#5C3A1E'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.strokeStyle='#5C3A1E';ctx.lineWidth=1.5;ctx.stroke();
 
-  // Detekované módy — vertikální čáry + labely
-  detectedModes.forEach(function(m, i3) {
-    var x3 = fx(m.hz);
-    if (x3 < PL || x3 > PL + PW) return;
-    // čára
-    ctx.strokeStyle = i3 === 0 ? '#C0392B' : (i3 === 1 ? '#185FA5' : '#27AE60');
-    ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
-    ctx.beginPath(); ctx.moveTo(x3, PT); ctx.lineTo(x3, PT + PH); ctx.stroke();
+  // Detekované módy
+  var colors=['#C0392B','#185FA5','#27AE60'];
+  detectedModes.forEach(function(m,i){
+    var x=fx(m.hz);
+    if(x<PL||x>PL+PW) return;
+    var isSelected=(i===selectedModeIdx);
+    // Vertikální čára
+    ctx.strokeStyle=colors[i%3];ctx.lineWidth=isSelected?2:1;
+    ctx.setLineDash(isSelected?[]:[4,3]);
+    ctx.beginPath();ctx.moveTo(x,PT);ctx.lineTo(x,PT+PH);ctx.stroke();
     ctx.setLineDash([]);
-    // label
-    var lbl = (m.hz >= 1000 ? (m.hz/1000).toFixed(2)+'k' : m.hz.toFixed(1)) + ' Hz';
-    ctx.font = 'bold 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
-    var lblY = PT + 14 + i3 * 14;
-    ctx.fillStyle = 'rgba(255,255,255,.85)';
-    ctx.fillRect(x3 - 22, lblY - 10, 44, 13);
-    ctx.fillStyle = ctx.strokeStyle; // barva dle módu
-    ctx.fillText(lbl, x3, lblY);
+    // Bod na křivce
+    var ampY=fy(m.amp);
+    ctx.fillStyle=colors[i%3];
+    ctx.beginPath();ctx.arc(x,ampY,isSelected?6:4,0,2*Math.PI);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(x,ampY,isSelected?6:4,0,2*Math.PI);ctx.stroke();
+    // Label
+    var lbl=(m.hz>=1000?(m.hz/1000).toFixed(2)+'k':m.hz.toFixed(1))+' Hz';
+    ctx.font=(isSelected?'bold ':'')+'11px -apple-system,sans-serif';
+    ctx.textAlign='center';
+    var lblY=PT+18+i*16;
+    ctx.fillStyle='rgba(255,255,255,.9)';
+    var tw=ctx.measureText(lbl).width;
+    ctx.fillRect(x-tw/2-3,lblY-11,tw+6,14);
+    ctx.fillStyle=colors[i%3];
+    ctx.fillText(lbl,x,lblY);
   });
 }
 
-function getFreqTicks(fMin, fMax) {
-  var range = fMax - fMin;
-  var step;
-  if (range <= 200) step = 20;
-  else if (range <= 500) step = 50;
-  else if (range <= 1000) step = 100;
-  else if (range <= 2000) step = 200;
-  else if (range <= 5000) step = 500;
-  else step = 1000;
-  var ticks = [];
-  var start = Math.ceil(fMin / step) * step;
-  for (var f = start; f <= fMax; f += step) ticks.push(f);
+function getFreqTicks(fMin,fMax){
+  var range=fMax-fMin;
+  var step=range<=200?20:range<=500?50:range<=1000?100:range<=2000?200:range<=5000?500:1000;
+  var ticks=[];
+  var s=Math.ceil(fMin/step)*step;
+  for(var f=s;f<=fMax;f+=step) ticks.push(f);
   return ticks;
 }
 
-// ── render detekovaných módů ─────────────────────────────
-function renderModes() {
-  var el = document.getElementById('fft-modes');
-  if (!el) return;
-  var colors = ['#C0392B', '#185FA5', '#27AE60', '#8E44AD', '#E67E22'];
-  var html = '';
-  detectedModes.forEach(function(m, i) {
-    html += '<div class="fft-mode-row" id="fft-mode-row-'+i+'">'
-      + '<div class="fft-mode-num" style="background:'+colors[i%colors.length]+'">'+( i+1)+'</div>'
-      + '<div style="flex:1">'
-      + '<div class="fft-mode-hz"><input id="fft-hz-'+i+'" type="number" value="'+m.hz.toFixed(1)+'" step="0.1" inputmode="decimal"> Hz</div>'
-      + '<div class="fft-mode-lbl">'+m.label+'</div>'
-      + '</div>'
-      + '</div>';
+// ── Render módů ───────────────────────────────────────────
+function renderModes(){
+  var el=document.getElementById('fft-modes');
+  if(!el) return;
+  var colors=['#C0392B','#185FA5','#27AE60'];
+  var html='';
+  detectedModes.forEach(function(m,i){
+    var dampStr=!isNaN(m.damping)?'ζ = '+(m.damping*100).toFixed(2)+'%':'ζ = ?';
+    var bwStr=!isNaN(m.bw)?'BW: '+m.bw.toFixed(1)+' Hz':'';
+    var isSelected=i===selectedModeIdx;
+    html+='<div class="fft-mode-row'+(isSelected?' active':'')+'" data-midx="'+i+'" style="cursor:pointer;border-color:'+(isSelected?colors[i%3]:'transparent')+'">'
+      +'<div class="fft-mode-num" style="background:'+colors[i%3]+'">'+( i+1)+'</div>'
+      +'<div style="flex:1">'
+      +'<div class="fft-mode-hz"><input id="fft-hz-'+i+'" type="number" value="'+m.hz.toFixed(1)+'" step="0.1" inputmode="decimal"> Hz</div>'
+      +'<div class="fft-mode-lbl">'+dampStr+(bwStr?' · '+bwStr:'')+'</div>'
+      +'</div>'
+      +'</div>';
   });
-  if (!html) html = '<div style="color:var(--g5);font-size:13px;padding:8px">Nebyly detekovány žádné píky v zadaném rozsahu</div>';
-  el.innerHTML = html;
-  // živá editace
-  detectedModes.forEach(function(m, i) {
-    var inp = document.getElementById('fft-hz-' + i);
-    if (!inp) return;
-    inp.addEventListener('input', function() {
-      var v = parseFloat(this.value);
-      if (!isNaN(v)) { detectedModes[i].hz = v; detectedModes[i].userEdited = true; drawFFT(); }
+  if(!html) html='<div style="color:var(--g5);font-size:13px;padding:8px">Nebyly detekovány žádné píky — zkus upravit rozsah frekvencí</div>';
+  el.innerHTML=html;
+  // Listenery
+  detectedModes.forEach(function(m,i){
+    var inp=document.getElementById('fft-hz-'+i);
+    if(inp){
+      inp.addEventListener('input',function(){
+        var v=parseFloat(this.value);
+        if(!isNaN(v)){detectedModes[i].hz=v;detectedModes[i].userEdited=true;drawFFT();}
+      });
+      inp.addEventListener('focusin',function(){setTimeout(function(){inp.select();},10);});
+    }
+    // Klik na řádek = výběr módu
+    var row=el.querySelector('[data-midx="'+i+'"]');
+    if(row) row.addEventListener('click',function(e){
+      if(e.target.tagName==='INPUT') return;
+      selectedModeIdx=i;drawFFT();renderModes();
     });
   });
 }
 
-// ── touch/mouse interakce na grafu ────────────────────────
-function setupChartInteraction() {
-  var cv = document.getElementById('cv-fft');
-  if (!cv) return;
+// ── Touch/mouse interakce ─────────────────────────────────
+function setupChartInteraction(){
+  var cv=document.getElementById('cv-fft');
+  if(!cv) return;
 
-  // --- dotyková interakce ---
-  cv.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 1) {
-      isDragging = true; lastTouchX = e.touches[0].clientX;
-    } else if (e.touches.length === 2) {
-      pinchStartDist = Math.abs(e.touches[0].clientX - e.touches[1].clientX);
-      pinchStartZoom = { start: zoomStart, end: zoomEnd };
-      isDragging = false;
+  cv.addEventListener('touchstart',function(e){
+    if(e.touches.length===1){isDragging=true;lastTouchX=e.touches[0].clientX;}
+    else if(e.touches.length===2){
+      pinchStartDist=Math.abs(e.touches[0].clientX-e.touches[1].clientX);
+      pinchStartZoom={start:zoomStart,end:zoomEnd};isDragging=false;
     }
     e.preventDefault();
-  }, { passive: false });
+  },{passive:false});
 
-  cv.addEventListener('touchmove', function(e) {
-    if (!fftData) return;
-    var W = cv.offsetWidth - 42 - 10; // PW
-    if (e.touches.length === 1 && isDragging) {
-      // posun (pan)
-      var dx = e.touches[0].clientX - lastTouchX;
-      lastTouchX = e.touches[0].clientX;
-      var dHz = -(dx / W) * (zoomEnd - zoomStart);
-      var range = zoomEnd - zoomStart;
-      var maxF = fftData.sampleRate / 2;
-      zoomStart = Math.max(0, Math.min(zoomStart + dHz, maxF - range));
-      zoomEnd = zoomStart + range;
-      drawFFT();
-    } else if (e.touches.length === 2 && pinchStartDist) {
-      // zoom (pinch)
-      var dist = Math.abs(e.touches[0].clientX - e.touches[1].clientX);
-      var scale = pinchStartDist / dist;
-      var center = (pinchStartZoom.start + pinchStartZoom.end) / 2;
-      var halfRange = (pinchStartZoom.end - pinchStartZoom.start) / 2 * scale;
-      halfRange = Math.max(50, Math.min(halfRange, fftData.sampleRate / 2));
-      var maxF2 = fftData.sampleRate / 2;
-      zoomStart = Math.max(0, center - halfRange);
-      zoomEnd = Math.min(maxF2, center + halfRange);
-      drawFFT();
+  cv.addEventListener('touchmove',function(e){
+    if(!fftData) return;
+    var PW=cv.offsetWidth-48;
+    if(e.touches.length===1&&isDragging){
+      var dx=e.touches[0].clientX-lastTouchX;lastTouchX=e.touches[0].clientX;
+      var dHz=-(dx/PW)*(zoomEnd-zoomStart);
+      var range=zoomEnd-zoomStart;
+      var maxF=fftData.sampleRate/2;
+      zoomStart=Math.max(0,Math.min(zoomStart+dHz,maxF-range));
+      zoomEnd=zoomStart+range;drawFFT();
+    } else if(e.touches.length===2&&pinchStartDist){
+      var dist=Math.abs(e.touches[0].clientX-e.touches[1].clientX);
+      var scale=pinchStartDist/dist;
+      var center=(pinchStartZoom.start+pinchStartZoom.end)/2;
+      var hr=(pinchStartZoom.end-pinchStartZoom.start)/2*scale;
+      hr=Math.max(50,Math.min(hr,fftData.sampleRate/4));
+      zoomStart=Math.max(0,center-hr);zoomEnd=Math.min(fftData.sampleRate/2,center+hr);drawFFT();
     }
     e.preventDefault();
-  }, { passive: false });
+  },{passive:false});
 
-  cv.addEventListener('touchend', function(e) {
-    if (e.changedTouches.length === 1 && !isDragging && e.changedTouches[0]) {
-      // Tap — zobraz kurzor a umožni výběr frekvence
-      handleCursorAt(e.changedTouches[0].clientX, cv);
+  cv.addEventListener('touchend',function(e){
+    if(isDragging&&e.changedTouches.length===1){
+      // Tap → výběr frekvence pro aktivní mód
+      var touch=e.changedTouches[0];
+      handleTap(touch.clientX,cv);
     }
-    isDragging = false; pinchStartDist = null; lastTouchX = null;
+    isDragging=false;pinchStartDist=null;lastTouchX=null;
   });
 
-  // --- mouse interakce (pro testování v prohlížeči) ---
-  var mouseDown = false;
-  var mouseLastX = null;
-  cv.addEventListener('mousedown', function(e) { mouseDown = true; mouseLastX = e.clientX; e.preventDefault(); });
-  cv.addEventListener('mousemove', function(e) {
-    if (!fftData) return;
-    if (mouseDown) {
-      var dx = e.clientX - mouseLastX; mouseLastX = e.clientX;
-      var W = cv.offsetWidth - 52;
-      var dHz = -(dx / W) * (zoomEnd - zoomStart);
-      var range = zoomEnd - zoomStart;
-      var maxF = fftData.sampleRate / 2;
-      zoomStart = Math.max(0, Math.min(zoomStart + dHz, maxF - range));
-      zoomEnd = zoomStart + range;
-      drawFFT();
+  // Mouse
+  var mDown=false,mLastX=null;
+  cv.addEventListener('mousedown',function(e){mDown=true;mLastX=e.clientX;e.preventDefault();});
+  cv.addEventListener('mousemove',function(e){
+    if(!fftData) return;
+    if(mDown){
+      var dx=e.clientX-mLastX;mLastX=e.clientX;
+      var PW2=cv.offsetWidth-48;
+      var dHz=-(dx/PW2)*(zoomEnd-zoomStart);
+      var range=zoomEnd-zoomStart,maxF=fftData.sampleRate/2;
+      zoomStart=Math.max(0,Math.min(zoomStart+dHz,maxF-range));
+      zoomEnd=zoomStart+range;drawFFT();
     }
-    // kurzor info při hoveru
-    showCursorAt(e.clientX, cv);
+    // Kurzor info
+    var rect=cv.getBoundingClientRect();
+    var PL=38,PW3=cv.offsetWidth-48;
+    var x=e.clientX-rect.left-PL;
+    if(x>=0&&x<=PW3){
+      var hz=zoomStart+(x/PW3)*(zoomEnd-zoomStart);
+      var info=document.getElementById('fft-cursor-info');
+      if(info){info.style.display='';info.textContent=hz.toFixed(1)+' Hz';}
+    }
   });
-  cv.addEventListener('mouseup', function(e) {
-    mouseDown = false;
-    // klik — výběr frekvence pro mód
-    handleCursorAt(e.clientX, cv);
+  cv.addEventListener('mouseup',function(e){
+    mDown=false;handleTap(e.clientX,cv);
   });
-  cv.addEventListener('mouseleave', function() {
-    document.getElementById('fft-cursor-info').style.display = 'none';
+  cv.addEventListener('mouseleave',function(){
+    mDown=false;
+    var info=document.getElementById('fft-cursor-info');
+    if(info) info.style.display='none';
   });
+  cv.addEventListener('wheel',function(e){
+    if(!fftData) return;
+    var PW4=cv.offsetWidth-48,PL=38;
+    var rect=cv.getBoundingClientRect();
+    var cx=((e.clientX-rect.left-PL)/PW4)*(zoomEnd-zoomStart)+zoomStart;
+    var factor=e.deltaY>0?1.25:0.8;
+    var range=(zoomEnd-zoomStart)*factor;
+    range=Math.max(50,Math.min(range,fftData.sampleRate/2));
+    var maxF=fftData.sampleRate/2;
+    var ratio=(cx-zoomStart)/(zoomEnd-zoomStart);
+    zoomStart=Math.max(0,cx-range*ratio);
+    zoomEnd=Math.min(maxF,zoomStart+range);
+    drawFFT();e.preventDefault();
+  },{passive:false});
+}
 
-  // Scroll = zoom
-  cv.addEventListener('wheel', function(e) {
-    if (!fftData) return;
-    var W = cv.offsetWidth - 52;
-    var rect = cv.getBoundingClientRect();
-    var cx = ((e.clientX - rect.left - 42) / W) * (zoomEnd - zoomStart) + zoomStart;
-    var factor = e.deltaY > 0 ? 1.2 : 0.8;
-    var range = (zoomEnd - zoomStart) * factor;
-    range = Math.max(50, Math.min(range, fftData.sampleRate / 2));
-    var maxF = fftData.sampleRate / 2;
-    zoomStart = Math.max(0, cx - range * (cx - zoomStart) / (zoomEnd - zoomStart));
-    zoomEnd = Math.min(maxF, zoomStart + range);
+function handleTap(clientX,cv){
+  if(!fftData||detectedModes.length===0) return;
+  var rect=cv.getBoundingClientRect();
+  var PL=38,PW=cv.offsetWidth-48;
+  var x=clientX-rect.left-PL;
+  if(x<0||x>PW) return;
+  var hz=zoomStart+(x/PW)*(zoomEnd-zoomStart);
+  // Nastav frekvenci vybraného módu
+  if(selectedModeIdx<detectedModes.length){
+    detectedModes[selectedModeIdx].hz=Math.round(hz*10)/10;
+    detectedModes[selectedModeIdx].userEdited=true;
+    var inp=document.getElementById('fft-hz-'+selectedModeIdx);
+    if(inp) inp.value=detectedModes[selectedModeIdx].hz.toFixed(1);
     drawFFT();
-    e.preventDefault();
-  }, { passive: false });
-}
-
-function showCursorAt(clientX, cv) {
-  if (!fftData) return;
-  var rect = cv.getBoundingClientRect();
-  var PL = 42, W = cv.offsetWidth - PL - 10;
-  var x = clientX - rect.left - PL;
-  if (x < 0 || x > W) return;
-  var hz = xToFreq(x, W);
-  var info = document.getElementById('fft-cursor-info');
-  info.style.display = '';
-  info.textContent = hz.toFixed(1) + ' Hz';
-}
-
-function handleCursorAt(clientX, cv) {
-  if (!fftData || detectedModes.length === 0) return;
-  var rect = cv.getBoundingClientRect();
-  var PL = 42, W = cv.offsetWidth - PL - 10;
-  var x = clientX - rect.left - PL;
-  if (x < 0 || x > W) return;
-  var hz = xToFreq(x, W);
-  // Najdi nejbližší mód a nabídni přepis
-  var closest = 0;
-  var minDist = Infinity;
-  detectedModes.forEach(function(m, i) {
-    var d = Math.abs(m.hz - hz);
-    if (d < minDist) { minDist = d; closest = i; }
-  });
-  // Nabídni uložení kurzorové frekvence do nejbližšího módu
-  if (minDist > (zoomEnd - zoomStart) * 0.1) {
-    // Daleko od jakéhokoli módu — nastav první mód
-    closest = 0;
   }
-  detectedModes[closest].hz = Math.round(hz * 10) / 10;
-  detectedModes[closest].userEdited = true;
-  // Aktualizuj input pole
-  var inp = document.getElementById('fft-hz-' + closest);
-  if (inp) inp.value = detectedModes[closest].hz.toFixed(1);
-  drawFFT();
 }
 
-// ── uložení výsledků do desky ────────────────────────────
-function saveFftToBoard() {
-  var modes = detectedModes.map(function(m) { return Math.round(m.hz * 10) / 10; });
-  if (!modes.length) { showToast('Nejsou žádná data'); return; }
-  // Uloží do aktuální nebo poslední desky
-  var target = null;
-  var _knots = window.wgGetKnots ? window.wgGetKnots() : [];
-  var _boards = window.wgGetAllBoards ? window.wgGetAllBoards() : [];
-  if (_knots && _knots.length) {
-    if (!window.wgCurrentBoardFft) window.wgCurrentBoardFft = {};
-    window.wgCurrentBoardFft.fft = modes;
-    showToast('Frekvence uloženy ✓ — uložte desku tlačítkem Nová deska');
-  } else if (_boards && _boards.length) {
-    var last = _boards[_boards.length - 1];
-    last.fft = modes;
-    if (window.wgSave) window.wgSave();
-    showToast('Frekvence uloženy do desky ' + last.id + ' ✓');
+// ── Uložení do desky ──────────────────────────────────────
+function saveFftToBoard(){
+  var modes=detectedModes.map(function(m){return Math.round(m.hz*10)/10;});
+  if(!modes.length){showToast('Nejsou data k uložení');return;}
+  var knots=window.wgGetKnots?window.wgGetKnots():[];
+  var boards=window.wgGetAllBoards?window.wgGetAllBoards():[];
+  if(boards.length){
+    var last=boards[boards.length-1];
+    last.fft=modes;
+    if(window.wgSave) window.wgSave();
+    showToast('Frekvence uloženy do '+last.id+' ✓');
   } else {
-    showToast('Nejprve zadej desku');
+    window.wgPendingFft=modes;
+    showToast('Frekvence uloženy ✓ — uloží se s příští deskou');
   }
 }
 
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 2400);
+function showToast(msg){
+  var t=document.getElementById('toast');
+  if(!t) return;
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2400);
 }
 
-// ── init ─────────────────────────────────────────────────
-function initFFT() {
-  document.getElementById('btn-fft-open').addEventListener('click', function() {
-    showFFTScreen();
+// ── Init ──────────────────────────────────────────────────
+function initFFT(){
+  var btnOpen=document.getElementById('btn-fft-open');
+  if(btnOpen) btnOpen.addEventListener('click',function(){
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+    document.getElementById('s-fft').classList.add('active');
   });
-  document.getElementById('btn-fft-back').addEventListener('click', function() {
-    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  var btnBack=document.getElementById('btn-fft-back');
+  if(btnBack) btnBack.addEventListener('click',function(){
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
     document.getElementById('s-entry').classList.add('active');
-    setTimeout(function() {
-      if (window.wgSchedDraw) window.wgSchedDraw();
-    }, 150);
+    setTimeout(function(){if(window.wgSchedDraw)window.wgSchedDraw();},150);
   });
-  document.getElementById('btn-rec').addEventListener('click', function() { startRecording(recordDuration); });
-  document.getElementById('btn-rec-5').addEventListener('click', function() { startRecording(5); });
-  document.getElementById('btn-rec-clear').addEventListener('click', function() {
-    stopRecordingManually();
-    audioBuffer = null; fftData = null; detectedModes = [];
-    document.getElementById('fft-result-card').style.display = 'none';
-    setStatus('Stiskni nahrát a 3× udeř do desky');
-    var cv = document.getElementById('cv-wave');
-    if (cv) { var ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height); }
+  var btnRec=document.getElementById('btn-rec');
+  if(btnRec) btnRec.addEventListener('click',function(){startRecording(recordDuration);});
+  var btnRec5=document.getElementById('btn-rec-5');
+  if(btnRec5) btnRec5.addEventListener('click',function(){startRecording(5);});
+  var btnClear=document.getElementById('btn-rec-clear');
+  if(btnClear) btnClear.addEventListener('click',function(){
+    if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop();
+    clearTimeout(recTimer);clearInterval(recCountdown);stopWaveformVis();
+    audioBuffer=null;fftData=null;detectedModes=[];
+    var rc=document.getElementById('fft-result-card');if(rc) rc.style.display='none';
+    var cv=document.getElementById('cv-wave');
+    if(cv){var ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}
+    document.getElementById('btn-rec').disabled=false;
+    document.getElementById('btn-rec-5').disabled=false;
+    var cd=document.getElementById('fft-countdown');if(cd) cd.textContent='';
+    setStatus('Stiskni nahrát a 3× udeř do konce desky');
   });
-  document.getElementById('btn-fft-save').addEventListener('click', saveFftToBoard);
-  ['fft-fmin','fft-fmax','fft-nmodes','fft-window'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.addEventListener('change', function() {
-      if (fftData) { detectPeaks(); drawFFT(); renderModes(); }
+  var btnSave=document.getElementById('btn-fft-save');
+  if(btnSave) btnSave.addEventListener('click',saveFftToBoard);
+  ['fft-fmin','fft-fmax','fft-nmodes'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.addEventListener('change',function(){
+      if(fftData){detectPeaks();drawFFT();renderModes();}
     });
   });
   setupChartInteraction();
 }
 
-function showFFTScreen() {
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  document.getElementById('s-fft').classList.add('active');
-}
-
-window.wgFFTInit = initFFT;
-window.wgFFTSave = saveFftToBoard;
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initFFT);
-} else {
-  initFFT();
-}
-
+window.wgFFTInit=initFFT;
+window.wgFFTSave=saveFftToBoard;
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initFFT);}else{initFFT();}
 })();
+
 </script>
 </body>
 </html>
