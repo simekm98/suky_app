@@ -48,7 +48,7 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F5
 /* inputs */
 .frow{display:flex;gap:8px;flex-wrap:wrap}
 .fld{display:flex;flex-direction:column;gap:4px;flex:1;min-width:65px}
-.fld label{font-size:11px;font-weight:600;color:var(--g5)}
+.fld label{font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block}
 .fld input,.fld select{font-size:16px;padding:10px 11px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);width:100%;-webkit-appearance:none}
 .fld input:focus,.fld select:focus{outline:none;border-color:var(--brm);box-shadow:0 0 0 3px rgba(139,94,60,.18)}
 .fld.wide{flex:1.5}.fld.narrow{flex:.7;min-width:55px}
@@ -59,8 +59,8 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F5
 
 /* metrics — 5 sloupců */
 .mrow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px}
-.met{background:#fff;border-radius:var(--rads);padding:9px 4px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)}
-.ml{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:3px}
+.met{background:#fff;border-radius:var(--rads);padding:9px 4px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ml{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:3px;text-align:center}
 .mv{font-size:15px;font-weight:800;line-height:1}
 .mv.kar{color:var(--bl)}.mv.dab{color:var(--am)}.mv.den{color:var(--br)}
 .ms{font-size:8px;color:var(--g5);margin-top:2px}
@@ -92,11 +92,11 @@ canvas{display:block;width:100%;height:72px}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .fc{background:#fff;border-radius:var(--rad);padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);border:1.5px solid transparent}
 .fc.editing{border-color:var(--blm);background:var(--bll)}
-.ft{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:8px}
+.ft{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:8px;text-align:center}
 .ipair{display:flex;gap:6px;margin-bottom:6px}
 .ipair:last-child{margin-bottom:0}
 .ic{flex:1;display:flex;flex-direction:column;gap:3px}
-.ic span{font-size:11px;font-weight:700;color:var(--g5)}
+.ic span{font-size:11px;font-weight:700;color:var(--g5);display:block;text-align:center}
 .ic input{font-size:18px;font-weight:500;padding:10px 8px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);text-align:right;width:100%;-webkit-appearance:none}
 .ic input:focus{outline:none;border-color:var(--brm);box-shadow:0 0 0 3px rgba(139,94,60,.18)}
 .fc.editing .ic input{background:#fff}
@@ -171,6 +171,7 @@ canvas{display:block;width:100%;height:72px}
 <div class="screen active" id="s-entry">
   <div class="topbar">
     <h1>WoodGrader <sup>26</sup></h1>
+    <span id="sync-indicator" style="display:none;font-size:16px;cursor:pointer" onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" title="Cloud sync"></span>
     <button class="tbtn" id="btn-fft-open" aria-label="FFT analýza" style="font-size:12px;font-weight:800;letter-spacing:-.3px">FFT</button><button class="tbtn" id="btn-metodika" aria-label="Metodika" style="font-size:18px;font-weight:800">ⓘ</button><button class="tbtn" id="btn-settings" aria-label="Nastavení"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <button class="tbtn" id="btn-list" aria-label="Seznam desek">☰</button>
   </div>
@@ -356,6 +357,38 @@ canvas{display:block;width:100%;height:72px}
       <label style="flex:1;padding:10px;border:1.5px solid var(--g3);border-radius:10px;background:#fff;color:var(--g7);font-size:13px;font-weight:700;cursor:pointer;text-align:center">
         ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
       </label>
+    </div>
+        <!-- Cloud sync sekce -->
+    <div class="setting-section" style="margin-top:4px">☁ Cloud synchronizace</div>
+    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1)">
+      <div style="display:flex;align-items:center;margin-bottom:12px">
+        <div style="flex:1">
+          <div style="font-size:15px;color:var(--g9)">Supabase sync</div>
+          <div style="font-size:12px;color:var(--g5)">Real-time záloha + více zařízení</div>
+        </div>
+        <button class="toggle" data-opt="cloud" id="cloud-toggle" onclick="toggleCloudPanel()"></button>
+      </div>
+      <div id="cloud-panel" style="display:none">
+        <div style="margin-bottom:8px">
+          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Supabase Project URL</div>
+          <input id="cfg-supa-url" type="url" placeholder="https://xxx.supabase.co" style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Anon Key</div>
+          <input id="cfg-supa-key" type="text" placeholder="eyJ..." style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        </div>
+        <button onclick="applySyncSettings()" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Připojit k cloudu</button>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:9px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:13px;font-weight:600;cursor:pointer">⬆ Odeslat</button>
+          <button onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" style="flex:1;padding:9px;border:1.5px solid var(--blm);border-radius:8px;background:var(--bll);color:var(--bl);font-size:13px;font-weight:600;cursor:pointer">⬇ Načíst</button>
+        </div>
+        <div style="margin-top:10px;padding:10px;background:#F5F0EB;border-radius:8px;font-size:12px;color:var(--g5);line-height:1.6">
+          <strong style="color:var(--br)">Nastavení Supabase (jednou):</strong><br>
+          1. supabase.com → nový projekt<br>
+          2. SQL Editor → spusť SQL ze zálohy<br>
+          3. Project Settings → API → zkopíruj URL a anon key
+        </div>
+      </div>
     </div>
     <div class="setting-section">Rozměry suků</div>
     <div class="setting-row">
@@ -957,7 +990,8 @@ function doExport(){
 }
 
 // ── storage ──────────────────────────────────────────────────
-function save(){try{localStorage.setItem(DB,JSON.stringify({allBoards:allBoards,knots:knots,opts:opts,cid:getId(),b:getB(),d:getD()}));}catch(e){}}
+function save(){try{localStorage.setItem(DB,JSON.stringify({allBoards:allBoards,knots:knots,opts:opts,cid:getId(),b:getB(),d:getD()}));}catch(e){}
+  if(window.wgMarkDirty)setTimeout(window.wgMarkDirty,100);}
 function load(){
   try{
     var raw=localStorage.getItem(DB);if(!raw)return;
@@ -1247,6 +1281,35 @@ function showToast(msg){
   if(!t) return;
   t.textContent=msg;t.classList.add('show');
   setTimeout(function(){t.classList.remove('show');},2400);
+}
+
+
+function toggleCloudPanel(){
+  var panel=document.getElementById('cloud-panel');
+  if(!panel) return;
+  var open=panel.style.display!=='none';
+  panel.style.display=open?'none':'';
+  if(!open){
+    // Načti uložené hodnoty
+    var cfg=null;try{cfg=JSON.parse(localStorage.getItem('wg26_sync_cfg'));}catch(e){}
+    if(cfg){
+      var urlEl=document.getElementById('cfg-supa-url');
+      var keyEl=document.getElementById('cfg-supa-key');
+      if(urlEl) urlEl.value=cfg.url||'';
+      if(keyEl) keyEl.value=cfg.key||'';
+      var tog=document.getElementById('cloud-toggle');
+      if(tog) tog.classList.toggle('on',!!cfg.enabled);
+    }
+  }
+}
+function applySyncSettings(){
+  var url=(document.getElementById('cfg-supa-url')||{}).value||'';
+  var key=(document.getElementById('cfg-supa-key')||{}).value||'';
+  var tog=document.getElementById('cloud-toggle');
+  var enabled=tog?tog.classList.contains('on'):false;
+  if(url&&key) enabled=true; // automaticky zapni při zadání credentials
+  if(tog) tog.classList.toggle('on',enabled);
+  if(window.saveSyncSettings) window.saveSyncSettings(url,key,enabled);
 }
 
 // ── export referencí pro FFT modul ──
@@ -2416,5 +2479,6 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
+<script src="sync.js"></script>
 </body>
 </html>
