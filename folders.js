@@ -342,6 +342,21 @@ function showFolderToast(msg){
 }
 
 // ── Event delegation ──────────────────────────────────────
+
+// ── Aktualizuj label aktivní složky v entry screenu ──────
+function updateActiveFolderBar(){
+  var lbl = document.getElementById('active-folder-label');
+  if(!lbl) return;
+  if(!activeFolderId){
+    lbl.textContent = '(bez složky)';
+    lbl.style.color = 'var(--g5)';
+  } else {
+    lbl.textContent = getFolderName(activeFolderId);
+    lbl.style.color = 'var(--br)';
+  }
+}
+window.updateActiveFolderBar = updateActiveFolderBar;
+
 function initFolders(){
   loadFolders();
 
@@ -388,6 +403,7 @@ function initFolders(){
       closeFolderModal();
       showFolderToast('Složka: ' + getFolderName(fid));
       renderFolderChips();
+      updateActiveFolderBar();
     }
     else if(act === 'createfolder'){
       var inp = document.getElementById('new-folder-name');
@@ -402,6 +418,7 @@ function initFolders(){
         renderFolderChips();
         closeFolderModal();
         showFolderToast('Složka "'+f.name+'" vytvořena a aktivní ✓');
+        updateActiveFolderBar();
       }
     }
     else if(act === 'closefolder'){ closeFolderModal(); }
@@ -421,14 +438,21 @@ function initFolders(){
     }
   });
 
-  // Spuštění aplikace — nabídni výběr složky
+  // Spuštění aplikace — nastav složku + nabídni výběr
   setTimeout(function(){
-    if(allFolders.length > 0){
-      // Automaticky nastav první pokud žádná není aktivní
-      if(!activeFolderId) activeFolderId = allFolders[0].id;
+    if(allFolders.length > 0 && !activeFolderId){
+      activeFolderId = allFolders[0].id;
+      saveFolders();
     }
     renderFolderChips();
+    updateActiveFolderBar();
   }, 300);
+  // Nabídni výběr složky při každém startu (pokud existují)
+  setTimeout(function(){
+    if(allFolders.length > 0){
+      openFolderModal();
+    }
+  }, 700);
 }
 
 // Exportuj do globálního scope
