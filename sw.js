@@ -1,8 +1,8 @@
 // WoodGrader 26 — Service Worker
-const CACHE = 'wg26-v1';
+const CACHE = 'wg26-v2';
 
 // Cachujeme jen index.html — všechno ostatní je inline nebo CDN
-const ASSETS = ['./index.html', './manifest.json', './icons/icon-192.svg', './icons/icon-512.svg'];
+const ASSETS = ['./index.html', './manifest.json', './sync.js', './icons/icon-192.svg', './icons/icon-512.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
