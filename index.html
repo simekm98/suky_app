@@ -207,45 +207,21 @@ canvas{display:block;width:100%;height:72px}
     </div>
 
     <!-- Metrics: KAR | DAB | Hustota | Třída | Suků -->
-    <div class="mrow">
+    <!-- Řada 1: KAR, DAB, MOED_L, MOED_B -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:6px">
       <div class="met"><div class="ml">KAR</div><div class="mv kar" id="v-kar">—</div></div>
       <div class="met"><div class="ml">DAB</div><div class="mv dab" id="v-dab">—</div><div class="ms" id="v-dabs"></div></div>
+      <div class="met"><div class="ml">MOED<sub style="font-size:8px">L</sub></div><div class="mv" style="color:var(--br);font-size:14px" id="v-moedl">—</div><div class="ms">MPa</div></div>
+      <div class="met"><div class="ml">MOED<sub style="font-size:8px">B</sub></div><div class="mv" style="color:var(--bl);font-size:14px" id="v-moedb">—</div><div class="ms">MPa</div></div>
+    </div>
+    <!-- Řada 2: Hustota, Třída, Suků -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px" class="mrow">
       <div class="met" id="met-den"><div class="ml">Hustota</div><div class="mv den" id="v-den">—</div><div class="ms">kg/m³</div></div>
       <div class="met"><div class="ml">Třída</div><div id="v-grade"><span class="gp gna">—</span></div></div>
       <div class="met"><div class="ml">Suků</div><div class="mv" id="v-cnt">0</div></div>
     </div>
     <!-- MOED metriky - zobrazí se po FFT měření -->
-    <div id="moed-row" style="display:none;margin-bottom:10px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        <div class="met" style="background:#FDF3E3;border:.5px solid var(--brm)">
-          <div class="ml" style="color:var(--brm)">MOE<sub>D,L</sub></div>
-          <div class="mv den" id="v-moed-l">—</div>
-          <div class="ms">MPa · podélný</div>
-        </div>
-        <div class="met" style="background:#FDF3E3;border:.5px solid var(--brm)">
-          <div class="ml" style="color:var(--brm)">MOE<sub>D,B</sub></div>
-          <div class="mv den" id="v-moed-b">—</div>
-          <div class="ms">MPa · ohybový</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MOED výsledky -->
-    <div id="moed-row" style="display:none;background:#fff;border-radius:var(--rads);padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--g5);margin-bottom:8px">Dynamické moduly pružnosti</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:var(--brl);border-radius:8px;padding:8px 10px">
-          <div style="font-size:10px;font-weight:700;color:var(--brm);margin-bottom:2px">MOED<sub>L</sub></div>
-          <div style="font-size:16px;font-weight:800;color:var(--br)" id="v-moedl">—</div>
-          <div style="font-size:10px;color:var(--g5)">MPa (podélný)</div>
-        </div>
-        <div style="background:var(--bll);border-radius:8px;padding:8px 10px">
-          <div style="font-size:10px;font-weight:700;color:var(--blm);margin-bottom:2px">MOED<sub>B</sub></div>
-          <div style="font-size:16px;font-weight:800;color:var(--bl)" id="v-moedb">—</div>
-          <div style="font-size:10px;color:var(--g5)">MPa (ohybový)</div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- Canvas -->
     <div class="crow">
@@ -544,15 +520,10 @@ function calcMOED(board){
 
 function updateMOEDDisplay(board){
   var res=calcMOED(board);
-  var row=document.getElementById('moed-row');
-  if(!row) return;
-  if(res.moedL!=null||res.moedB!=null){
-    row.style.display='';
-    document.getElementById('v-moed-l').textContent=res.moedL!=null?res.moedL+' MPa':'—';
-    document.getElementById('v-moed-b').textContent=res.moedB!=null?res.moedB+' MPa':'—';
-  } else {
-    row.style.display='none';
-  }
+  var elL=document.getElementById('v-moedl');
+  var elB=document.getElementById('v-moedb');
+  if(elL) elL.textContent=res.moedL!=null?String(res.moedL):'—';
+  if(elB) elB.textContent=res.moedB!=null?String(res.moedB):'—';
 }
 function calcDensity(mass,length,b,d){
   if(!mass||!length||!b||!d)return null;
@@ -804,11 +775,75 @@ function renderDetailBody(bi){
     if(k.cs1!=null)vals.push('C:'+k.cs1+'–'+k.cs2);
     if(k.bs1!=null)vals.push('B:'+k.bs1+'–'+k.bs2);
     if(k.ds1!=null)vals.push('D:'+k.ds1+'–'+k.ds2);
-    html+='<div class="krow"><div class="knum">'+(ki+1)+'</div>'
+    html+='<div class="krow" id="dkrow-'+ki+'">'
+      +'<div class="knum">'+(ki+1)+'</div>'
       +'<div class="kvals"><strong>a_i '+(ai>0?ai.toFixed(1):'—')+' mm</strong>'+vals.join(' ')+'</div>'
-      +'<div class="kacts"><button class="ibtn edt" data-act="dedit" data-ki="'+ki+'">✏️</button>'
-      +'<button class="ibtn del" data-act="ddel" data-ki="'+ki+'">🗑</button></div></div>';
+      +'<div class="kacts">'
+      +'<button class="ibtn edt" data-act="dedit" data-ki="'+ki+'" aria-label="Upravit">✏️</button>'
+      +'<button class="ibtn del" data-act="ddel" data-ki="'+ki+'" aria-label="Smazat">🗑</button>'
+      +'</div></div>'
+      // Inline editor (skrytý)
+      +'<div class="knot-inline-editor" id="dkeditor-'+ki+'" style="display:none;padding:10px 14px 12px;background:var(--bll);border-top:.5px solid var(--g1)">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+      // A
+      +'<div style="background:#fff;border-radius:10px;padding:10px">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">A — horní</div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">AS1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as1" type="number" value="'+(k.as1!=null?k.as1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">AS2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as2" type="number" value="'+(k.as2!=null?k.as2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'</div>'
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">AL1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al1" type="number" value="'+(k.al1!=null?k.al1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">AL2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al2" type="number" value="'+(k.al2!=null?k.al2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +'</div>'
+      // B
+      +'<div style="background:#fff;border-radius:10px;padding:10px">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">B — levá</div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">BS1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs1" type="number" value="'+(k.bs1!=null?k.bs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">BS2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs2" type="number" value="'+(k.bs2!=null?k.bs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'</div>'
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">BL1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl1" type="number" value="'+(k.bl1!=null?k.bl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">BL2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl2" type="number" value="'+(k.bl2!=null?k.bl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +'</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+      // C
+      +'<div style="background:#fff;border-radius:10px;padding:10px">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">C — dolní</div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">CS1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs1" type="number" value="'+(k.cs1!=null?k.cs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">CS2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs2" type="number" value="'+(k.cs2!=null?k.cs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'</div>'
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">CL1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl1" type="number" value="'+(k.cl1!=null?k.cl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">CL2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl2" type="number" value="'+(k.cl2!=null?k.cl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +'</div>'
+      // D
+      +'<div style="background:#fff;border-radius:10px;padding:10px">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">D — pravá</div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">DS1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds1" type="number" value="'+(k.ds1!=null?k.ds1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">DS2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds2" type="number" value="'+(k.ds2!=null?k.ds2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'</div>'
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">DL1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl1" type="number" value="'+(k.dl1!=null?k.dl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">DL2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl2" type="number" value="'+(k.dl2!=null?k.dl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +'</div>'
+      +'</div>'
+      +'<button style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="dsaveknot" data-bi="'+bi+'" data-ki="'+ki+'">Uložit suk '+( ki+1)+'</button>'
+      +'</div>';
   }
+  // Přidej nový suk
+  html+='<div class="card" style="margin-top:10px">'
+    +'<div class="clbl">Přidat nový suk</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+    // A nový
+    +'<div style="background:#F5F0EB;border-radius:10px;padding:10px">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">A — horní</div>'
+    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">AS1</div><input id="dn-as1" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">AS2</div><input id="dn-as2" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
+    // C nový
+    +'<div style="background:#F5F0EB;border-radius:10px;padding:10px">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">C — dolní</div>'
+    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">CS1</div><input id="dn-cs1" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">CS2</div><input id="dn-cs2" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
+    +'</div>'
+    +'<button style="width:100%;padding:11px;background:var(--g9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="daddknot" data-bi="'+bi+'">+ Přidat suk</button>'
+    +'</div>';
   html+='</div>';
   body.innerHTML=html;
   // vrut toggle v detailu
@@ -949,17 +984,69 @@ document.addEventListener('click',function(e){
   else if(act==='delb'){e.stopPropagation();delBoard(bi);}
   else if(act==='openboard')openBoardDetail(bi);
   else if(act==='dedit'){
-    // editace suku z detailu — načteme do hlavního formuláře
-    if(detailBi<0)return;
-    var bd2=allBoards[detailBi];
-    // dočasně překopírujeme suky desky do knots (bez uložení)
-    knots=bd2.knots.slice();
-    document.getElementById('cid').value=bd2.id;
-    document.getElementById('clen').value=bd2.b;
-    document.getElementById('cwid').value=bd2.d;
-    enterEdit(ki);
-    // po uložení saveEdit musíme zapsat zpět do allBoards — override saveEdit
-    editState.fromDetail=detailBi;
+    // Toggle inline editor v detailu
+    var editor=document.getElementById('dkeditor-'+ki);
+    var row=document.getElementById('dkrow-'+ki);
+    if(editor){
+      var isOpen=editor.style.display!=='none';
+      // Zavři všechny ostatní
+      document.querySelectorAll('.knot-inline-editor').forEach(function(e){e.style.display='none';});
+      document.querySelectorAll('.krow').forEach(function(r){r.style.background='';});
+      if(!isOpen){
+        editor.style.display='';
+        if(row) row.style.background='var(--bll)';
+        // Select all na první input
+        var firstInp=editor.querySelector('input[type="number"]');
+        if(firstInp) setTimeout(function(){firstInp.focus();firstInp.select();},50);
+      }
+    }
+  }
+  else if(act==='dsaveknot'){
+    // Ulož inline editaci suku v detailu
+    var bi2=parseInt(btn.getAttribute('data-bi'));
+    var ki2=parseInt(btn.getAttribute('data-ki'));
+    if(bi2<0||bi2>=allBoards.length) return;
+    var editor2=document.getElementById('dkeditor-'+ki2);
+    if(!editor2) return;
+    var inputs=editor2.querySelectorAll('.knot-inp');
+    inputs.forEach(function(inp){
+      var field=inp.getAttribute('data-field');
+      var val=parseFloat(inp.value);
+      allBoards[bi2].knots[ki2][field]=isNaN(val)?null:val;
+    });
+    save();
+    // Překresli canvas v detailu
+    var bd3=allBoards[bi2];
+    if(document.getElementById('dcv1'))
+      setTimeout(function(){paintDetailCv('dcv1','dwrap1',bd3.knots,bd3.b,bd3.d);},100);
+    // Zavři editor
+    editor2.style.display='none';
+    var row2=document.getElementById('dkrow-'+ki2);
+    if(row2) row2.style.background='';
+    // Aktualizuj souhrn řádku
+    var ai2=kAi(allBoards[bi2].knots[ki2],allBoards[bi2].b);
+    var valsArr=[];
+    var k3=allBoards[bi2].knots[ki2];
+    if(k3.as1!=null) valsArr.push('A:'+k3.as1+'–'+k3.as2);
+    if(k3.cs1!=null) valsArr.push('C:'+k3.cs1+'–'+k3.cs2);
+    if(k3.bs1!=null) valsArr.push('B:'+k3.bs1+'–'+k3.bs2);
+    if(k3.ds1!=null) valsArr.push('D:'+k3.ds1+'–'+k3.ds2);
+    var kvals=row2?row2.querySelector('.kvals'):null;
+    if(kvals) kvals.innerHTML='<strong>a_i '+(ai2>0?ai2.toFixed(1):'—')+' mm</strong>'+valsArr.join(' ');
+    showToast('Suk '+(ki2+1)+' upraven ✓');
+    renderBlist();
+  }
+  else if(act==='daddknot'){
+    var bi3=parseInt(btn.getAttribute('data-bi'));
+    if(bi3<0||bi3>=allBoards.length) return;
+    var nk={};
+    ['as1','as2','cs1','cs2'].forEach(function(f){
+      var v=parseFloat((document.getElementById('dn-'+f)||{}).value);
+      nk[f]=isNaN(v)?null:v;
+    });
+    if(!kPts(nk,allBoards[bi3].b,allBoards[bi3].d)){showToast('Zadej alespoň AS nebo CS hodnoty');return;}
+    allBoards[bi3].knots.push(nk);
+    save();openBoardDetail(bi3);showToast('Suk přidán ✓');
   }
   else if(act==='ddel'){
     if(detailBi<0)return;
@@ -1103,14 +1190,10 @@ function updateMoedDisplay(){
     fft:window.wgPendingFft||(board?board.fft:null)
   };
   var r=calcMOED(tmpBoard);
-  var row=document.getElementById('moed-row');
   var elL=document.getElementById('v-moedl');
   var elB=document.getElementById('v-moedb');
-  if(r.moedL!=null||r.moedB!=null){
-    if(row) row.style.display='';
-    if(elL) elL.textContent=r.moedL!=null?r.moedL+' MPa':'—';
-    if(elB) elB.textContent=r.moedB!=null?r.moedB+' MPa':'—';
-  }
+  if(elL) elL.textContent=r.moedL!=null?String(r.moedL):'—';
+  if(elB) elB.textContent=r.moedB!=null?String(r.moedB):'—';
 }
 window.updateMoedDisplay=updateMoedDisplay;
 
