@@ -251,9 +251,9 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <div class="clbl">Deska</div>
       <div class="frow" style="margin-bottom:8px">
-        <div class="fld wide"><label>Název</label><input id="cid" value="20L" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="fld"><label>Šířka b (mm)</label><input id="clen" type="number" value="157" min="1" inputmode="decimal"></div>
-        <div class="fld"><label>Výška d (mm)</label><input id="cwid" type="number" value="50" min="1" step="0.1" inputmode="decimal"></div>
+        <div class="fld wide"><label>Název</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div class="fld"><label>Šířka b (mm)</label><input id="clen" type="number" value="" min="1" inputmode="decimal"></div>
+        <div class="fld"><label>Výška d (mm)</label><input id="cwid" type="number" value="" min="1" step="0.1" inputmode="decimal"></div>
       </div>
       <div class="frow" id="row-lm">
         <div class="fld opt-field" data-opt="length"><label>Délka (mm)</label><input id="p-length" type="number" min="1" inputmode="decimal" placeholder="—"></div>
@@ -1149,11 +1149,12 @@ function load(){
   try{
     var raw=localStorage.getItem(DB);if(!raw)return;
     var data=JSON.parse(raw);
-    allBoards=data.allBoards||[];knots=data.knots||[];
+    allBoards=data.allBoards||[];
+    // knots (rozpracovaný suk) a vstupní pole VŽDY začínají prázdné při startu appky —
+    // jen uložené desky (allBoards) se obnoví, rozpracovaný formulář ne.
+    knots=[];
     if(data.opts)Object.keys(data.opts).forEach(function(k){opts[k]=data.opts[k];});
-    if(data.cid)document.getElementById('cid').value=data.cid;
-    if(data.b)document.getElementById('clen').value=data.b;
-    if(data.d)document.getElementById('cwid').value=data.d;
+    // cid/clen/cwid záměrně NEnačítáme z localStorage — vždy čistý formulář
   }catch(e){}
 }
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);}
