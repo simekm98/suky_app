@@ -579,9 +579,16 @@ function uLen(ivs){
 }
 function kAi(k,b){return uLen(kIv(k,b));}
 function calcDAB(ks,b){
+  // DAB = Σ šířek suků na všech 4 plochách (A,B,C,D) bez sjednocení překryvů / (2×b)
   if(!ks.length)return 0;
-  var all=[];ks.forEach(function(k){kIv(k,b).forEach(function(iv){all.push(iv);});});
-  return uLen(all)/(2*b);
+  var sum=0;
+  ks.forEach(function(k){
+    if(k.as1!=null&&k.as2!=null) sum+=Math.abs(k.as2-k.as1);
+    if(k.bs1!=null&&k.bs2!=null) sum+=Math.abs(k.bs2-k.bs1);
+    if(k.cs1!=null&&k.cs2!=null) sum+=Math.abs(k.cs2-k.cs1);
+    if(k.ds1!=null&&k.ds2!=null) sum+=Math.abs(k.ds2-k.ds1);
+  });
+  return sum/(2*b);
 }
 function calcUA(polys,b,d){
   if(!polys.length)return 0;
