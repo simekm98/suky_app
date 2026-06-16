@@ -371,6 +371,7 @@ canvas{display:block;width:100%;height:72px}
   <div class="topbar">
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
+    <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
   <div class="sbody">
@@ -2560,6 +2561,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 
 </script>
 <script src="folders.js"></script>
+<script src="import.js"></script>
 <script src="voice.js"></script>
 <script src="stats.js"></script>
 <script src="sync.js"></script>
