@@ -18,6 +18,7 @@ var micPermissionGranted = false;
 var restartTimer = null;
 var watchdogTimer = null;
 var cycleGeneration = 0;
+var successfulCyclesCount = 0; // periodický refresh session po N úspěších proti degradaci
 var audioCtxBeep = null;
 var confirmOverlayTimer = null;
 
@@ -417,6 +418,7 @@ function startVoiceSession(){
 
   sessionActive = true;
   cycleGeneration++;
+  successfulCyclesCount = 0;
   updateVoiceUI('requesting','Připravuji mikrofon…');
 
   requestMicPermission(function(granted, errMsg){
@@ -454,13 +456,20 @@ function runRecognitionCycle(gen){
 
   clearAllTimers();
   if(recognition){
-    try{ recognition.onend=null; recognition.onerror=null; recognition.onresult=null; recognition.abort(); }catch(e){}
+    // Odstraň handlery, ale NEvolej abort() na objekt který už dokončil
+    // svou práci (měl onresult) — agresivní abort na "umírající" instanci
+    // na mobilních platformách postupně degraduje nativní audio subsystém.
+    try{
+      recognition.onend=null; recognition.onerror=null; recognition.onresult=null;
+      if(recognition._wgActive) recognition.abort();
+    }catch(e){}
     recognition = null;
   }
 
-  // Vždy minimální zpoždění (i na desktopu) — okamžité restartování recognition
-  // bez pauzy způsobuje na řadě platforem tiché InvalidStateError a zamrznutí cyklu
-  var startDelay = isIOSDevice() ? 120 : 60;
+  // Delší pauza mezi cykly — uvolní audio session prohlížeče dřív než
+  // vytvoříme novou instanci. Krátké zpoždění (60-120ms) bylo nedostatečné
+  // a způsobovalo postupnou degradaci po několika cyklech.
+  var startDelay = isIOSDevice() ? 350 : 220;
   restartTimer = setTimeout(function(){
     if(!sessionActive || gen !== cycleGeneration) return;
     actuallyStartRecognition(gen);
@@ -485,6 +494,7 @@ function startSessionHeartbeat(gen){
 function actuallyStartRecognition(gen){
   var SR = getSR();
   recognition = new SR();
+  recognition._wgActive = true; // true = ještě poslouchá, abort() je bezpečný
   recognition.lang = 'cs-CZ';
   recognition.continuous = false;
   recognition.interimResults = false;
@@ -497,6 +507,7 @@ function actuallyStartRecognition(gen){
   var gotResult = false;
 
   recognition.onresult = function(event){
+    recognition._wgActive = false; // dokončil svou práci přirozeně
     if(gen !== cycleGeneration){
       dlog('⚠ onresult IGNOROVÁN — gen mismatch ('+gen+' vs '+cycleGeneration+')','err');
       return;
@@ -514,6 +525,7 @@ function actuallyStartRecognition(gen){
   };
 
   recognition.onerror = function(event){
+    recognition._wgActive = false;
     dlog('⚠ onerror: '+event.error, event.error==='no-speech'?'':'err');
     if(!sessionActive || gen !== cycleGeneration) return;
     if(event.error === 'no-speech' || event.error === 'aborted'){
@@ -529,6 +541,7 @@ function actuallyStartRecognition(gen){
   };
 
   recognition.onend = function(){
+    recognition._wgActive = false;
     dlog('⏹ onend (gotResult='+gotResult+')');
     if(!sessionActive || gen !== cycleGeneration) return;
     if(!gotResult) runRecognitionCycle(gen);
@@ -546,6 +559,25 @@ function actuallyStartRecognition(gen){
 }
 
 // ── Jednofázové zpracování příkazu — okamžitý zápis + vizuální potvrzení ──
+// ── Pokračuj v poslechu, ale po N cyklech udělej plný refresh session
+// (nový getUserMedia handshake) jako preventivní opatření proti
+// postupné degradaci nativního audio subsystému na mobilních platformách.
+function continueOrRefresh(gen){
+  if(!sessionActive) return;
+  successfulCyclesCount++;
+  if(successfulCyclesCount >= 12){
+    dlog('🔄 periodický refresh session (12 cyklů) — obnovuji mikrofon','ok');
+    successfulCyclesCount = 0;
+    var wasActive = sessionActive;
+    stopVoiceSession();
+    if(wasActive){
+      setTimeout(function(){ startVoiceSession(); }, 400);
+    }
+    return;
+  }
+  runRecognitionCycle(gen);
+}
+
 function processCommand(transcript, gen){
   dlog('🎤 slyšel: "'+transcript+'"');
   if(isStopCommand(transcript)){ dlog('stop příkaz'); stopVoiceSession(); return; }
@@ -553,7 +585,7 @@ function processCommand(transcript, gen){
   // "zpět" — vrátí poslední zapsanou hodnotu
   if(/\bzpět\b/.test(transcript.toLowerCase()) || /\bzpátky\b/.test(transcript.toLowerCase())){
     undoLastValue();
-    if(sessionActive) runRecognitionCycle(gen);
+    if(sessionActive) continueOrRefresh(gen);
     return;
   }
 
@@ -564,7 +596,7 @@ function processCommand(transcript, gen){
     executeAction(actionCmd.action);
     showConfirmOverlay(actionCmd.label, '✓ provedeno');
     beepOk();
-    if(sessionActive) runRecognitionCycle(gen);
+    if(sessionActive) continueOrRefresh(gen);
     return;
   }
 
@@ -574,7 +606,7 @@ function processCommand(transcript, gen){
     dlog('❌ pole nerozpoznáno', 'err');
     beepErr();
     showVoiceToast('Nerozpoznáno: "'+transcript+'"');
-    if(sessionActive) runRecognitionCycle(gen);
+    if(sessionActive) continueOrRefresh(gen);
     return;
   }
 
@@ -584,22 +616,22 @@ function processCommand(transcript, gen){
   if(field === '__screw__'){
     kind = 'bool';
     value = parseBoolFromText(parsed.valueText);
-    if(value === null){ dlog('❌ vrut ano/ne nenalezeno','err'); beepErr(); showVoiceToast('Vrut: ano nebo ne'); if(sessionActive) runRecognitionCycle(gen); return; }
+    if(value === null){ dlog('❌ vrut ano/ne nenalezeno','err'); beepErr(); showVoiceToast('Vrut: ano nebo ne'); if(sessionActive) continueOrRefresh(gen); return; }
   } else if(field === 'p-vg'){
     kind = 'vg';
     value = parseSpokenNumber(parsed.valueText);
-    if(value===null || value<1 || value>4){ dlog('❌ vizuál mimo 1-4','err'); beepErr(); showVoiceToast('Vizuál: 1 až 4'); if(sessionActive) runRecognitionCycle(gen); return; }
+    if(value===null || value<1 || value>4){ dlog('❌ vizuál mimo 1-4','err'); beepErr(); showVoiceToast('Vizuál: 1 až 4'); if(sessionActive) continueOrRefresh(gen); return; }
     value = Math.round(value);
   } else {
     kind = 'number';
     value = parseSpokenNumber(parsed.valueText);
-    if(value===null || isNaN(value)){ dlog('❌ hodnota nerozpoznána z "'+parsed.valueText+'"','err'); beepErr(); showVoiceToast('Nerozpoznána hodnota'); if(sessionActive) runRecognitionCycle(gen); return; }
+    if(value===null || isNaN(value)){ dlog('❌ hodnota nerozpoznána z "'+parsed.valueText+'"','err'); beepErr(); showVoiceToast('Nerozpoznána hodnota'); if(sessionActive) continueOrRefresh(gen); return; }
   }
 
   // Okamžitý zápis — žádné druhé hlasové kolo
   writeValue(field, value, kind);
 
-  if(sessionActive) runRecognitionCycle(gen);
+  if(sessionActive) continueOrRefresh(gen);
 }
 
 // ── Zápis hodnoty + vizuální potvrzení (2s overlay) ───────
