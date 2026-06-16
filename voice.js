@@ -208,7 +208,9 @@ var WORD_NUMS = {
   'jedenáct':11,'dvanáct':12,'třináct':13,'čtrnáct':14,'patnáct':15,
   'šestnáct':16,'sedmnáct':17,'osmnáct':18,'devatenáct':19,'dvacet':20,
   'třicet':30,'čtyřicet':40,'padesát':50,'šedesát':60,'sedmdesát':70,
-  'osmdesát':80,'devadesát':90,'sto':100,'dvěstě':200,'třista':300
+  'osmdesát':80,'devadesát':90,'sto':100,'dvěstě':200,'třista':300,
+  'čtyřista':400,'pětset':500,'šestset':600,'sedmset':700,'osmset':800,'devětset':900,
+  'tisíc':1000,'tisíce':1000,'tisícù':1000
 };
 
 function parseSpokenNumber(text){
@@ -243,22 +245,35 @@ function parseIntegerWords(text){
   if(digitMatch) return parseInt(digitMatch[0], 10);
 
   var words = text.split(/\s+/);
-  var total = 0, hasAny = false;
-  var hundreds = 0, tens = 0;
+  var thousands = 0, hundreds = 0, tens = 0, ones = 0, hasAny = false;
+  var pendingThousandMultiplier = 0; // číslo těsně před "tisíc" (např. "dva" v "dva tisíce")
+
   words.forEach(function(w){
     w = w.replace(/[.,]/g,'');
-    if(WORD_NUMS.hasOwnProperty(w)){
-      hasAny = true;
-      var val = WORD_NUMS[w];
-      if(val >= 100){ hundreds += val; }
-      else if(val >= 20 && val % 10 === 0){ tens = val; }
-      else if(tens > 0 && val < 10){ total += tens + val; tens = 0; }
-      else { total += val; }
+    if(!WORD_NUMS.hasOwnProperty(w)) return;
+    hasAny = true;
+    var val = WORD_NUMS[w];
+
+    if(val === 1000){
+      // "tisíc" samo o sobě = 1000; "dva tisíce" = předchozí číslo × 1000
+      var mult = pendingThousandMultiplier > 0 ? pendingThousandMultiplier : 1;
+      thousands += mult * 1000;
+      pendingThousandMultiplier = 0;
+      hundreds = 0; tens = 0; ones = 0; // reset nižších řádů, začínáme od stovek dál
     }
+    else if(val >= 100){ hundreds += val; }
+    else if(val >= 20 && val % 10 === 0){ tens = val; }
+    else if(tens > 0 && val < 10){ ones += val; }
+    else if(val < 10 && val > 0){
+      // Může to být buď jednotka, NEBO multiplikátor před "tisíc" (zjistíme později)
+      pendingThousandMultiplier = val;
+      ones += val;
+    }
+    else { ones += val; }
   });
-  if(tens > 0) total += tens;
+
   if(!hasAny) return null;
-  return hundreds + total;
+  return thousands + hundreds + tens + ones;
 }
 
 // ── Rozdělení textu na pole + hodnotu ─────────────────────
