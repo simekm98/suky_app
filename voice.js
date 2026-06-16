@@ -133,23 +133,24 @@ function checkVoiceSupport(){
 }
 
 // ── Krátké pípnutí místo TTS (okamžité, žádná prodleva) ───
-function beep(freq, dur){
+function beep(freq, dur, vol){
   try{
     if(!audioCtxBeep) audioCtxBeep = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtxBeep.state === 'suspended') audioCtxBeep.resume();
     var osc = audioCtxBeep.createOscillator();
     var gain = audioCtxBeep.createGain();
+    osc.type = 'square'; // výraznější, pronikavější zvuk než sine
     osc.frequency.value = freq;
     osc.connect(gain); gain.connect(audioCtxBeep.destination);
-    gain.gain.setValueAtTime(0.15, audioCtxBeep.currentTime);
+    gain.gain.setValueAtTime(vol||0.35, audioCtxBeep.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtxBeep.currentTime + dur);
     osc.start(); osc.stop(audioCtxBeep.currentTime + dur);
-  } catch(e){}
+  } catch(e){ console.warn('[Voice] beep failed', e); }
 }
-function beepOk(){ beep(880, 0.08); }
+function beepOk(){ beep(1000, 0.12, 0.3); }
 function beepErr(){
-  beep(220, 0.09);
-  setTimeout(function(){ beep(220, 0.09); }, 120);
-  setTimeout(function(){ beep(220, 0.09); }, 240);
+  beep(180, 0.18, 0.4);
+  setTimeout(function(){ beep(180, 0.18, 0.4); }, 220);
 }
 
 // ── Parsování čísla ──────────────────────────────────────────
@@ -307,16 +308,13 @@ function runRecognitionCycle(mode, gen){
     recognition = null;
   }
 
-  // Minimální nutné zpoždění — iOS potřebuje trochu málo, jinde téměř nic
-  var startDelay = isIOSDevice() ? 80 : 0;
-  if(startDelay === 0){
+  // Vždy minimální zpoždění (i na desktopu) — okamžité restartování recognition
+  // bez pauzy způsobuje na řadě platforem tiché InvalidStateError a zamrznutí cyklu
+  var startDelay = isIOSDevice() ? 120 : 60;
+  restartTimer = setTimeout(function(){
+    if(!sessionActive || gen !== cycleGeneration) return;
     actuallyStartRecognition(mode, gen);
-  } else {
-    restartTimer = setTimeout(function(){
-      if(!sessionActive || gen !== cycleGeneration) return;
-      actuallyStartRecognition(mode, gen);
-    }, startDelay);
-  }
+  }, startDelay);
 }
 
 function actuallyStartRecognition(mode, gen){
@@ -371,6 +369,7 @@ function actuallyStartRecognition(mode, gen){
 }
 
 function processFieldValue(transcript, gen){
+  console.log('[Voice] heard:', transcript);
   if(isStopCommand(transcript)){ stopVoiceSession(); return; }
 
   var parsed = parseCommand(transcript);
@@ -427,12 +426,15 @@ function processConfirmation(transcript, gen){
 }
 
 function applyVoiceValue(gen){
+  console.log('[Voice] applying:', pendingField, '=', pendingValue);
   if(pendingField === '__screw__'){
     var cb = document.getElementById('cb-screw');
     if(cb){
       var want = !!pendingValue;
       var has = cb.classList.contains('checked');
       if(want !== has) cb.click();
+    } else {
+      console.warn('[Voice] cb-screw element not found');
     }
   } else {
     var el = document.getElementById(pendingField);
@@ -444,6 +446,13 @@ function applyVoiceValue(gen){
         var vgBtn = document.querySelector('[data-act="setvg"][data-vg="'+pendingValue+'"]');
         if(vgBtn) vgBtn.click();
       }
+    } else {
+      console.warn('[Voice] element not found for field:', pendingField);
+      beepErr();
+      showVoiceToast('Chyba: pole '+pendingField+' neexistuje');
+      pendingField=null; pendingValue=null; pendingKind=null;
+      if(sessionActive) runRecognitionCycle('listen', gen);
+      return;
     }
   }
 
