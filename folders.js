@@ -418,7 +418,7 @@ function initFolders(){
   window.openExportModal  = openExportModal;
   window.closeExportModal = closeExportModal;
 
-  // Init aktivní složka
+  // Init aktivní složka — automaticky vyber první, žádný prompt
   if(!activeFolderId && allFolders.length>0){
     activeFolderId = allFolders[0].id;
     saveFolders();
@@ -428,10 +428,6 @@ function initFolders(){
     updateActiveFolderBar();
     renderFolderChips();
     renderBlistMain();
-    // Nabídni výběr složky při startu
-    if(allFolders.length>0){
-      openFolderModal();
-    }
   }, 400);
 }
 
