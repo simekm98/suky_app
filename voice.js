@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 //  HLASOVÉ ZADÁVÁNÍ — WoodGrader 26 (čeština)
-//  Kontinuální smyčka: pole+hodnota → "okej?" → ano/ne → další
-//  Podporuje: rozměry, VG 1-4, vrut ano/ne
+//  Formát: "POLE rovná se HODNOTA" (např. "AS1 rovná se 20")
+//  Kontinuální smyčka s delším restartem (iOS Safari fix)
 // ═══════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -9,41 +9,46 @@
 var recognition = null;
 var synth = window.speechSynthesis;
 var sessionActive = false;
-var voicePhase = 'idle';        // idle | listening | confirming
+var voicePhase = 'idle';
 var pendingField = null;
-var pendingValue = null;        // číslo NEBO 'ano'/'ne' pro vrut, NEBO 1-4 pro VG
-var pendingKind = null;         // 'number' | 'bool' | 'vg'
+var pendingValue = null;
+var pendingKind = null;
 var czechVoice = null;
 var micPermissionGranted = false;
 var restartTimer = null;
 var watchdogTimer = null;
+var cycleGeneration = 0; // zabraňuje souběhu starých/nových cyklů
 
-// ── Mapování polí ──────────────────────────────────────────
+// ── Mapování polí — fonetické varianty pro "AS1", "AS 1" atd. ─
+// Klíč = jak to STT typicky přepíše, hodnota = ID inputu
 var FIELD_MAP = {
+  // Geometrie
   'šířka':'clen','šíře':'clen',
   'výška':'cwid','výšku':'cwid',
   'délka':'p-length','délku':'p-length',
   'hmotnost':'p-mass','váha':'p-mass','hmotnosti':'p-mass','vaha':'p-mass',
   'vlhkost':'p-moist','vlhkosti':'p-moist',
-  'as jedna':'as1','a s jedna':'as1','a jedna':'as1',
-  'as dva':'as2','a s dva':'as2','a dva':'as2',
-  'al jedna':'al1','a l jedna':'al1',
-  'al dva':'al2','a l dva':'al2',
-  'bs jedna':'bs1','b s jedna':'bs1','b jedna':'bs1',
-  'bs dva':'bs2','b s dva':'bs2','b dva':'bs2',
-  'bl jedna':'bl1','bl dva':'bl2',
-  'cs jedna':'cs1','c s jedna':'cs1','c jedna':'cs1',
-  'cs dva':'cs2','c s dva':'cs2','c dva':'cs2',
-  'cl jedna':'cl1','cl dva':'cl2',
-  'ds jedna':'ds1','d s jedna':'ds1','d jedna':'ds1',
-  'ds dva':'ds2','d s dva':'ds2','d dva':'ds2',
-  'dl jedna':'dl1','dl dva':'dl2',
   'název':'cid','jméno':'cid','identifikace':'cid',
-  'vizuál':'p-vg','vizuální':'p-vg','vizuální třída':'p-vg','třída':'p-vg',
-  'vrut':'__screw__'
+  'vizuální třída':'p-vg','vizuál':'p-vg','vizuální':'p-vg',
+  'vrut':'__screw__',
+  // Suky — fonetické varianty "AS1" (eska/es jedna/a s jedna apod.)
+  'as1':'as1','as 1':'as1','a s 1':'as1','a s jedna':'as1','as jedna':'as1','a jedna':'as1',
+  'as2':'as2','as 2':'as2','a s 2':'as2','a s dva':'as2','as dva':'as2','a dva':'as2',
+  'al1':'al1','al 1':'al1','a l 1':'al1','a l jedna':'al1','al jedna':'al1',
+  'al2':'al2','al 2':'al2','a l 2':'al2','a l dva':'al2','al dva':'al2',
+  'bs1':'bs1','bs 1':'bs1','b s 1':'bs1','b s jedna':'bs1','bs jedna':'bs1','b jedna':'bs1',
+  'bs2':'bs2','bs 2':'bs2','b s 2':'bs2','b s dva':'bs2','bs dva':'bs2','b dva':'bs2',
+  'bl1':'bl1','bl 1':'bl1','b l jedna':'bl1','bl jedna':'bl1',
+  'bl2':'bl2','bl 2':'bl2','b l dva':'bl2','bl dva':'bl2',
+  'cs1':'cs1','cs 1':'cs1','c s 1':'cs1','c s jedna':'cs1','cs jedna':'cs1','c jedna':'cs1',
+  'cs2':'cs2','cs 2':'cs2','c s 2':'cs2','c s dva':'cs2','cs dva':'cs2','c dva':'cs2',
+  'cl1':'cl1','cl 1':'cl1','c l jedna':'cl1','cl jedna':'cl1',
+  'cl2':'cl2','cl 2':'cl2','c l dva':'cl2','cl dva':'cl2',
+  'ds1':'ds1','ds 1':'ds1','d s 1':'ds1','d s jedna':'ds1','ds jedna':'ds1','d jedna':'ds1',
+  'ds2':'ds2','ds 2':'ds2','d s 2':'ds2','d s dva':'ds2','ds dva':'ds2','d dva':'ds2',
+  'dl1':'dl1','dl 1':'dl1','d l jedna':'dl1','dl jedna':'dl1',
+  'dl2':'dl2','dl 2':'dl2','d l dva':'dl2','dl dva':'dl2'
 };
-
-// Klíče seřazené dle délky (nejdelší první) pro správné rozpoznání ("vizuální třída" před "třída")
 var FIELD_KEYS_SORTED = Object.keys(FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
 var FIELD_LABELS = {
@@ -64,14 +69,17 @@ function isStandaloneIOS(){
                       window.matchMedia('(display-mode: standalone)').matches;
   return isIOS && isStandalone;
 }
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
 
 function checkVoiceSupport(){
   var SR = getSR();
   if(!SR){
     if(isStandaloneIOS()){
-      return {ok:false, reason:'iOS blokuje rozpoznávání řeči v aplikacích přidaných na plochu. Otevři tuto stránku přímo v Safari (zadej adresu, ne ikonu na ploše).', critical:true};
+      return {ok:false, reason:'iOS blokuje rozpoznávání řeči v aplikacích přidaných na plochu. Otevři tuto stránku přímo v Safari.', critical:true};
     }
-    return {ok:false, reason:'Tento prohlížeč nepodporuje rozpoznávání řeči. Zkus Safari nebo Chrome.', critical:true};
+    return {ok:false, reason:'Tento prohlížeč nepodporuje rozpoznávání řeči.', critical:true};
   }
   return {ok:true};
 }
@@ -101,8 +109,7 @@ function speak(text, onEnd){
     var finish = function(){ if(done) return; done=true; if(onEnd) onEnd(); };
     u.onend = finish;
     u.onerror = finish;
-    // Watchdog — pokud TTS zůstane viset (známý iOS bug), pokračuj po 4s
-    setTimeout(finish, 4000);
+    setTimeout(finish, 4000); // watchdog pro iOS TTS bug (zůstává viset)
     synth.speak(u);
   } catch(e){ if(onEnd) onEnd(); }
 }
@@ -134,6 +141,33 @@ function parseSpokenNumber(text){
   });
   if(tempTens>0) total=(total||0)+tempTens;
   return total;
+}
+
+// ── Parsování "POLE rovná se HODNOTA" ────────────────────────
+// Odděluje pole od hodnoty pomocí klíčových slov "rovná se" / "rovnáse" / "="
+var EQUALS_PATTERNS = ['rovná se','rovnáse','rovna se','je','='];
+
+function splitFieldAndValue(text){
+  text = text.toLowerCase().trim();
+  // Najdi oddělovač
+  var splitIdx = -1, splitLen = 0;
+  EQUALS_PATTERNS.forEach(function(p){
+    var idx = text.indexOf(p);
+    if(idx >= 0 && (splitIdx===-1 || idx < splitIdx)){
+      splitIdx = idx; splitLen = p.length;
+    }
+  });
+
+  var fieldPart, valuePart;
+  if(splitIdx >= 0){
+    fieldPart = text.substring(0, splitIdx).trim();
+    valuePart = text.substring(splitIdx + splitLen).trim();
+  } else {
+    // Fallback: žádný oddělovač — zkus najít pole na začátku a číslo na konci
+    fieldPart = text;
+    valuePart = text;
+  }
+  return {fieldPart:fieldPart, valuePart:valuePart, fullText:text};
 }
 
 function parseFieldFromText(text){
@@ -193,6 +227,7 @@ function startVoiceSession(){
   }
 
   sessionActive = true;
+  cycleGeneration++;
   updateVoiceUI('requesting','Žádám o přístup k mikrofonu…');
 
   requestMicPermission(function(granted, errMsg){
@@ -202,16 +237,17 @@ function startVoiceSession(){
       showVoiceToast(errMsg || 'Mikrofon nedostupný');
       return;
     }
-    speak('Poslouchám. Říkej pole a hodnotu.', function(){
-      runRecognitionCycle('listen');
+    speak('Poslouchám. Říkej pole rovná se hodnota.', function(){
+      runRecognitionCycle('listen', cycleGeneration);
     });
   });
 }
 
 function stopVoiceSession(){
   sessionActive = false;
+  cycleGeneration++; // znehodnotí všechny pending callbacky
   clearAllTimers();
-  if(recognition){ try{ recognition.onend=null; recognition.onerror=null; recognition.abort(); }catch(e){} }
+  if(recognition){ try{ recognition.onend=null; recognition.onerror=null; recognition.onresult=null; recognition.abort(); }catch(e){} }
   if(synth) try{ synth.cancel(); }catch(e){}
   voicePhase = 'idle';
   updateVoiceUI('idle','');
@@ -224,85 +260,103 @@ function clearAllTimers(){
 }
 
 // ── JEDNOTNÁ smyčka rozpoznávání ────────────────────────────
-// mode: 'listen' (čeká pole+hodnota) nebo 'confirm' (čeká ano/ne)
-function runRecognitionCycle(mode){
-  if(!sessionActive) return;
+// gen = generation token — pokud se mezitím session zastavila/restartovala, starý callback se ignoruje
+function runRecognitionCycle(mode, gen){
+  if(!sessionActive || gen !== cycleGeneration) return;
   var SR = getSR();
   if(!SR){ stopVoiceSession(); return; }
 
   clearAllTimers();
 
-  // Ukonči předchozí instanci pokud běží
   if(recognition){
     try{ recognition.onend=null; recognition.onerror=null; recognition.onresult=null; recognition.abort(); }catch(e){}
+    recognition = null;
   }
 
+  // iOS Safari potřebuje krátkou pauzu po předchozím audio session než nový recognition spustí
+  var startDelay = isIOSDevice() ? 350 : 50;
+
+  restartTimer = setTimeout(function(){
+    if(!sessionActive || gen !== cycleGeneration) return;
+    actuallyStartRecognition(mode, gen);
+  }, startDelay);
+}
+
+function actuallyStartRecognition(mode, gen){
+  var SR = getSR();
   recognition = new SR();
   recognition.lang = 'cs-CZ';
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.maxAlternatives = 3;
+  recognition.maxAlternatives = 5;
 
   voicePhase = mode === 'confirm' ? 'confirming' : 'listening';
   updateVoiceUI(voicePhase, mode==='confirm'
-    ? ((FIELD_LABELS[pendingField]||pendingField) + ' = ' + pendingValue + ' — okej?')
-    : '🎤 Poslouchám…');
+    ? ((FIELD_LABELS[pendingField]||pendingField) + ' rovná se ' + pendingValue + ' — okej?')
+    : '🎤 Poslouchám… (pole rovná se hodnota)');
 
   var gotResult = false;
 
   recognition.onresult = function(event){
+    if(gen !== cycleGeneration) return;
     gotResult = true;
     clearAllTimers();
     var transcript = event.results[0][0].transcript;
-    if(mode === 'confirm') processConfirmation(transcript);
-    else processFieldValue(transcript);
+    if(mode === 'confirm') processConfirmation(transcript, gen);
+    else processFieldValue(transcript, gen);
   };
 
   recognition.onerror = function(event){
-    if(!sessionActive) return;
+    if(!sessionActive || gen !== cycleGeneration) return;
     if(event.error === 'no-speech' || event.error === 'aborted'){
-      restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 350);
+      runRecognitionCycle(mode, gen);
       return;
     }
     if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
       sessionActive = false;
       updateVoiceUI('idle','');
-      showVoiceToast('Mikrofon zablokován — povol v nastavení prohlížeče');
+      showVoiceToast('Mikrofon zablokován — povol v nastavení prohlížeče (ikona zámku v adresním řádku)');
       return;
     }
-    // audio-capture, network apod. — zkus restart
-    restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 700);
+    if(event.error === 'network'){
+      showVoiceToast('Rozpoznávání řeči potřebuje internet');
+      runRecognitionCycle(mode, gen);
+      return;
+    }
+    // audio-capture apod.
+    runRecognitionCycle(mode, gen);
   };
 
   recognition.onend = function(){
-    if(!sessionActive) return;
+    if(!sessionActive || gen !== cycleGeneration) return;
     if(!gotResult){
-      restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 300);
+      runRecognitionCycle(mode, gen);
     }
   };
 
-  // Watchdog: pokud recognition "zatuhne" (známý iOS/Android bug), restartuj po 8s
   watchdogTimer = setTimeout(function(){
-    if(sessionActive && voicePhase===(mode==='confirm'?'confirming':'listening') && !gotResult){
+    if(sessionActive && gen===cycleGeneration && !gotResult){
       try{ recognition.abort(); }catch(e){}
     }
-  }, 8000);
+  }, 9000);
 
   try{
     recognition.start();
   } catch(e){
-    restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 700);
+    if(sessionActive && gen===cycleGeneration) runRecognitionCycle(mode, gen);
   }
 }
 
-function processFieldValue(transcript){
+function processFieldValue(transcript, gen){
   if(isStopCommand(transcript)){ stopVoiceSession(); return; }
 
-  var field = parseFieldFromText(transcript);
+  var split = splitFieldAndValue(transcript);
+  var field = parseFieldFromText(split.fieldPart) || parseFieldFromText(split.fullText);
+
   if(!field){
-    showVoiceToast('Nerozpoznáno pole: "'+transcript+'"');
-    speak('Nerozuměla jsem políčku.', function(){
-      if(sessionActive) runRecognitionCycle('listen');
+    showVoiceToast('Nerozpoznáno pole: "'+transcript+'" — zkus "AS1 rovná se 20"');
+    speak('Nerozuměla jsem políčku. Zkus znovu, například A S jedna rovná se dvacet.', function(){
+      if(sessionActive) runRecognitionCycle('listen', gen);
     });
     return;
   }
@@ -310,32 +364,33 @@ function processFieldValue(transcript){
   var kind, value;
   if(field === '__screw__'){
     kind = 'bool';
-    value = parseBoolFromText(transcript);
+    value = parseBoolFromText(split.valuePart) !== null ? parseBoolFromText(split.valuePart) : parseBoolFromText(split.fullText);
     if(value === null){
       showVoiceToast('U vrutu řekni ano nebo ne');
-      speak('Vrut — řekni ano nebo ne.', function(){
-        if(sessionActive) runRecognitionCycle('listen');
+      speak('Vrut rovná se ano, nebo vrut rovná se ne.', function(){
+        if(sessionActive) runRecognitionCycle('listen', gen);
       });
       return;
     }
   } else if(field === 'p-vg'){
     kind = 'vg';
-    value = parseSpokenNumber(transcript);
+    value = parseSpokenNumber(split.valuePart) !== null ? parseSpokenNumber(split.valuePart) : parseSpokenNumber(split.fullText);
     if(value===null || value<1 || value>4){
       showVoiceToast('Vizuál musí být 1 až 4');
-      speak('Vizuální třída je číslo jedna až čtyři.', function(){
-        if(sessionActive) runRecognitionCycle('listen');
+      speak('Vizuál rovná se číslo jedna až čtyři.', function(){
+        if(sessionActive) runRecognitionCycle('listen', gen);
       });
       return;
     }
     value = Math.round(value);
   } else {
     kind = 'number';
-    value = parseSpokenNumber(transcript);
+    value = parseSpokenNumber(split.valuePart);
+    if(value===null || isNaN(value)) value = parseSpokenNumber(split.fullText.replace(split.fieldPart,''));
     if(value===null || isNaN(value)){
-      showVoiceToast('Nerozpoznána hodnota: "'+transcript+'"');
+      showVoiceToast('Nerozpoznána hodnota v: "'+transcript+'"');
       speak('Nerozuměla jsem hodnotě.', function(){
-        if(sessionActive) runRecognitionCycle('listen');
+        if(sessionActive) runRecognitionCycle('listen', gen);
       });
       return;
     }
@@ -347,38 +402,38 @@ function processFieldValue(transcript){
 
   var label = FIELD_LABELS[field] || field;
   var spokenValue = kind==='bool' ? (value?'ano':'ne') : value;
-  speak(label + ' ' + spokenValue + '. Okej?', function(){
-    if(sessionActive) runRecognitionCycle('confirm');
+  speak(label + ' rovná se ' + spokenValue + '. Okej?', function(){
+    if(sessionActive) runRecognitionCycle('confirm', gen);
   });
 }
 
-function processConfirmation(transcript){
+function processConfirmation(transcript, gen){
   var text = transcript.toLowerCase();
   var positive = text.indexOf('ano')>=0 || text.indexOf('jo')>=0 || text.indexOf('jasn')>=0 || text.indexOf('okej')>=0 || text.indexOf('ok')>=0;
   var negative = !positive && text.indexOf('ne')>=0;
 
   if(positive){
-    applyVoiceValue();
+    applyVoiceValue(gen);
   } else if(negative){
     speak('Dobře, zkus znovu.', function(){
       pendingField=null; pendingValue=null; pendingKind=null;
-      if(sessionActive) runRecognitionCycle('listen');
+      if(sessionActive) runRecognitionCycle('listen', gen);
     });
     showVoiceToast('Zrušeno — řekni hodnotu znovu');
   } else {
     speak('Řekni ano nebo ne.', function(){
-      if(sessionActive) runRecognitionCycle('confirm');
+      if(sessionActive) runRecognitionCycle('confirm', gen);
     });
   }
 }
 
-function applyVoiceValue(){
+function applyVoiceValue(gen){
   if(pendingField === '__screw__'){
     var cb = document.getElementById('cb-screw');
     if(cb){
       var want = !!pendingValue;
       var has = cb.classList.contains('checked');
-      if(want !== has) cb.click(); // využije existující toggle logiku
+      if(want !== has) cb.click();
     }
   } else {
     var el = document.getElementById(pendingField);
@@ -386,7 +441,6 @@ function applyVoiceValue(){
       el.value = pendingValue;
       el.dispatchEvent(new Event('input', {bubbles:true}));
       el.dispatchEvent(new Event('change', {bubbles:true}));
-      // Pro VG pole je potřeba i kliknout na příslušné tlačítko (UI je button-based)
       if(pendingField === 'p-vg'){
         var vgBtn = document.querySelector('[data-act="setvg"][data-vg="'+pendingValue+'"]');
         if(vgBtn) vgBtn.click();
@@ -400,7 +454,7 @@ function applyVoiceValue(){
 
   speak('Zapsáno. Další?', function(){
     pendingField=null; pendingValue=null; pendingKind=null;
-    if(sessionActive) runRecognitionCycle('listen');
+    if(sessionActive) runRecognitionCycle('listen', gen);
   });
 }
 
