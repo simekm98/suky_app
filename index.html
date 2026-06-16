@@ -205,6 +205,10 @@ canvas{display:block;width:100%;height:72px}
 .voice-fab.voice-active{background:#C0392B;animation:voicePulse 1s infinite}
 @keyframes voicePulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 14px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
 #voice-status{display:none;position:fixed;bottom:148px;right:16px;left:16px;background:var(--g9);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;text-align:center;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.25);line-height:1.5}
+#voice-debug{display:none;position:fixed;top:60px;left:8px;right:8px;max-height:40dvh;overflow-y:auto;background:rgba(0,0,0,.92);color:#0f0;border-radius:10px;padding:10px 12px;font-size:11px;font-family:monospace;z-index:160;line-height:1.6;white-space:pre-wrap}
+#voice-debug.show{display:block}
+#voice-debug .err{color:#ff6b6b}
+#voice-debug .ok{color:#69db7c}
 
 
 /* ── Statistiky ──────────────────────────────────────────── */
@@ -500,6 +504,7 @@ canvas{display:block;width:100%;height:72px}
 
 <!-- Hlasové ovládání -->
 <div id="voice-status"></div>
+<div id="voice-debug"></div>
 <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: plocha A rozměr 1 rovná se 20">🎤</button>
 
 <div class="toast" id="toast"></div>
