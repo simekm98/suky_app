@@ -243,7 +243,7 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <div class="clbl">Deska</div>
       <div class="frow" style="margin-bottom:8px">
-        <div class="fld wide"><label>ID</label><input id="cid" value="20L" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div class="fld wide"><label>Název</label><input id="cid" value="20L" autocomplete="off" autocorrect="off" spellcheck="false"></div>
         <div class="fld"><label>Šířka b (mm)</label><input id="clen" type="number" value="157" min="1" inputmode="decimal"></div>
         <div class="fld"><label>Výška d (mm)</label><input id="cwid" type="number" value="50" min="1" step="0.1" inputmode="decimal"></div>
       </div>
@@ -254,7 +254,7 @@ canvas{display:block;width:100%;height:72px}
       <div class="frow" style="margin-top:8px" id="row-extra">
         <div class="fld opt-field" data-opt="moisture"><label>Vlhkost w (%)</label><input id="p-moist" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>
         <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
-          <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px">Viz. třída VG</label>
+          <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px">Vizuál</label>
           <div style="display:flex;gap:6px" id="vg-row">
             <button class="vg-btn" data-vg="1" data-act="setvg">1</button>
             <button class="vg-btn" data-vg="2" data-act="setvg">2</button>
@@ -487,7 +487,7 @@ canvas{display:block;width:100%;height:72px}
       <button class="toggle on" data-opt="moisture"></button>
     </div>
     <div class="setting-row">
-      <div class="setting-lbl">Vizuální třída VG<small>Výběr 1–4</small></div>
+      <div class="setting-lbl">Vizuál<small>Výběr 1–4</small></div>
       <button class="toggle on" data-opt="vg"></button>
     </div>
     <div class="setting-row">
@@ -924,7 +924,7 @@ function renderDetailBody(bi){
   // board params edit
   html+='<div class="card"><div class="clbl">Parametry desky</div>';
   html+='<div class="frow" style="margin-bottom:8px">';
-  html+='<div class="fld wide"><label>ID</label><input id="d-id" value="'+escH(bd.id)+'" autocomplete="off"></div>';
+  html+='<div class="fld wide"><label>Název</label><input id="d-id" value="'+escH(bd.id)+'" autocomplete="off"></div>';
   html+='<div class="fld"><label>Šířka b (mm)</label><input id="d-b" type="number" value="'+bd.b+'" min="1" inputmode="decimal"></div>';
   html+='<div class="fld"><label>Výška d (mm)</label><input id="d-d" type="number" value="'+bd.d+'" min="1" step="0.1" inputmode="decimal"></div>';
   html+='</div><div class="frow" style="margin-bottom:8px">';
@@ -932,7 +932,7 @@ function renderDetailBody(bi){
   html+='<div class="fld"><label>Hmotnost (g)</label><input id="d-mass" type="number" value="'+(bd.mass||'')+'" min="0" inputmode="decimal" placeholder="—"></div>';
   html+='</div><div class="frow">';
   html+='<div class="fld"><label>Vlhkost w (%)</label><input id="d-moist" type="number" value="'+(bd.moisture!=null?bd.moisture:'')+'" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>';
-  html+='<div class="fld"><label>VG</label><select id="d-vg"><option value="">—</option><option'+(bd.vg==='1'?' selected':'')+'>1</option><option'+(bd.vg==='2'?' selected':'')+'>2</option><option'+(bd.vg==='3'?' selected':'')+'>3</option><option'+(bd.vg==='4'?' selected':'')+'>4</option></select></div>';
+  html+='<div class="fld"><label>Vizuál</label><select id="d-vg"><option value="">—</option><option'+(bd.vg==='1'?' selected':'')+'>1</option><option'+(bd.vg==='2'?' selected':'')+'>2</option><option'+(bd.vg==='3'?' selected':'')+'>3</option><option'+(bd.vg==='4'?' selected':'')+'>4</option></select></div>';
   html+='<div class="cb-wrap" style="flex:.55;min-width:50px"><label>Vrut</label><button class="cb-box'+(bd.screw?' checked':'')+'" id="d-screw">'+(bd.screw?'✓':'—')+'</button></div>';
   html+='</div></div>';
   // suky
