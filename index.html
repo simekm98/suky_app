@@ -1556,7 +1556,12 @@ document.addEventListener('keydown', function(e){
   if(!allEmpty) { e.preventDefault(); addKnot(); }
 });
 
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(function(reg){
+    reg.update(); // vynuť kontrolu nové verze hned při startu
+    setInterval(function(){ reg.update(); }, 60000); // a pak každou minutu
+  }).catch(function(){});
+}
 
 document.getElementById('btn-metodika').addEventListener('click',function(){showScreen('s-metodika');});
 // btn-met-back je v DOM AŽ PO tomto scriptu — použij delegation
