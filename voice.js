@@ -44,15 +44,14 @@ var ROZMER_MAP = {
 
 // ── Slovní mapování ostatních polí ───────────────────────
 var WORD_FIELD_MAP = {
-  'šířka':'clen','šíře':'clen',
-  'výška':'cwid','výšku':'cwid',
-  'délka desky':'p-length','délku desky':'p-length',
-  'hmotnost':'p-mass','váha':'p-mass','hmotnosti':'p-mass','vaha':'p-mass',
-  'vlhkost':'p-moist','vlhkosti':'p-moist',
-  'název':'cid','jméno':'cid','identifikace':'cid',
-  'vizuální třída':'p-vg','vizuál':'p-vg','vizuální':'p-vg',
-  'vrut':'__screw__',
-  'délka':'p-length','délku':'p-length' // samotné "délka" bez "desky" — musí být ZA delšími klíči (řazeno dle délky)
+  'šířka b':'clen','šířka':'clen','šíře':'clen',
+  'výška d':'cwid','výška':'cwid','výšku':'cwid',
+  'délka':'p-length','délku':'p-length',
+  'hmotnost':'p-mass','hmotnosti':'p-mass',
+  'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist',
+  'název':'cid',
+  'vizuál':'p-vg',
+  'vrut':'__screw__'
 };
 var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
@@ -181,21 +180,52 @@ var WORD_NUMS = {
 
 function parseSpokenNumber(text){
   text = text.toLowerCase().trim();
-  var digitMatch = text.match(/-?\d+[.,]?\d*/);
+
+  // Nejdřív zkus přímou číslici s desetinnou čárkou/tečkou (10.5, 10,5)
+  var digitMatch = text.match(/-?\d+[.,]\d+/);
   if(digitMatch) return parseFloat(digitMatch[0].replace(',', '.'));
+
+  // "X celá Y" / "X celých Y" — slovní desetinné číslo
+  var celaMatch = text.match(/(.+?)\s+cel[áých]+\s+(.+)/);
+  if(celaMatch){
+    var wholePart = parseIntegerWords(celaMatch[1]);
+    var fracPart = parseIntegerWords(celaMatch[2]);
+    if(wholePart !== null && fracPart !== null){
+      return wholePart + fracPart / Math.pow(10, String(fracPart).length);
+    }
+  }
+
+  // Celé číslo přímo (bez desetinné části)
+  var intMatch = text.match(/-?\d+/);
+  if(intMatch) return parseFloat(intMatch[0]);
+
+  // Čistě slovní celé číslo
+  return parseIntegerWords(text);
+}
+
+function parseIntegerWords(text){
+  text = text.trim();
+  // Pokud je to číslice, vrať přímo
+  var digitMatch = text.match(/^-?\d+$/);
+  if(digitMatch) return parseInt(digitMatch[0], 10);
+
   var words = text.split(/\s+/);
-  var total = null, tempTens = 0;
+  var total = 0, hasAny = false;
+  var hundreds = 0, tens = 0;
   words.forEach(function(w){
     w = w.replace(/[.,]/g,'');
     if(WORD_NUMS.hasOwnProperty(w)){
+      hasAny = true;
       var val = WORD_NUMS[w];
-      if(val>=20 && val%10===0){ tempTens=val; }
-      else if(tempTens>0 && val<10){ total=(total||0)+tempTens+val; tempTens=0; }
-      else { total=(total||0)+val+tempTens; tempTens=0; }
+      if(val >= 100){ hundreds += val; }
+      else if(val >= 20 && val % 10 === 0){ tens = val; }
+      else if(tens > 0 && val < 10){ total += tens + val; tens = 0; }
+      else { total += val; }
     }
   });
-  if(tempTens>0) total=(total||0)+tempTens;
-  return total;
+  if(tens > 0) total += tens;
+  if(!hasAny) return null;
+  return hundreds + total;
 }
 
 // ── Rozdělení textu na pole + hodnotu ─────────────────────
@@ -432,9 +462,9 @@ function processFieldValue(transcript, gen){
   pendingValue = value;
   pendingKind = kind;
 
-  // Okamžitě poslouchej potvrzení — bez TTS, jen pípnutí + vizuál
-  beepOk();
+  // Spusť poslech HNED, pípnutí pošli asynchronně až poté (aby nekolidovalo s mikrofonem)
   runRecognitionCycle('confirm', gen);
+  setTimeout(beepOk, 30);
 }
 
 function processConfirmation(transcript, gen){
@@ -492,12 +522,12 @@ function applyVoiceValue(gen){
 
   var label = (FIELD_LABELS_PLOCHA[pendingField] || FIELD_LABELS[pendingField] || pendingField);
   var shown = pendingKind==='bool' ? (pendingValue?'ano':'ne') : pendingValue;
-  beepOk();
   showVoiceToast(label+' = '+shown+' ✓');
 
   pendingField=null; pendingValue=null; pendingKind=null;
-  // Okamžitě poslouchej další pole
+  // Okamžitě poslouchej další pole, pípnutí pošli až poté
   if(sessionActive) runRecognitionCycle('listen', gen);
+  setTimeout(beepOk, 30);
 }
 
 // ── UI feedback ───────────────────────────────────────────
