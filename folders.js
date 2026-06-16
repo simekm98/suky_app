@@ -51,6 +51,8 @@ function updateActiveFolderBar(){
 }
 window.updateActiveFolderBar = updateActiveFolderBar;
 window.getFolderActivId = function(){ return activeFolderId; };
+window.getFolderNameSafe = getFolderName;
+window.getCurrentFilterFolderId = function(){ return filterFolderId; };
 
 // ── FOLDER MODAL ──────────────────────────────────────────
 function openFolderModal(){
@@ -111,6 +113,12 @@ function renderFolderChips(){
   }
 
   el.innerHTML = html;
+}
+
+function renderStatsButton(){
+  var el = document.getElementById('stats-btn-wrap');
+  if(!el) return;
+  el.style.display = '';
 }
 
 // ── HLAVNÍ RENDER LISTU ───────────────────────────────────
