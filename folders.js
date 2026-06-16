@@ -53,6 +53,12 @@ window.updateActiveFolderBar = updateActiveFolderBar;
 window.getFolderActivId = function(){ return activeFolderId; };
 window.getFolderNameSafe = getFolderName;
 window.getCurrentFilterFolderId = function(){ return filterFolderId; };
+window.wgGetAllFoldersList = function(){ return allFolders; };
+window.wgCreateFolderByName = function(name){
+  var f = createFolder(name);
+  return f ? f.id : null;
+};
+window.renderFolderChipsGlobal = renderFolderChips;
 
 // ── FOLDER MODAL ──────────────────────────────────────────
 function openFolderModal(){
