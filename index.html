@@ -858,10 +858,10 @@ function delKnot(ki){
   if(editState&&editState.ki===ki)cancelEdit();
   knots.splice(ki,1);save();schedDraw();renderKlist();toast('Suk smazán');
 }
-function newBoard(){
+function newBoard(skipConfirm){
   // Deska může být uložena i bez suků
-  if(!knots.length){
-    // Potvrzení pro prázdnou desku
+  if(!knots.length && !skipConfirm){
+    // Potvrzení pro prázdnou desku — jen při ručním kliknutí (confirm() blokuje a kazí hlasovou session)
     if(!confirm('Deska nemá žádné suky. Uložit i tak?')) return;
   }
   var ex=getBoardExtra();
@@ -1516,6 +1516,8 @@ window.getBoardExtra = getBoardExtra;
 window.wgGetAllBoards = function(){ return allBoards; };
 window.wgSchedDraw = schedDraw;
 window.wgSave = save;
+window.wgNewBoard = function(){ newBoard(true); }; // hlasové volání — vždy skipConfirm
+window.wgAddKnot = function(){ addKnot(); };
 
 
 // ── select all text on input focus ──────────────────────
@@ -2486,18 +2488,28 @@ function handleTap(clientX,cv){
 function saveFftToBoard(){
   var modes=detectedModes.map(function(m){return Math.round(m.hz*10)/10;});
   if(!modes.length){showToast('Nejsou data k uložení');return;}
+  // fftVibType: 'longitudinal' -> index 0, 'bending' -> index 1
+  // (index 2 rezervován pro případný 3. mód, zatím nepoužit)
+  var idx = fftVibType==='bending' ? 1 : 0;
   var knots=window.wgGetKnots?window.wgGetKnots():[];
   var boards=window.wgGetAllBoards?window.wgGetAllBoards():[];
+
+  function mergeFft(existing){
+    var arr = (existing && existing.slice) ? existing.slice() : [];
+    arr[idx] = modes[0]; // hlavní (první detekovaný) mód pro daný typ kmitání
+    return arr;
+  }
+
   if(boards.length){
     var last=boards[boards.length-1];
-    last.fft=modes;
+    last.fft = mergeFft(last.fft);
     if(window.wgSave) window.wgSave();
-    showToast('Frekvence uloženy do '+last.id+' ✓');
-  if(window.updateMoedDisplay) window.updateMoedDisplay();
+    showToast((fftVibType==='bending'?'Ohybová':'Podélná')+' frekvence uložena do '+last.id+' ✓');
+    if(window.updateMoedDisplay) window.updateMoedDisplay();
   } else {
-    window.wgPendingFft=modes;
-    showToast('Frekvence uloženy ✓ — uloží se s příští deskou');
-  if(window.updateMoedDisplay) window.updateMoedDisplay();
+    window.wgPendingFft = mergeFft(window.wgPendingFft);
+    showToast((fftVibType==='bending'?'Ohybová':'Podélná')+' frekvence uložena ✓ — zapíše se s příští deskou');
+    if(window.updateMoedDisplay) window.updateMoedDisplay();
   }
 }
 
