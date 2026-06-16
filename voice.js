@@ -18,6 +18,21 @@ var watchdogTimer = null;
 var cycleGeneration = 0;
 var audioCtxBeep = null;
 
+// ── Viditelný debug panel (funguje i na telefonu bez připojení k PC) ──
+function dlog(msg, cls){
+  console.log('[Voice]', msg);
+  var panel = document.getElementById('voice-debug');
+  if(!panel) return;
+  panel.classList.add('show');
+  var line = document.createElement('div');
+  if(cls) line.className = cls;
+  line.textContent = new Date().toLocaleTimeString('cs-CZ').slice(0,8) + '  ' + msg;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+  // Omez na posledních 40 řádků
+  while(panel.children.length > 40) panel.removeChild(panel.firstChild);
+}
+
 // ── Mapování "plocha X rozměr Y" ──────────────────────────
 var PLOCHA_MAP = {'a':'a','á':'a','b':'b','bé':'b','c':'c','cé':'c','d':'d','dé':'d'};
 var ROZMER_MAP = {
@@ -326,6 +341,7 @@ function actuallyStartRecognition(mode, gen){
   recognition.maxAlternatives = 5;
 
   voicePhase = mode === 'confirm' ? 'confirming' : 'listening';
+  dlog('▶ start recognition mode='+mode+' gen='+gen+' (current='+cycleGeneration+')');
   updateVoiceUI(voicePhase, mode==='confirm'
     ? ((FIELD_LABELS[pendingField]||pendingField) + ' = ' + pendingValue + ' — ano/ne?')
     : '🎤 plocha A rozměr 1 = 20');
@@ -333,15 +349,20 @@ function actuallyStartRecognition(mode, gen){
   var gotResult = false;
 
   recognition.onresult = function(event){
-    if(gen !== cycleGeneration) return;
+    if(gen !== cycleGeneration){
+      dlog('⚠ onresult IGNOROVÁN — gen mismatch ('+gen+' vs '+cycleGeneration+')','err');
+      return;
+    }
     gotResult = true;
     clearAllTimers();
     var transcript = event.results[0][0].transcript;
+    dlog('📥 onresult [' + mode + ']: "' + transcript + '"');
     if(mode === 'confirm') processConfirmation(transcript, gen);
     else processFieldValue(transcript, gen);
   };
 
   recognition.onerror = function(event){
+    dlog('⚠ onerror: '+event.error+' (mode='+mode+')', event.error==='no-speech'?'':'err');
     if(!sessionActive || gen !== cycleGeneration) return;
     if(event.error === 'no-speech' || event.error === 'aborted'){
       runRecognitionCycle(mode, gen); return;
@@ -356,24 +377,31 @@ function actuallyStartRecognition(mode, gen){
   };
 
   recognition.onend = function(){
+    dlog('⏹ onend (mode='+mode+' gotResult='+gotResult+')');
     if(!sessionActive || gen !== cycleGeneration) return;
     if(!gotResult) runRecognitionCycle(mode, gen);
   };
 
   watchdogTimer = setTimeout(function(){
-    if(sessionActive && gen===cycleGeneration && !gotResult){ try{ recognition.abort(); }catch(e){} }
+    if(sessionActive && gen===cycleGeneration && !gotResult){
+      dlog('⏱ watchdog timeout — abort','err');
+      try{ recognition.abort(); }catch(e){}
+    }
   }, 6000);
 
-  try{ recognition.start(); }
-  catch(e){ if(sessionActive && gen===cycleGeneration) runRecognitionCycle(mode, gen); }
+  try{ recognition.start(); dlog('✓ recognition.start() OK'); }
+  catch(e){ dlog('❌ recognition.start() THREW: '+e.message,'err'); if(sessionActive && gen===cycleGeneration) runRecognitionCycle(mode, gen); }
 }
 
+
 function processFieldValue(transcript, gen){
-  console.log('[Voice] heard:', transcript);
-  if(isStopCommand(transcript)){ stopVoiceSession(); return; }
+  dlog('🎤 slyšel: "'+transcript+'"');
+  if(isStopCommand(transcript)){ dlog('stop příkaz'); stopVoiceSession(); return; }
 
   var parsed = parseCommand(transcript);
+  dlog('→ pole='+parsed.field+' hodnotaText="'+parsed.valueText+'"');
   if(!parsed.field){
+    dlog('❌ pole nerozpoznáno', 'err');
     beepErr();
     showVoiceToast('Nerozpoznáno: "'+transcript+'"');
     if(sessionActive) runRecognitionCycle('listen', gen);
@@ -386,18 +414,19 @@ function processFieldValue(transcript, gen){
   if(field === '__screw__'){
     kind = 'bool';
     value = parseBoolFromText(parsed.valueText);
-    if(value === null){ beepErr(); showVoiceToast('Vrut: ano nebo ne'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
+    if(value === null){ dlog('❌ vrut ano/ne nenalezeno','err'); beepErr(); showVoiceToast('Vrut: ano nebo ne'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
   } else if(field === 'p-vg'){
     kind = 'vg';
     value = parseSpokenNumber(parsed.valueText);
-    if(value===null || value<1 || value>4){ beepErr(); showVoiceToast('Vizuál: 1 až 4'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
+    if(value===null || value<1 || value>4){ dlog('❌ vizuál mimo 1-4','err'); beepErr(); showVoiceToast('Vizuál: 1 až 4'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
     value = Math.round(value);
   } else {
     kind = 'number';
     value = parseSpokenNumber(parsed.valueText);
-    if(value===null || isNaN(value)){ beepErr(); showVoiceToast('Nerozpoznána hodnota'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
+    if(value===null || isNaN(value)){ dlog('❌ hodnota nerozpoznána z "'+parsed.valueText+'"','err'); beepErr(); showVoiceToast('Nerozpoznána hodnota'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
   }
 
+  dlog('✓ připraveno: '+field+' = '+value+' (čekám potvrzení)','ok');
   pendingField = field;
   pendingValue = value;
   pendingKind = kind;
@@ -408,25 +437,28 @@ function processFieldValue(transcript, gen){
 }
 
 function processConfirmation(transcript, gen){
+  dlog('🎤 potvrzení: "'+transcript+'"');
   var text = transcript.toLowerCase();
   var positive = /\bano\b/.test(text) || /\bjo\b/.test(text) || text.indexOf('jasn')>=0 || text.indexOf('okej')>=0 || text.indexOf('ok')>=0;
   var negative = !positive && /\bne\b/.test(text);
 
   if(positive){
+    dlog('→ ANO, zapisuji','ok');
     applyVoiceValue(gen);
   } else if(negative){
+    dlog('→ NE, zrušeno');
     beepErr();
     showVoiceToast('Zrušeno');
     pendingField=null; pendingValue=null; pendingKind=null;
     if(sessionActive) runRecognitionCycle('listen', gen);
   } else {
-    // Nerozuměl ano/ne — poslouchej dál (žádná prodleva)
+    dlog('→ nerozpoznáno ano/ne, čekám znovu');
     if(sessionActive) runRecognitionCycle('confirm', gen);
   }
 }
 
 function applyVoiceValue(gen){
-  console.log('[Voice] applying:', pendingField, '=', pendingValue);
+  dlog('💾 ZAPISUJI: '+pendingField+' = '+pendingValue,'ok');
   if(pendingField === '__screw__'){
     var cb = document.getElementById('cb-screw');
     if(cb){
@@ -434,7 +466,7 @@ function applyVoiceValue(gen){
       var has = cb.classList.contains('checked');
       if(want !== has) cb.click();
     } else {
-      console.warn('[Voice] cb-screw element not found');
+      dlog('❌ element cb-screw nenalezen v DOM','err');
     }
   } else {
     var el = document.getElementById(pendingField);
@@ -442,12 +474,13 @@ function applyVoiceValue(gen){
       el.value = pendingValue;
       el.dispatchEvent(new Event('input', {bubbles:true}));
       el.dispatchEvent(new Event('change', {bubbles:true}));
+      dlog('✅ input#'+pendingField+'.value nyní = "'+el.value+'"','ok');
       if(pendingField === 'p-vg'){
         var vgBtn = document.querySelector('[data-act="setvg"][data-vg="'+pendingValue+'"]');
         if(vgBtn) vgBtn.click();
       }
     } else {
-      console.warn('[Voice] element not found for field:', pendingField);
+      dlog('❌ element #'+pendingField+' NEEXISTUJE v DOM','err');
       beepErr();
       showVoiceToast('Chyba: pole '+pendingField+' neexistuje');
       pendingField=null; pendingValue=null; pendingKind=null;
@@ -505,6 +538,34 @@ function initVoice(){
     if(!btn) return;
     toggleVoiceSession();
   });
+
+  // Dlouhé podržení (800ms) na mikrofonu = zobrazit/skrýt debug panel
+  var pressTimer = null;
+  document.addEventListener('touchstart', function(e){
+    var btn = e.target.closest('#btn-voice');
+    if(!btn) return;
+    pressTimer = setTimeout(function(){
+      var panel = document.getElementById('voice-debug');
+      if(panel) panel.classList.toggle('show');
+      pressTimer = null;
+    }, 800);
+  });
+  document.addEventListener('touchend', function(){
+    if(pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
+  });
+  document.addEventListener('mousedown', function(e){
+    var btn = e.target.closest('#btn-voice');
+    if(!btn) return;
+    pressTimer = setTimeout(function(){
+      var panel = document.getElementById('voice-debug');
+      if(panel) panel.classList.toggle('show');
+      pressTimer = null;
+    }, 800);
+  });
+  document.addEventListener('mouseup', function(){
+    if(pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
+  });
+
   updateVoiceFabVisibility();
   setInterval(updateVoiceFabVisibility, 400);
   var support = checkVoiceSupport();
