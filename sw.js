@@ -1,5 +1,5 @@
 // WoodGrader 26 — Service Worker
-const CACHE = 'wg26-v11';
+const CACHE = 'wg26-v12';
 
 // Cachujeme jen index.html — všechno ostatní je inline nebo CDN
 const ASSETS = ['./index.html', './manifest.json', './sync.js', './folders.js', './stats.js', './voice.js', './import.js', './icons/icon-192.svg', './icons/icon-512.svg'];
@@ -32,6 +32,18 @@ self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+  // JS soubory — network-first, aby se nová verze projevila okamžitě
+  if (e.request.url.endsWith('.js')) {
+    e.respondWith(
+      fetch(e.request).then(r => {
+        if (r.ok) {
+          caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+        }
+        return r;
+      }).catch(() => caches.match(e.request))
     );
     return;
   }
