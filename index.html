@@ -199,6 +199,24 @@ canvas{display:block;width:100%;height:72px}
 .folder-item-name{flex:1;font-size:15px;font-weight:600}
 .folder-item-count{font-size:12px;color:var(--g5)}
 
+
+/* ── Hlasové ovládání ────────────────────────────────────── */
+.voice-fab{position:fixed;bottom:84px;right:16px;width:56px;height:56px;border-radius:28px;background:var(--br);color:#fff;border:none;font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:150;-webkit-appearance:none}
+.voice-fab.voice-active{background:#C0392B;animation:voicePulse 1s infinite}
+@keyframes voicePulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 14px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+#voice-status{display:none;position:fixed;bottom:148px;right:16px;left:16px;background:var(--g9);color:#fff;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;text-align:center;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+
+
+/* ── Statistiky ──────────────────────────────────────────── */
+.stats-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin:16px 0 8px}
+.stat-summary-box{background:#fff;border-radius:12px;padding:4px 14px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stat-summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:.5px solid var(--g1);font-size:13px;gap:10px}
+.stat-summary-row:last-child{border-bottom:none}
+.stat-summary-row span:first-child{font-weight:700;color:var(--g9);flex-shrink:0;min-width:64px}
+.stat-summary-row span:last-child{color:var(--g7);text-align:right;font-size:12px}
+.stats-chart-card{background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stats-chart-label{font-size:12px;font-weight:700;color:var(--g7);margin-bottom:6px}
+.stats-chart-card canvas{display:block;width:100%}
 </style>
 </head>
 <body>
@@ -353,7 +371,7 @@ canvas{display:block;width:100%;height:72px}
   <div class="topbar">
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
-    
+    <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
   <div class="sbody">
 
@@ -477,6 +495,11 @@ canvas{display:block;width:100%;height:72px}
     </div>
   </div>
 </div>
+
+
+<!-- Hlasové ovládání -->
+<div id="voice-status"></div>
+<button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Hlasové zadávání">🎤</button>
 
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2537,6 +2560,8 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 
 </script>
 <script src="folders.js"></script>
+<script src="voice.js"></script>
+<script src="stats.js"></script>
 <script src="sync.js"></script>
 </div>
 
@@ -2570,6 +2595,21 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
     <div id="export-folder-list" style="max-height:50dvh;overflow-y:auto"><!-- dynamicky --></div>
     <div style="padding:14px 20px;border-top:.5px solid var(--g1)">
       <button data-act="doexport" style="width:100%;padding:13px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">Exportovat vybrané</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ STATS MODAL ═══════════════════════════════════════ -->
+<div class="folder-modal" id="modal-stats">
+  <div class="folder-modal-inner" style="max-height:88dvh">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="display:flex;align-items:center">
+      <span style="flex:1">📊 Statistika — <span id="stats-folder-name">—</span></span>
+      <button class="modal-close" data-act="closestats">✕</button>
+    </div>
+    <div id="stats-body" style="max-height:70dvh;overflow-y:auto;padding:14px 16px 20px">
+      <!-- dynamicky -->
     </div>
   </div>
 </div>
