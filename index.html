@@ -207,6 +207,8 @@ canvas{display:block;width:100%;height:72px}
 @keyframes voiceGreenBlink{0%{box-shadow:0 0 0 0 rgba(39,174,96,.7)}70%{box-shadow:0 0 0 16px rgba(39,174,96,0)}100%{box-shadow:0 0 0 0 rgba(39,174,96,0)}}
 @keyframes voicePulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 14px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
 #voice-status{display:none;position:fixed;bottom:148px;right:16px;left:16px;background:var(--g9);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;text-align:center;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.25);line-height:1.5}
+#voice-confirm-overlay{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);background:rgba(39,174,96,.96);color:#fff;padding:20px 32px;border-radius:18px;font-size:22px;font-weight:800;z-index:300;box-shadow:0 8px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;text-align:center;max-width:80vw}
+#voice-confirm-overlay.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #voice-debug{display:none;position:fixed;top:60px;left:8px;right:8px;max-height:40dvh;overflow-y:auto;background:rgba(0,0,0,.92);color:#0f0;border-radius:10px;padding:10px 12px;font-size:11px;font-family:monospace;z-index:160;line-height:1.6;white-space:pre-wrap}
 #voice-debug.show{display:block}
 #voice-debug .err{color:#ff6b6b}
@@ -506,8 +508,9 @@ canvas{display:block;width:100%;height:72px}
 
 <!-- Hlasové ovládání -->
 <div id="voice-status"></div>
+<div id="voice-confirm-overlay"></div>
 <div id="voice-debug"></div>
-<button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: Délka 1500, plocha A rozměr 1 = 20, Přidat suk, Nová deska">🎤</button>
+<button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení.">🎤</button>
 
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
