@@ -51,7 +51,8 @@ var WORD_FIELD_MAP = {
   'vlhkost':'p-moist','vlhkosti':'p-moist',
   'název':'cid','jméno':'cid','identifikace':'cid',
   'vizuální třída':'p-vg','vizuál':'p-vg','vizuální':'p-vg',
-  'vrut':'__screw__'
+  'vrut':'__screw__',
+  'délka':'p-length','délku':'p-length' // samotné "délka" bez "desky" — musí být ZA delšími klíči (řazeno dle délky)
 };
 var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
