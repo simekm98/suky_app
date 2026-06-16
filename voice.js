@@ -40,7 +40,14 @@ function dlog(msg, cls){
 }
 
 // ── Mapování "plocha X rozměr Y" ──────────────────────────
-var PLOCHA_MAP = {'a':'a','á':'a','b':'b','bé':'b','c':'c','cé':'c','d':'d','dé':'d'};
+// Čeština hláskuje písmena různě: "á"/"áá" pro A, "bé" pro B, "cé"/"cé" pro C, "dé" pro D
+// STT může vrátit i zdvojené/protažené varianty
+var PLOCHA_MAP = {
+  'a':'a','á':'a','áá':'a','aa':'a','ah':'a','ahá':'a',
+  'b':'b','bé':'b','béé':'b','be':'b',
+  'c':'c','cé':'c','céé':'c','ce':'c','cé.':'c',
+  'd':'d','dé':'d','déé':'d','de':'d'
+};
 // Rozměr 1=S1, 2=S2, 3=L1, 4=L2 — odpovídá novému zobrazení A1/A2/A3/A4 v UI
 var ROZMER_MAP = {
   '1':'s1','jedna':'s1','jeden':'s1','první':'s1',
@@ -74,36 +81,34 @@ var FIELD_LABELS = {
 // ── Přímý formát "AS1", "as 1", "a s jedna" (fonetická normalizace) ──
 function findDirectFieldCode(text){
   var t = ' ' + text.toLowerCase() + ' ';
-  t = t.replace(/ á /g, ' a ').replace(/ bé /g, ' b ').replace(/ cé /g, ' c ').replace(/ dé /g, ' d ');
-  t = t.replace(/ eska /g, ' s ').replace(/ es /g, ' s ').replace(/ el /g, ' l ');
   t = t.replace(/ jedna /g, ' 1 ').replace(/ jeden /g,' 1 ').replace(/ dva /g, ' 2 ').replace(/ dvě /g, ' 2 ')
        .replace(/ tři /g, ' 3 ').replace(/ čtyři /g, ' 4 ');
 
   // Hledáme kód pole na ZAČÁTKU textu (první 1-3 tokeny), ne kdekoli ve zhuštěném stringu
   // — jinak by se "a1 30" zhustilo na "a130" a kolidovalo s hodnotou
   var words = t.trim().split(/\s+/);
-  var prefix = words.slice(0, 3).join('');
 
   // Nový krátký formát "A1"-"D4" (bez S/L) — odpovídá UI labelům A1/A2/A3/A4
-  // 1=S1, 2=S2, 3=L1, 4=L2. Musí být na začátku a NIC číselného nesmí následovat hned za ním
-  // (jinak "a1" v "a130" by pohltilo i hodnotu) — řešíme tak, že hledáme jen v prefixu
-  // sestaveném ze slov, a samotné číslo 1-4 musí být buď celé slovo, nebo splynuté s písmenem.
+  // 1=S1, 2=S2, 3=L1, 4=L2. Použijeme PLOCHA_MAP lookup (tolerantní k "áá","bé","cé" výslovnosti)
+  // místo striktního regexu [abcd] — STT často přepíše hláskovaná písmena foneticky.
   var m4 = null;
-  // Případ A: písmeno a číslo jsou oddělená slova: "a", "1", "30" → words[0]="a", words[1]="1"
-  if(words.length >= 2 && /^[abcd]$/.test(words[0]) && /^[1234]$/.test(words[1])){
-    m4 = [null, words[0], words[1]];
+
+  // Případ A: písmeno a číslo jsou oddělená slova: "á", "1", "30" → words[0]="á", words[1]="1"
+  if(words.length >= 2 && PLOCHA_MAP.hasOwnProperty(words[0]) && /^[1234]$/.test(words[1])){
+    m4 = [PLOCHA_MAP[words[0]], words[1]];
   }
   // Případ B: písmeno a číslo slita v jednom slově: "a1", "30" → words[0]="a1"
   else if(words.length >= 1 && /^[abcd][1234]$/.test(words[0])){
-    m4 = [null, words[0][0], words[0][1]];
+    m4 = [words[0][0], words[0][1]];
   }
   if(m4){
-    var plocha = m4[1];
+    var plocha = m4[0];
     var numMap = {'1':'s1','2':'s2','3':'l1','4':'l2'};
-    return plocha + numMap[m4[2]];
+    return plocha + numMap[m4[1]];
   }
 
   // Starý formát "AS1"/"AL1" (s/l explicitně) — hledáme v prefixu, ne v celém textu
+  var prefix = words.slice(0, 3).join('');
   var compactPrefix = prefix;
   var m = compactPrefix.match(/^([abcd])(s|l)(1|2)/);
   if(m) return m[1] + m[2] + m[3];
@@ -192,8 +197,7 @@ function beep(freq, dur, vol){
 }
 function beepOk(){ beep(1000, 0.12, 0.3); }
 function beepErr(){
-  beep(180, 0.18, 0.4);
-  setTimeout(function(){ beep(180, 0.18, 0.4); }, 220);
+  beep(180, 0.25, 0.4); // jedno delší pípnutí místo dvou — žádný zpožděný timer co kolidoval s mikrofonem
 }
 
 // ── Parsování čísla ──────────────────────────────────────────
@@ -368,12 +372,16 @@ function findActionCommand(text){
 }
 
 function executeAction(action){
-  if(action === 'addknot'){
-    var btn = document.getElementById('btn-add');
-    if(btn) btn.click();
-  } else if(action === 'newboard'){
-    var btn2 = document.getElementById('btn-new');
-    if(btn2) btn2.click();
+  try{
+    if(action === 'addknot'){
+      if(window.wgAddKnot) window.wgAddKnot();
+      else { var btn = document.getElementById('btn-add'); if(btn) btn.click(); }
+    } else if(action === 'newboard'){
+      if(window.wgNewBoard) window.wgNewBoard(); // přeskočí blokující confirm() dialog
+      else { var btn2 = document.getElementById('btn-new'); if(btn2) btn2.click(); }
+    }
+  } catch(err){
+    dlog('💥 executeAction('+action+') selhal: '+err.message,'err');
   }
 }
 
@@ -706,10 +714,18 @@ function updateVoiceFabVisibility(){
   if(!fab) return;
   var entryActive = document.getElementById('s-entry') && document.getElementById('s-entry').classList.contains('active');
   fab.style.display = entryActive ? '' : 'none';
-  if(!entryActive && sessionActive){ stopVoiceSession(); }
+  // Pozn.: NEukončujeme session zde — krátkodobé "mizení" active class při
+  // re-renderu (showScreen toggluje class) by jinak omylem zabilo aktivní
+  // hlasovou session. Místo toho zastavíme session jen na explicitní akci
+  // uživatele (klik na ☰/jiné tlačítko navigace), viz initVoice().
 }
 
 function initVoice(){
+  document.addEventListener('click', function(e){
+    // Explicitní opuštění entry screenu uživatelem — bezpečně ukončí session
+    var navBtn = e.target.closest('#btn-list, #btn-fft-open, #btn-metodika, #btn-settings');
+    if(navBtn && sessionActive){ stopVoiceSession(); }
+  });
   document.addEventListener('click', function(e){
     var btn = e.target.closest('#btn-voice');
     if(!btn) return;
