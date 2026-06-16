@@ -50,11 +50,14 @@ function speak(text, onEnd){
 }
 
 // ── Viditelný debug panel (funguje i na telefonu bez připojení k PC) ──
+var debugPanelEnabled = false; // řídí VIDITELNOST, logování běží vždy na pozadí
+
 function dlog(msg, cls){
   console.log('[Voice]', msg);
   var panel = document.getElementById('voice-debug');
   if(!panel) return;
-  panel.classList.add('show');
+  // Logujeme vždy (pro historii), ale 'show' class řídíme výhradně přes debugPanelEnabled
+  panel.classList.toggle('show', debugPanelEnabled);
   var line = document.createElement('div');
   if(cls) line.className = cls;
   line.textContent = new Date().toLocaleTimeString('cs-CZ').slice(0,8) + '  ' + msg;
@@ -101,10 +104,38 @@ function findDirectFieldCode(text){
   var t = ' ' + text.toLowerCase() + ' ';
   t = t.replace(/ á /g, ' a ').replace(/ bé /g, ' b ').replace(/ cé /g, ' c ').replace(/ dé /g, ' d ');
   t = t.replace(/ eska /g, ' s ').replace(/ es /g, ' s ').replace(/ el /g, ' l ');
-  t = t.replace(/ jedna /g, ' 1 ').replace(/ jeden /g,' 1 ').replace(/ dva /g, ' 2 ').replace(/ dvě /g, ' 2 ');
-  var compact = t.replace(/\s+/g, '');
-  var m = compact.match(/([abcd])(s|l)(1|2)/);
+  t = t.replace(/ jedna /g, ' 1 ').replace(/ jeden /g,' 1 ').replace(/ dva /g, ' 2 ').replace(/ dvě /g, ' 2 ')
+       .replace(/ tři /g, ' 3 ').replace(/ čtyři /g, ' 4 ');
+
+  // Hledáme kód pole na ZAČÁTKU textu (první 1-3 tokeny), ne kdekoli ve zhuštěném stringu
+  // — jinak by se "a1 30" zhustilo na "a130" a kolidovalo s hodnotou
+  var words = t.trim().split(/\s+/);
+  var prefix = words.slice(0, 3).join('');
+
+  // Nový krátký formát "A1"-"D4" (bez S/L) — odpovídá UI labelům A1/A2/A3/A4
+  // 1=S1, 2=S2, 3=L1, 4=L2. Musí být na začátku a NIC číselného nesmí následovat hned za ním
+  // (jinak "a1" v "a130" by pohltilo i hodnotu) — řešíme tak, že hledáme jen v prefixu
+  // sestaveném ze slov, a samotné číslo 1-4 musí být buď celé slovo, nebo splynuté s písmenem.
+  var m4 = null;
+  // Případ A: písmeno a číslo jsou oddělená slova: "a", "1", "30" → words[0]="a", words[1]="1"
+  if(words.length >= 2 && /^[abcd]$/.test(words[0]) && /^[1234]$/.test(words[1])){
+    m4 = [null, words[0], words[1]];
+  }
+  // Případ B: písmeno a číslo slita v jednom slově: "a1", "30" → words[0]="a1"
+  else if(words.length >= 1 && /^[abcd][1234]$/.test(words[0])){
+    m4 = [null, words[0][0], words[0][1]];
+  }
+  if(m4){
+    var plocha = m4[1];
+    var numMap = {'1':'s1','2':'s2','3':'l1','4':'l2'};
+    return plocha + numMap[m4[2]];
+  }
+
+  // Starý formát "AS1"/"AL1" (s/l explicitně) — hledáme v prefixu, ne v celém textu
+  var compactPrefix = prefix;
+  var m = compactPrefix.match(/^([abcd])(s|l)(1|2)/);
   if(m) return m[1] + m[2] + m[3];
+
   return null;
 }
 
@@ -607,10 +638,11 @@ function updateVoiceUI(state, msg){
   var btn = document.getElementById('btn-voice');
   var indicator = document.getElementById('voice-status');
   if(btn){
-    // Zelené blikání = appka AKTIVNĚ poslouchá, je čas mluvit
-    btn.classList.toggle('voice-listening', state==='listening'||state==='confirming');
-    // Červené pulzování = příprava/mluvení appky (uživatel by neměl mluvit)
-    btn.classList.toggle('voice-active', state==='requesting'||state==='speaking');
+    var shouldListen = (state==='listening'||state==='confirming');
+    var shouldActive = (state==='requesting'||state==='speaking');
+    dlog('UI state="'+state+'" listening='+shouldListen+' active='+shouldActive);
+    btn.classList.toggle('voice-listening', shouldListen);
+    btn.classList.toggle('voice-active', shouldActive);
     btn.textContent = sessionActive ? '⏹' : '🎤';
   }
   if(indicator){
@@ -647,12 +679,17 @@ function initVoice(){
 
   // Dlouhé podržení (800ms) na mikrofonu = zobrazit/skrýt debug panel
   var pressTimer = null;
+  function toggleDebugPanel(){
+    debugPanelEnabled = !debugPanelEnabled;
+    var panel = document.getElementById('voice-debug');
+    if(panel) panel.classList.toggle('show', debugPanelEnabled);
+    showVoiceToast(debugPanelEnabled ? 'Debug panel zapnut' : 'Debug panel skryt');
+  }
   document.addEventListener('touchstart', function(e){
     var btn = e.target.closest('#btn-voice');
     if(!btn) return;
     pressTimer = setTimeout(function(){
-      var panel = document.getElementById('voice-debug');
-      if(panel) panel.classList.toggle('show');
+      toggleDebugPanel();
       pressTimer = null;
     }, 800);
   });
@@ -663,8 +700,7 @@ function initVoice(){
     var btn = e.target.closest('#btn-voice');
     if(!btn) return;
     pressTimer = setTimeout(function(){
-      var panel = document.getElementById('voice-debug');
-      if(panel) panel.classList.toggle('show');
+      toggleDebugPanel();
       pressTimer = null;
     }, 800);
   });
