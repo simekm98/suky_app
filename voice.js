@@ -1,22 +1,24 @@
 // ═══════════════════════════════════════════════════════════
 //  HLASOVÉ ZADÁVÁNÍ — WoodGrader 26 (čeština)
-//  Kontinuální režim: nahrávání běží dál po celou dobu zadávání
-//  Pole + hodnota → "okej?" → ano/ne → pokračuje dál
+//  Kontinuální smyčka: pole+hodnota → "okej?" → ano/ne → další
+//  Podporuje: rozměry, VG 1-4, vrut ano/ne
 // ═══════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
 var recognition = null;
 var synth = window.speechSynthesis;
-var sessionActive = false;       // true = celá session hlasového zadávání běží
-var voicePhase = 'idle';         // idle | listening | confirming | speaking
+var sessionActive = false;
+var voicePhase = 'idle';        // idle | listening | confirming
 var pendingField = null;
-var pendingValue = null;
+var pendingValue = null;        // číslo NEBO 'ano'/'ne' pro vrut, NEBO 1-4 pro VG
+var pendingKind = null;         // 'number' | 'bool' | 'vg'
 var czechVoice = null;
 var micPermissionGranted = false;
 var restartTimer = null;
+var watchdogTimer = null;
 
-// ── Mapování hlasových příkazů na pole formuláře ──────────
+// ── Mapování polí ──────────────────────────────────────────
 var FIELD_MAP = {
   'šířka':'clen','šíře':'clen',
   'výška':'cwid','výšku':'cwid',
@@ -36,8 +38,13 @@ var FIELD_MAP = {
   'ds jedna':'ds1','d s jedna':'ds1','d jedna':'ds1',
   'ds dva':'ds2','d s dva':'ds2','d dva':'ds2',
   'dl jedna':'dl1','dl dva':'dl2',
-  'název':'cid','jméno':'cid','identifikace':'cid'
+  'název':'cid','jméno':'cid','identifikace':'cid',
+  'vizuál':'p-vg','vizuální':'p-vg','vizuální třída':'p-vg','třída':'p-vg',
+  'vrut':'__screw__'
 };
+
+// Klíče seřazené dle délky (nejdelší první) pro správné rozpoznání ("vizuální třída" před "třída")
+var FIELD_KEYS_SORTED = Object.keys(FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
 var FIELD_LABELS = {
   'clen':'šířka','cwid':'výška','p-length':'délka','p-mass':'hmotnost','p-moist':'vlhkost',
@@ -45,7 +52,7 @@ var FIELD_LABELS = {
   'bs1':'BS1','bs2':'BS2','bl1':'BL1','bl2':'BL2',
   'cs1':'CS1','cs2':'CS2','cl1':'CL1','cl2':'CL2',
   'ds1':'DS1','ds2':'DS2','dl1':'DL1','dl2':'DL2',
-  'cid':'název'
+  'cid':'název','p-vg':'vizuál','__screw__':'vrut'
 };
 
 // ── Detekce podpory ────────────────────────────────────────
@@ -62,7 +69,7 @@ function checkVoiceSupport(){
   var SR = getSR();
   if(!SR){
     if(isStandaloneIOS()){
-      return {ok:false, reason:'iOS blokuje rozpoznávání řeči v aplikacích přidaných na plochu. Otevři tuto stránku v Safari (ne přes ikonu na ploše) a hlasové zadávání tam bude fungovat.', critical:true};
+      return {ok:false, reason:'iOS blokuje rozpoznávání řeči v aplikacích přidaných na plochu. Otevři tuto stránku přímo v Safari (zadej adresu, ne ikonu na ploše).', critical:true};
     }
     return {ok:false, reason:'Tento prohlížeč nepodporuje rozpoznávání řeči. Zkus Safari nebo Chrome.', critical:true};
   }
@@ -90,8 +97,12 @@ function speak(text, onEnd){
     u.lang = 'cs-CZ';
     if(czechVoice) u.voice = czechVoice;
     u.rate = 1.05;
-    u.onend = function(){ if(onEnd) onEnd(); };
-    u.onerror = function(){ if(onEnd) onEnd(); };
+    var done = false;
+    var finish = function(){ if(done) return; done=true; if(onEnd) onEnd(); };
+    u.onend = finish;
+    u.onerror = finish;
+    // Watchdog — pokud TTS zůstane viset (známý iOS bug), pokračuj po 4s
+    setTimeout(finish, 4000);
     synth.speak(u);
   } catch(e){ if(onEnd) onEnd(); }
 }
@@ -127,11 +138,18 @@ function parseSpokenNumber(text){
 
 function parseFieldFromText(text){
   text = text.toLowerCase().trim();
-  var bestMatch=null, bestLen=0;
-  Object.keys(FIELD_MAP).forEach(function(key){
-    if(text.indexOf(key)>=0 && key.length>bestLen){ bestMatch=FIELD_MAP[key]; bestLen=key.length; }
-  });
-  return bestMatch;
+  for(var i=0;i<FIELD_KEYS_SORTED.length;i++){
+    var key = FIELD_KEYS_SORTED[i];
+    if(text.indexOf(key) >= 0) return FIELD_MAP[key];
+  }
+  return null;
+}
+
+function parseBoolFromText(text){
+  text = text.toLowerCase();
+  if(/\bano\b/.test(text) || /\bje\b/.test(text) || /\bjo\b/.test(text)) return true;
+  if(/\bne\b/.test(text) || /\bnení\b/.test(text)) return false;
+  return null;
 }
 
 function isStopCommand(text){
@@ -157,13 +175,10 @@ function requestMicPermission(callback){
     });
 }
 
-// ── Spuštění / zastavení celé session ─────────────────────
+// ── Session control ────────────────────────────────────────
 function toggleVoiceSession(){
-  if(sessionActive){
-    stopVoiceSession();
-  } else {
-    startVoiceSession();
-  }
+  if(sessionActive) stopVoiceSession();
+  else startVoiceSession();
 }
 
 function startVoiceSession(){
@@ -171,9 +186,8 @@ function startVoiceSession(){
   if(!support.ok){
     showVoiceToast(support.reason);
     if(support.critical){
-      // Zobraz trvalejší upozornění v indikátoru
       updateVoiceUI('error', support.reason);
-      setTimeout(function(){ updateVoiceUI('idle',''); }, 6000);
+      setTimeout(function(){ if(!sessionActive) updateVoiceUI('idle',''); }, 6000);
     }
     return;
   }
@@ -189,25 +203,39 @@ function startVoiceSession(){
       return;
     }
     speak('Poslouchám. Říkej pole a hodnotu.', function(){
-      listenLoop();
+      runRecognitionCycle('listen');
     });
   });
 }
 
 function stopVoiceSession(){
   sessionActive = false;
-  if(recognition){ try{ recognition.abort(); }catch(e){} }
-  if(restartTimer){ clearTimeout(restartTimer); restartTimer=null; }
+  clearAllTimers();
+  if(recognition){ try{ recognition.onend=null; recognition.onerror=null; recognition.abort(); }catch(e){} }
+  if(synth) try{ synth.cancel(); }catch(e){}
   voicePhase = 'idle';
   updateVoiceUI('idle','');
   speak('Hlasové zadávání ukončeno.');
 }
 
-// ── Kontinuální smyčka poslechu ────────────────────────────
-function listenLoop(){
+function clearAllTimers(){
+  if(restartTimer){ clearTimeout(restartTimer); restartTimer=null; }
+  if(watchdogTimer){ clearTimeout(watchdogTimer); watchdogTimer=null; }
+}
+
+// ── JEDNOTNÁ smyčka rozpoznávání ────────────────────────────
+// mode: 'listen' (čeká pole+hodnota) nebo 'confirm' (čeká ano/ne)
+function runRecognitionCycle(mode){
   if(!sessionActive) return;
   var SR = getSR();
   if(!SR){ stopVoiceSession(); return; }
+
+  clearAllTimers();
+
+  // Ukonči předchozí instanci pokud běží
+  if(recognition){
+    try{ recognition.onend=null; recognition.onerror=null; recognition.onresult=null; recognition.abort(); }catch(e){}
+  }
 
   recognition = new SR();
   recognition.lang = 'cs-CZ';
@@ -215,125 +243,164 @@ function listenLoop(){
   recognition.interimResults = false;
   recognition.maxAlternatives = 3;
 
-  voicePhase = 'listening';
-  updateVoiceUI('listening', '🎤 Poslouchám…');
+  voicePhase = mode === 'confirm' ? 'confirming' : 'listening';
+  updateVoiceUI(voicePhase, mode==='confirm'
+    ? ((FIELD_LABELS[pendingField]||pendingField) + ' = ' + pendingValue + ' — okej?')
+    : '🎤 Poslouchám…');
 
   var gotResult = false;
 
   recognition.onresult = function(event){
     gotResult = true;
+    clearAllTimers();
     var transcript = event.results[0][0].transcript;
-    handleVoiceCommand(transcript);
+    if(mode === 'confirm') processConfirmation(transcript);
+    else processFieldValue(transcript);
   };
+
   recognition.onerror = function(event){
+    if(!sessionActive) return;
     if(event.error === 'no-speech' || event.error === 'aborted'){
-      // Tichý restart smyčky
-      if(sessionActive) restartTimer = setTimeout(listenLoop, 400);
+      restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 350);
       return;
     }
-    if(event.error === 'not-allowed'){
+    if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
       sessionActive = false;
       updateVoiceUI('idle','');
       showVoiceToast('Mikrofon zablokován — povol v nastavení prohlížeče');
       return;
     }
-    // Jiná chyba — zkus restart po chvíli
-    if(sessionActive) restartTimer = setTimeout(listenLoop, 800);
+    // audio-capture, network apod. — zkus restart
+    restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 700);
   };
+
   recognition.onend = function(){
-    if(voicePhase==='listening' && !gotResult && sessionActive){
-      // Žádný výsledek — restart smyčky (uživatel mlčel)
-      restartTimer = setTimeout(listenLoop, 300);
+    if(!sessionActive) return;
+    if(!gotResult){
+      restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 300);
     }
   };
+
+  // Watchdog: pokud recognition "zatuhne" (známý iOS/Android bug), restartuj po 8s
+  watchdogTimer = setTimeout(function(){
+    if(sessionActive && voicePhase===(mode==='confirm'?'confirming':'listening') && !gotResult){
+      try{ recognition.abort(); }catch(e){}
+    }
+  }, 8000);
 
   try{
     recognition.start();
   } catch(e){
-    if(sessionActive) restartTimer = setTimeout(listenLoop, 800);
+    restartTimer = setTimeout(function(){ runRecognitionCycle(mode); }, 700);
   }
 }
 
-function handleVoiceCommand(transcript){
-  if(isStopCommand(transcript)){
-    stopVoiceSession();
-    return;
-  }
+function processFieldValue(transcript){
+  if(isStopCommand(transcript)){ stopVoiceSession(); return; }
 
   var field = parseFieldFromText(transcript);
-  var value = parseSpokenNumber(transcript);
-
-  if(!field || value===null || isNaN(value)){
-    // Nerozpoznáno — krátké upozornění, ale smyčka pokračuje
-    showVoiceToast('Nerozpoznáno: "'+transcript+'" — zkus znovu');
-    speak('Nerozuměla jsem.', function(){
-      if(sessionActive) listenLoop();
+  if(!field){
+    showVoiceToast('Nerozpoznáno pole: "'+transcript+'"');
+    speak('Nerozuměla jsem políčku.', function(){
+      if(sessionActive) runRecognitionCycle('listen');
     });
     return;
   }
 
+  var kind, value;
+  if(field === '__screw__'){
+    kind = 'bool';
+    value = parseBoolFromText(transcript);
+    if(value === null){
+      showVoiceToast('U vrutu řekni ano nebo ne');
+      speak('Vrut — řekni ano nebo ne.', function(){
+        if(sessionActive) runRecognitionCycle('listen');
+      });
+      return;
+    }
+  } else if(field === 'p-vg'){
+    kind = 'vg';
+    value = parseSpokenNumber(transcript);
+    if(value===null || value<1 || value>4){
+      showVoiceToast('Vizuál musí být 1 až 4');
+      speak('Vizuální třída je číslo jedna až čtyři.', function(){
+        if(sessionActive) runRecognitionCycle('listen');
+      });
+      return;
+    }
+    value = Math.round(value);
+  } else {
+    kind = 'number';
+    value = parseSpokenNumber(transcript);
+    if(value===null || isNaN(value)){
+      showVoiceToast('Nerozpoznána hodnota: "'+transcript+'"');
+      speak('Nerozuměla jsem hodnotě.', function(){
+        if(sessionActive) runRecognitionCycle('listen');
+      });
+      return;
+    }
+  }
+
   pendingField = field;
   pendingValue = value;
-  voicePhase = 'confirming';
-  var label = FIELD_LABELS[field] || field;
-  updateVoiceUI('confirming', label+' = '+value+' — okej?');
+  pendingKind = kind;
 
-  speak(label + ' ' + value + '. Okej?', function(){
-    listenForConfirmation();
+  var label = FIELD_LABELS[field] || field;
+  var spokenValue = kind==='bool' ? (value?'ano':'ne') : value;
+  speak(label + ' ' + spokenValue + '. Okej?', function(){
+    if(sessionActive) runRecognitionCycle('confirm');
   });
 }
 
-function listenForConfirmation(){
-  var SR = getSR();
-  if(!SR){ stopVoiceSession(); return; }
-  var confirmRec = new SR();
-  confirmRec.lang = 'cs-CZ';
-  confirmRec.continuous = false;
-  confirmRec.interimResults = false;
+function processConfirmation(transcript){
+  var text = transcript.toLowerCase();
+  var positive = text.indexOf('ano')>=0 || text.indexOf('jo')>=0 || text.indexOf('jasn')>=0 || text.indexOf('okej')>=0 || text.indexOf('ok')>=0;
+  var negative = !positive && text.indexOf('ne')>=0;
 
-  voicePhase = 'confirming';
-  updateVoiceUI('confirming', (FIELD_LABELS[pendingField]||pendingField)+' = '+pendingValue+' — řekni ano/ne');
-
-  confirmRec.onresult = function(event){
-    var text = event.results[0][0].transcript.toLowerCase();
-    if(text.indexOf('ano')>=0 || text.indexOf('jo')>=0 || text.indexOf('jasn')>=0 || text.indexOf('okej')>=0 || text.indexOf('ok')>=0){
-      applyVoiceValue();
-    } else if(text.indexOf('ne')>=0){
-      speak('Dobře, zkus znovu.', function(){
-        if(sessionActive) listenLoop();
-      });
-      showVoiceToast('Zrušeno — řekni hodnotu znovu');
-    } else {
-      // Nerozuměla potvrzení — zkus se zeptat znovu
-      speak('Řekni ano nebo ne.', function(){
-        if(sessionActive) listenForConfirmation();
-      });
-    }
-  };
-  confirmRec.onerror = function(event){
-    if(event.error==='no-speech' && sessionActive){
-      restartTimer = setTimeout(listenForConfirmation, 300);
-      return;
-    }
-    if(sessionActive) restartTimer = setTimeout(listenLoop, 600);
-  };
-  try{ confirmRec.start(); }catch(e){
-    if(sessionActive) restartTimer = setTimeout(listenLoop, 600);
+  if(positive){
+    applyVoiceValue();
+  } else if(negative){
+    speak('Dobře, zkus znovu.', function(){
+      pendingField=null; pendingValue=null; pendingKind=null;
+      if(sessionActive) runRecognitionCycle('listen');
+    });
+    showVoiceToast('Zrušeno — řekni hodnotu znovu');
+  } else {
+    speak('Řekni ano nebo ne.', function(){
+      if(sessionActive) runRecognitionCycle('confirm');
+    });
   }
 }
 
 function applyVoiceValue(){
-  var el = document.getElementById(pendingField);
-  if(el){
-    el.value = pendingValue;
-    el.dispatchEvent(new Event('input', {bubbles:true}));
-    el.dispatchEvent(new Event('change', {bubbles:true}));
+  if(pendingField === '__screw__'){
+    var cb = document.getElementById('cb-screw');
+    if(cb){
+      var want = !!pendingValue;
+      var has = cb.classList.contains('checked');
+      if(want !== has) cb.click(); // využije existující toggle logiku
+    }
+  } else {
+    var el = document.getElementById(pendingField);
+    if(el){
+      el.value = pendingValue;
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+      el.dispatchEvent(new Event('change', {bubbles:true}));
+      // Pro VG pole je potřeba i kliknout na příslušné tlačítko (UI je button-based)
+      if(pendingField === 'p-vg'){
+        var vgBtn = document.querySelector('[data-act="setvg"][data-vg="'+pendingValue+'"]');
+        if(vgBtn) vgBtn.click();
+      }
+    }
   }
+
   var label = FIELD_LABELS[pendingField] || pendingField;
-  showVoiceToast(label+' = '+pendingValue+' ✓ zapsáno');
+  var shown = pendingKind==='bool' ? (pendingValue?'ano':'ne') : pendingValue;
+  showVoiceToast(label+' = '+shown+' ✓ zapsáno');
+
   speak('Zapsáno. Další?', function(){
-    pendingField=null; pendingValue=null;
-    if(sessionActive) listenLoop();
+    pendingField=null; pendingValue=null; pendingKind=null;
+    if(sessionActive) runRecognitionCycle('listen');
   });
 }
 
@@ -368,7 +435,6 @@ function updateVoiceFabVisibility(){
   if(!fab) return;
   var entryActive = document.getElementById('s-entry') && document.getElementById('s-entry').classList.contains('active');
   fab.style.display = entryActive ? '' : 'none';
-  // Pokud opustíme entry screen během session, zastav ji
   if(!entryActive && sessionActive){ stopVoiceSession(); }
 }
 
