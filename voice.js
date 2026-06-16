@@ -51,14 +51,14 @@ var ROZMER_MAP = {
 
 // ── Slovní mapování ostatních polí ───────────────────────
 var WORD_FIELD_MAP = {
-  'šířka b':'clen','šířka':'clen','šíře':'clen',
-  'výška d':'cwid','výška':'cwid','výšku':'cwid',
-  'délka':'p-length','délku':'p-length',
-  'hmotnost':'p-mass','hmotnosti':'p-mass',
-  'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist',
-  'název':'cid',
-  'vizuál':'p-vg',
-  'vrut':'__screw__'
+  'šířka b':'clen','šířka':'clen','šíře':'clen','sirka':'clen','širka':'clen',
+  'výška d':'cwid','výška':'cwid','výšku':'cwid','vyska':'cwid','výsku':'cwid',
+  'délka':'p-length','délku':'p-length','delka':'p-length','delku':'p-length',
+  'hmotnost':'p-mass','hmotnosti':'p-mass','hmotnost je':'p-mass',
+  'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
+  'název':'cid','nazev':'cid',
+  'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
+  'vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__'
 };
 var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
@@ -259,6 +259,49 @@ function parseIntegerWords(text){
 // ── Rozdělení textu na pole + hodnotu ─────────────────────
 var EQUALS_PATTERNS = ['rovná se','rovnáse','rovna se','='];
 
+// ── Fuzzy matching — tolerantní k drobným odchylkám STT ──
+function levenshtein(a, b){
+  var m = a.length, n = b.length;
+  var dp = [];
+  for(var i=0;i<=m;i++) dp.push([i]);
+  for(var j=0;j<=n;j++) dp[0][j]=j;
+  for(var i=1;i<=m;i++){
+    for(var j=1;j<=n;j++){
+      if(a[i-1]===b[j-1]) dp[i][j]=dp[i-1][j-1];
+      else dp[i][j]=1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+// Klíčová slova pro fuzzy fallback — jen základní tvary, ne všechny varianty
+var FUZZY_BASE_WORDS = [
+  {word:'šířka', field:'clen'}, {word:'sirka', field:'clen'},
+  {word:'výška', field:'cwid'}, {word:'vyska', field:'cwid'},
+  {word:'délka', field:'p-length'}, {word:'delka', field:'p-length'},
+  {word:'hmotnost', field:'p-mass'},
+  {word:'vlhkost', field:'p-moist'},
+  {word:'vizuál', field:'p-vg'}, {word:'vizual', field:'p-vg'},
+  {word:'vrut', field:'__screw__'}
+];
+
+function fuzzyFindField(text){
+  var words = text.toLowerCase().trim().split(/\s+/);
+  var bestField = null, bestDist = 3; // tolerance max 2 znaky odchylka
+  words.forEach(function(w){
+    if(w.length < 3) return; // krátká slova přeskoč (čísla, spojky)
+    FUZZY_BASE_WORDS.forEach(function(fw){
+      var dist = levenshtein(w, fw.word);
+      var threshold = Math.max(1, Math.floor(fw.word.length * 0.3)); // tolerance ~30% délky slova
+      if(dist <= threshold && dist < bestDist){
+        bestDist = dist;
+        bestField = fw.field;
+      }
+    });
+  });
+  return bestField;
+}
+
 function parseCommand(text){
   text = text.toLowerCase().trim();
 
@@ -268,13 +311,19 @@ function parseCommand(text){
   // 2. Zkus "plocha X rozměr Y" formát (delší, ale jednoznačný)
   if(!field) field = findPlochaRozmer(text);
 
-  // 3. Pokud ne, zkus slovní pole (šířka, výška, vrut...)
+  // 3. Pokud ne, zkus slovní pole (šířka, výška, vrut...) — přesná shoda
   if(!field){
     for(var i=0;i<WORD_FIELD_KEYS_SORTED.length;i++){
       var key = WORD_FIELD_KEYS_SORTED[i];
       if(text.indexOf(key) >= 0){ field = WORD_FIELD_MAP[key]; break; }
     }
   }
+
+  // 4. Fuzzy fallback — STT mohlo slovo zkomolit (vizuál→vyzuál apod.)
+  if(!field){
+    field = fuzzyFindField(text);
+  }
+
   if(!field) return {field:null, valueText:text};
 
   // 3. Najdi hodnotu — po oddělovači, nebo poslední číslo ve větě
@@ -370,6 +419,7 @@ function startVoiceSession(){
       return;
     }
     beepOk();
+    startSessionHeartbeat(cycleGeneration);
     runRecognitionCycle(cycleGeneration);
   });
 }
@@ -409,6 +459,21 @@ function runRecognitionCycle(gen){
   }, startDelay);
 }
 
+// ── Session-level watchdog — pokud cyklus "zamrzne" (žádný onend/onerror
+// dlouho po sobě), restartuje celou session od nuly. Záchranná síť proti
+// platformovým bugům, kdy recognition.start() přestane fungovat ─────────
+var sessionHeartbeat = null;
+function startSessionHeartbeat(gen){
+  if(sessionHeartbeat) clearInterval(sessionHeartbeat);
+  sessionHeartbeat = setInterval(function(){
+    if(!sessionActive || gen !== cycleGeneration){ clearInterval(sessionHeartbeat); return; }
+    if(!recognition){
+      dlog('💔 heartbeat: recognition chybí, restartuji cyklus','err');
+      runRecognitionCycle(gen);
+    }
+  }, 8000);
+}
+
 function actuallyStartRecognition(gen){
   var SR = getSR();
   recognition = new SR();
@@ -432,7 +497,12 @@ function actuallyStartRecognition(gen){
     clearAllTimers();
     var transcript = event.results[0][0].transcript;
     dlog('📥 onresult: "' + transcript + '"');
-    processCommand(transcript, gen);
+    try{
+      processCommand(transcript, gen);
+    } catch(err){
+      dlog('💥 processCommand selhal: '+err.message,'err');
+      if(sessionActive) runRecognitionCycle(gen);
+    }
   };
 
   recognition.onerror = function(event){
