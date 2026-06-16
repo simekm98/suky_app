@@ -82,6 +82,23 @@ var FIELD_LABELS = {
 // ── Přímý formát "AS1", "as 1", "a s jedna" (fonetická normalizace) ──
 function findDirectFieldCode(text){
   var t = ' ' + text.toLowerCase() + ' ';
+
+  // Nejdřív ošetři SLITÉ varianty písmeno+číslovka bez mezery (STT to často spojí):
+  // "ádva"→"á dva", "déčtyři"→"dé čtyři", "ajedna"→"a jedna" apod.
+  // Zkusíme všechny kombinace plocha-klíčů + číslovek a vložíme mezeru.
+  var plochaKeys = Object.keys(PLOCHA_MAP).sort(function(a,b){return b.length-a.length;});
+  var numWords = ['jedna','jeden','dva','dvě','tři','čtyři'];
+  plochaKeys.forEach(function(pk){
+    numWords.forEach(function(nw){
+      var glued = pk + nw;
+      // \b nefunguje spolehlivě s diakritikou (á,é) v JS regexu — používáme
+      // explicitní mezery jako hranice místo \b.
+      var re = new RegExp('( |^)' + glued + '( |$)', 'g');
+      t = t.replace(re, '$1' + pk + ' ' + nw + '$2');
+    });
+    // i slité s číslicí: "a1"→ponecháme (řeší se case B níže), ale "a 1" již má mezeru
+  });
+
   t = t.replace(/ jedna /g, ' 1 ').replace(/ jeden /g,' 1 ').replace(/ dva /g, ' 2 ').replace(/ dvě /g, ' 2 ')
        .replace(/ tři /g, ' 3 ').replace(/ čtyři /g, ' 4 ');
 
@@ -90,8 +107,9 @@ function findDirectFieldCode(text){
   var words = t.trim().split(/\s+/);
 
   // Nový krátký formát "A1"-"D4" (bez S/L) — odpovídá UI labelům A1/A2/A3/A4
-  // 1=S1, 2=S2, 3=L1, 4=L2. Použijeme PLOCHA_MAP lookup (tolerantní k "áá","bé","cé" výslovnosti)
-  // místo striktního regexu [abcd] — STT často přepíše hláskovaná písmena foneticky.
+  // 1=S1, 2=S2, 3=L1, 4=L2. Použijeme PLOCHA_MAP lookup (tolerantní k "áá","bé","cé"
+  // výslovnosti) místo striktního regexu [abcd] — STT často přepíše hláskovaná
+  // písmena foneticky, a slovní číslovky (dva/čtyři) až výše ošetřeny rozdělením.
   var m4 = null;
 
   // Případ A: písmeno a číslo jsou oddělená slova: "á", "1", "30" → words[0]="á", words[1]="1"
@@ -503,7 +521,7 @@ function startSessionHeartbeat(gen){
       dlog('💔 heartbeat: recognition chybí, restartuji cyklus','err');
       runRecognitionCycle(gen);
     }
-  }, 8000);
+  }, 15000);
 }
 
 function actuallyStartRecognition(gen){
@@ -567,7 +585,7 @@ function actuallyStartRecognition(gen){
       dlog('⏱ watchdog timeout — abort','err');
       try{ recognition.abort(); }catch(e){}
     }
-  }, 6000);
+  }, 12000);
 
   try{ recognition.start(); dlog('✓ recognition.start() OK'); }
   catch(e){ dlog('❌ recognition.start() THREW: '+e.message,'err'); if(sessionActive && gen===cycleGeneration) runRecognitionCycle(gen); }
@@ -580,8 +598,11 @@ function actuallyStartRecognition(gen){
 function continueOrRefresh(gen){
   if(!sessionActive) return;
   successfulCyclesCount++;
-  if(successfulCyclesCount >= 12){
-    dlog('🔄 periodický refresh session (12 cyklů) — obnovuji mikrofon','ok');
+  // Limit zvýšen na 30 — původních 12 bylo příliš nízké a způsobovalo
+  // nečekaný plný restart mikrofonu uprostřed běžného používání (vypadalo
+  // to jako "appka po pár zadáních zkolabuje").
+  if(successfulCyclesCount >= 30){
+    dlog('🔄 periodický refresh session (30 cyklů) — obnovuji mikrofon','ok');
     successfulCyclesCount = 0;
     var wasActive = sessionActive;
     stopVoiceSession();
