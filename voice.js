@@ -7,6 +7,8 @@
 'use strict';
 
 var recognition = null;
+var synth = window.speechSynthesis;
+var czechVoice = null;
 var sessionActive = false;
 var voicePhase = 'idle';
 var pendingField = null;
@@ -17,6 +19,35 @@ var restartTimer = null;
 var watchdogTimer = null;
 var cycleGeneration = 0;
 var audioCtxBeep = null;
+
+function pickCzechVoice(){
+  if(!synth) return null;
+  var voices = synth.getVoices();
+  return voices.find(function(v){ return v.lang==='cs-CZ'; })
+      || voices.find(function(v){ return v.lang && v.lang.indexOf('cs')===0; }) || null;
+}
+if(synth){
+  synth.onvoiceschanged = function(){ czechVoice = pickCzechVoice(); };
+  czechVoice = pickCzechVoice();
+}
+
+// Mluví KRÁTCE — jen pole a hodnotu, žádné věty navíc
+function speak(text, onEnd){
+  if(!synth){ if(onEnd) onEnd(); return; }
+  try{
+    synth.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'cs-CZ';
+    if(czechVoice) u.voice = czechVoice;
+    u.rate = 1.3; // rychlá řeč
+    var done = false;
+    var finish = function(){ if(done) return; done=true; if(onEnd) onEnd(); };
+    u.onend = finish;
+    u.onerror = finish;
+    setTimeout(finish, 2200); // watchdog — pokud TTS zůstane viset
+    synth.speak(u);
+  } catch(e){ if(onEnd) onEnd(); }
+}
 
 // ── Viditelný debug panel (funguje i na telefonu bez připojení k PC) ──
 function dlog(msg, cls){
@@ -462,9 +493,15 @@ function processFieldValue(transcript, gen){
   pendingValue = value;
   pendingKind = kind;
 
-  // Spusť poslech HNED, pípnutí pošli asynchronně až poté (aby nekolidovalo s mikrofonem)
-  runRecognitionCycle('confirm', gen);
-  setTimeout(beepOk, 30);
+  // Přečti zpět "pole hodnota" — uživatel musí slyšet co appka rozpoznala
+  // Teprve PO dokončení řeči spusť poslech na ano/ne
+  var label = (FIELD_LABELS_PLOCHA[field] || FIELD_LABELS[field] || field);
+  var spokenValue = kind==='bool' ? (value?'ano':'ne') : value;
+  dlog('🔊 říkám: "'+label+' '+spokenValue+'"');
+  speak(label + ' ' + spokenValue, function(){
+    dlog('🔊 řeč dokončena, spouštím poslech na ano/ne');
+    runRecognitionCycle('confirm', gen);
+  });
 }
 
 function processConfirmation(transcript, gen){
