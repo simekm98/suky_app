@@ -1,51 +1,37 @@
 // ═══════════════════════════════════════════════════════════
-//  HLASOVÉ ZADÁVÁNÍ — WoodGrader 26 (čeština) — RYCHLÁ VERZE
-//  Formát: "POLE rovná se HODNOTA" / "POLE HODNOTA" / "POLE = HODNOTA"
-//  Fonetická normalizace pro AS1/BS1/CS1/DS1/AL1... (eska jedna, á es jedna…)
+//  HLASOVÉ ZADÁVÁNÍ — WoodGrader 26 — REAL-TIME VERZE
+//  Formát: "plocha A rozměr jedna rovná se 20"
+//  Bez TTS prodlev — jen krátký pípnutí + vizuální feedback
 // ═══════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
 var recognition = null;
-var synth = window.speechSynthesis;
 var sessionActive = false;
 var voicePhase = 'idle';
 var pendingField = null;
 var pendingValue = null;
 var pendingKind = null;
-var czechVoice = null;
 var micPermissionGranted = false;
 var restartTimer = null;
 var watchdogTimer = null;
 var cycleGeneration = 0;
+var audioCtxBeep = null;
 
-// ── Fonetická normalizace ────────────────────────────────
-// Čeština STT přepíše "AS1" různě: "eska jedna", "á es jedna", "as jedna", "asjedna"...
-// Strategie: odstraň mezery a diakritiku, najdi vzor [a-d][sl][1-2]
-function normalizePhonetic(text){
-  var t = ' ' + text.toLowerCase() + ' ';
-  // Nahraď slovní hláskování písmen na jejich grafém (s mezerami pro spolehlivé hranice slov)
-  t = t.replace(/ á /g, ' a ').replace(/ bé /g, ' b ').replace(/ cé /g, ' c ').replace(/ dé /g, ' d ');
-  t = t.replace(/ eska /g, ' s ').replace(/ es /g, ' s ').replace(/ el /g, ' l ');
-  // Slovní číslovky 1/2 v kontextu kódu pole
-  t = t.replace(/ jedna /g, ' 1 ').replace(/ jeden /g,' 1 ').replace(/ dva /g, ' 2 ').replace(/ dvě /g, ' 2 ');
-  return t;
-}
-
-// Najde kód pole typu "as1","bs2","al1" atd. — libovolná kombinace mezer mezi písmeny
-function findFieldCode(text){
-  var norm = normalizePhonetic(text);
-  var compact = norm.replace(/\s+/g, '');
-  var m = compact.match(/([abcd])(s|l)(1|2)/);
-  if(m) return m[1] + m[2] + m[3];
-  return null;
-}
+// ── Mapování "plocha X rozměr Y" ──────────────────────────
+var PLOCHA_MAP = {'a':'a','á':'a','b':'b','bé':'b','c':'c','cé':'c','d':'d','dé':'d'};
+var ROZMER_MAP = {
+  '1':'1','jedna':'1','jeden':'1','první':'1',
+  '2':'2','dva':'2','dvě':'2','druhý':'2',
+  'l1':'l1','l 1':'l1','el jedna':'l1','l jedna':'l1','délka jedna':'l1','délka 1':'l1',
+  'l2':'l2','l 2':'l2','el dva':'l2','l dva':'l2','délka dva':'l2','délka 2':'l2'
+};
 
 // ── Slovní mapování ostatních polí ───────────────────────
 var WORD_FIELD_MAP = {
   'šířka':'clen','šíře':'clen',
   'výška':'cwid','výšku':'cwid',
-  'délka':'p-length','délku':'p-length',
+  'délka desky':'p-length','délku desky':'p-length',
   'hmotnost':'p-mass','váha':'p-mass','hmotnosti':'p-mass','vaha':'p-mass',
   'vlhkost':'p-moist','vlhkosti':'p-moist',
   'název':'cid','jméno':'cid','identifikace':'cid',
@@ -56,11 +42,65 @@ var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ ret
 
 var FIELD_LABELS = {
   'clen':'šířka','cwid':'výška','p-length':'délka','p-mass':'hmotnost','p-moist':'vlhkost',
-  'as1':'AS1','as2':'AS2','al1':'AL1','al2':'AL2',
-  'bs1':'BS1','bs2':'BS2','bl1':'BL1','bl2':'BL2',
-  'cs1':'CS1','cs2':'CS2','cl1':'CL1','cl2':'CL2',
-  'ds1':'DS1','ds2':'DS2','dl1':'DL1','dl2':'DL2',
+  'as1':'A1','as2':'A2','al1':'AL1','al2':'AL2',
+  'bs1':'B1','bs2':'B2','bl1':'BL1','bl2':'BL2',
+  'cs1':'C1','cs2':'C2','cl1':'CL1','cl2':'CL2',
+  'ds1':'D1','ds2':'D2','dl1':'DL1','dl2':'DL2',
   'cid':'název','p-vg':'vizuál','__screw__':'vrut'
+};
+
+// ── Nalezení "plocha X rozměr Y" ve textu ─────────────────
+function findPlochaRozmer(text){
+  var t = ' ' + text.toLowerCase() + ' ';
+  // Najdi "plocha"
+  var plochaIdx = t.indexOf('plocha');
+  if(plochaIdx < 0) return null;
+
+  var after = t.substring(plochaIdx + 6).trim();
+  // Najdi písmeno plochy (první slovo)
+  var words = after.split(/\s+/);
+  if(!words.length) return null;
+  var plochaLetter = PLOCHA_MAP[words[0]];
+  if(!plochaLetter) return null;
+
+  // Najdi "rozměr" nebo přímo číslo po něm
+  var rest = words.slice(1).join(' ');
+  var rozmerIdx = rest.indexOf('rozměr');
+  var rozmerPart;
+  if(rozmerIdx >= 0){
+    rozmerPart = rest.substring(rozmerIdx + 6).trim();
+  } else {
+    rozmerPart = rest; // "plocha A jedna" bez slova rozměr
+  }
+
+  // Zkus najít L-variant nejdřív (delší shoda), pak číslo
+  var rozmerWords = rozmerPart.split(/\s+/);
+  var rozmerKey = null;
+
+  // Zkus 2-slovní kombinace pro L (délka jedna, el jedna...)
+  if(rozmerWords.length >= 2){
+    var combo2 = rozmerWords[0] + ' ' + rozmerWords[1];
+    if(ROZMER_MAP[combo2]) rozmerKey = ROZMER_MAP[combo2];
+  }
+  if(!rozmerKey && rozmerWords.length >= 1 && ROZMER_MAP[rozmerWords[0]]){
+    rozmerKey = ROZMER_MAP[rozmerWords[0]];
+  }
+  // Přímá číslice
+  if(!rozmerKey){
+    var numMatch = rozmerPart.match(/^[12]/);
+    if(numMatch) rozmerKey = numMatch[0];
+  }
+  if(!rozmerKey) return null;
+
+  var suffix = rozmerKey.indexOf('l') === 0 ? rozmerKey : 's' + rozmerKey; // '1'->'s1', 'l1'->'l1'
+  return plochaLetter + suffix; // např. "as1", "al1"
+}
+
+var FIELD_LABELS_PLOCHA = {
+  'as1':'A1','as2':'A2','al1':'AL1','al2':'AL2',
+  'bs1':'B1','bs2':'B2','bl1':'BL1','bl2':'BL2',
+  'cs1':'C1','cs2':'C2','cl1':'CL1','cl2':'CL2',
+  'ds1':'D1','ds2':'D2','dl1':'DL1','dl2':'DL2'
 };
 
 // ── Detekce podpory ────────────────────────────────────────
@@ -79,34 +119,21 @@ function checkVoiceSupport(){
   return {ok:true};
 }
 
-// ── TTS — zkráceno, bez zbytečných vět ───────────────────
-function pickCzechVoice(){
-  if(!synth) return null;
-  var voices = synth.getVoices();
-  return voices.find(function(v){ return v.lang==='cs-CZ'; })
-      || voices.find(function(v){ return v.lang && v.lang.indexOf('cs')===0; }) || null;
-}
-if(synth){
-  synth.onvoiceschanged = function(){ czechVoice = pickCzechVoice(); };
-  czechVoice = pickCzechVoice();
-}
-
-function speak(text, onEnd){
-  if(!synth){ if(onEnd) onEnd(); return; }
+// ── Krátké pípnutí místo TTS (okamžité, žádná prodleva) ───
+function beep(freq, dur){
   try{
-    synth.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'cs-CZ';
-    if(czechVoice) u.voice = czechVoice;
-    u.rate = 1.25; // rychlejší řeč
-    var done = false;
-    var finish = function(){ if(done) return; done=true; if(onEnd) onEnd(); };
-    u.onend = finish;
-    u.onerror = finish;
-    setTimeout(finish, 2500); // kratší watchdog
-    synth.speak(u);
-  } catch(e){ if(onEnd) onEnd(); }
+    if(!audioCtxBeep) audioCtxBeep = new (window.AudioContext||window.webkitAudioContext)();
+    var osc = audioCtxBeep.createOscillator();
+    var gain = audioCtxBeep.createGain();
+    osc.frequency.value = freq;
+    osc.connect(gain); gain.connect(audioCtxBeep.destination);
+    gain.gain.setValueAtTime(0.15, audioCtxBeep.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtxBeep.currentTime + dur);
+    osc.start(); osc.stop(audioCtxBeep.currentTime + dur);
+  } catch(e){}
 }
+function beepOk(){ beep(880, 0.08); }
+function beepErr(){ beep(220, 0.12); }
 
 // ── Parsování čísla ──────────────────────────────────────────
 var WORD_NUMS = {
@@ -143,11 +170,10 @@ var EQUALS_PATTERNS = ['rovná se','rovnáse','rovna se','='];
 function parseCommand(text){
   text = text.toLowerCase().trim();
 
-  // 1. Zkus najít kód pole (AS1, BS2, atd.)
-  var code = findFieldCode(text);
-  var field = code || null;
+  // 1. Zkus "plocha X rozměr Y" formát (preferovaný, nejspolehlivější)
+  var field = findPlochaRozmer(text);
 
-  // 2. Pokud kód nenalezen, zkus slovní pole
+  // 2. Pokud ne, zkus slovní pole (šířka, výška, vrut...)
   if(!field){
     for(var i=0;i<WORD_FIELD_KEYS_SORTED.length;i++){
       var key = WORD_FIELD_KEYS_SORTED[i];
@@ -156,9 +182,8 @@ function parseCommand(text){
   }
   if(!field) return {field:null, valueText:text};
 
-  // 3. Najdi část textu PO poli (oddělovač nebo prostě zbytek)
+  // 3. Najdi hodnotu — po oddělovači, nebo poslední číslo ve větě
   var valueText = text;
-  // Zkus najít oddělovač
   var splitIdx = -1, splitLen = 0;
   EQUALS_PATTERNS.forEach(function(p){
     var idx = text.indexOf(p);
@@ -167,10 +192,12 @@ function parseCommand(text){
   if(splitIdx >= 0){
     valueText = text.substring(splitIdx+splitLen).trim();
   } else {
-    // Bez oddělovače — vezmi všechny číslice z celého textu (poslední číslo ve větě je obvykle hodnota)
     var allNums = text.match(/-?\d+[.,]?\d*/g);
     if(allNums && allNums.length){
       valueText = allNums[allNums.length-1];
+    } else {
+      // Zkus slovní čísla na konci věty
+      valueText = text;
     }
   }
   return {field:field, valueText:valueText};
@@ -229,9 +256,8 @@ function startVoiceSession(){
       showVoiceToast(errMsg || 'Mikrofon nedostupný');
       return;
     }
-    // Krátké uvítání, hned poslouchej
-    var gen = cycleGeneration;
-    runRecognitionCycle('listen', gen);
+    beepOk();
+    runRecognitionCycle('listen', cycleGeneration);
   });
 }
 
@@ -240,7 +266,6 @@ function stopVoiceSession(){
   cycleGeneration++;
   clearAllTimers();
   if(recognition){ try{ recognition.onend=null; recognition.onerror=null; recognition.onresult=null; recognition.abort(); }catch(e){} }
-  if(synth) try{ synth.cancel(); }catch(e){}
   voicePhase = 'idle';
   updateVoiceUI('idle','');
 }
@@ -250,7 +275,7 @@ function clearAllTimers(){
   if(watchdogTimer){ clearTimeout(watchdogTimer); watchdogTimer=null; }
 }
 
-// ── JEDNOTNÁ smyčka rozpoznávání ────────────────────────────
+// ── JEDNOTNÁ smyčka rozpoznávání — minimální zpoždění ─────
 function runRecognitionCycle(mode, gen){
   if(!sessionActive || gen !== cycleGeneration) return;
   var SR = getSR();
@@ -262,12 +287,16 @@ function runRecognitionCycle(mode, gen){
     recognition = null;
   }
 
-  // Minimální nutné zpoždění (iOS potřebuje trochu, jinak konflikt audio session)
-  var startDelay = isIOSDevice() ? 150 : 20;
-  restartTimer = setTimeout(function(){
-    if(!sessionActive || gen !== cycleGeneration) return;
+  // Minimální nutné zpoždění — iOS potřebuje trochu málo, jinde téměř nic
+  var startDelay = isIOSDevice() ? 80 : 0;
+  if(startDelay === 0){
     actuallyStartRecognition(mode, gen);
-  }, startDelay);
+  } else {
+    restartTimer = setTimeout(function(){
+      if(!sessionActive || gen !== cycleGeneration) return;
+      actuallyStartRecognition(mode, gen);
+    }, startDelay);
+  }
 }
 
 function actuallyStartRecognition(mode, gen){
@@ -281,7 +310,7 @@ function actuallyStartRecognition(mode, gen){
   voicePhase = mode === 'confirm' ? 'confirming' : 'listening';
   updateVoiceUI(voicePhase, mode==='confirm'
     ? ((FIELD_LABELS[pendingField]||pendingField) + ' = ' + pendingValue + ' — ano/ne?')
-    : '🎤 AS1 = 20 …');
+    : '🎤 plocha A rozměr 1 = 20');
 
   var gotResult = false;
 
@@ -326,8 +355,8 @@ function processFieldValue(transcript, gen){
 
   var parsed = parseCommand(transcript);
   if(!parsed.field){
-    showVoiceToast('Nerozpoznáno: "'+transcript+'" — zkus "AS1 = 20"');
-    // Žádné TTS — okamžitě poslouchej dál (rychlost)
+    beepErr();
+    showVoiceToast('Nerozpoznáno: "'+transcript+'"');
     if(sessionActive) runRecognitionCycle('listen', gen);
     return;
   }
@@ -338,40 +367,25 @@ function processFieldValue(transcript, gen){
   if(field === '__screw__'){
     kind = 'bool';
     value = parseBoolFromText(parsed.valueText);
-    if(value === null){
-      showVoiceToast('Vrut: řekni ano nebo ne');
-      if(sessionActive) runRecognitionCycle('listen', gen);
-      return;
-    }
+    if(value === null){ beepErr(); showVoiceToast('Vrut: ano nebo ne'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
   } else if(field === 'p-vg'){
     kind = 'vg';
     value = parseSpokenNumber(parsed.valueText);
-    if(value===null || value<1 || value>4){
-      showVoiceToast('Vizuál: číslo 1 až 4');
-      if(sessionActive) runRecognitionCycle('listen', gen);
-      return;
-    }
+    if(value===null || value<1 || value>4){ beepErr(); showVoiceToast('Vizuál: 1 až 4'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
     value = Math.round(value);
   } else {
     kind = 'number';
     value = parseSpokenNumber(parsed.valueText);
-    if(value===null || isNaN(value)){
-      showVoiceToast('Nerozpoznána hodnota v: "'+transcript+'"');
-      if(sessionActive) runRecognitionCycle('listen', gen);
-      return;
-    }
+    if(value===null || isNaN(value)){ beepErr(); showVoiceToast('Nerozpoznána hodnota'); if(sessionActive) runRecognitionCycle('listen', gen); return; }
   }
 
   pendingField = field;
   pendingValue = value;
   pendingKind = kind;
 
-  var label = FIELD_LABELS[field] || field;
-  var spokenValue = kind==='bool' ? (value?'ano':'ne') : value;
-  // Krátké TTS potvrzení, hned poslouchej na ano/ne
-  speak(label + ' ' + spokenValue + '?', function(){
-    if(sessionActive) runRecognitionCycle('confirm', gen);
-  });
+  // Okamžitě poslouchej potvrzení — bez TTS, jen pípnutí + vizuál
+  beepOk();
+  runRecognitionCycle('confirm', gen);
 }
 
 function processConfirmation(transcript, gen){
@@ -382,11 +396,12 @@ function processConfirmation(transcript, gen){
   if(positive){
     applyVoiceValue(gen);
   } else if(negative){
-    showVoiceToast('Zrušeno — zkus znovu');
+    beepErr();
+    showVoiceToast('Zrušeno');
     pendingField=null; pendingValue=null; pendingKind=null;
     if(sessionActive) runRecognitionCycle('listen', gen);
   } else {
-    // Nerozuměl — rovnou poslouchej znovu na ano/ne (bez TTS prodlevy)
+    // Nerozuměl ano/ne — poslouchej dál (žádná prodleva)
     if(sessionActive) runRecognitionCycle('confirm', gen);
   }
 }
@@ -412,12 +427,13 @@ function applyVoiceValue(gen){
     }
   }
 
-  var label = FIELD_LABELS[pendingField] || pendingField;
+  var label = (FIELD_LABELS_PLOCHA[pendingField] || FIELD_LABELS[pendingField] || pendingField);
   var shown = pendingKind==='bool' ? (pendingValue?'ano':'ne') : pendingValue;
+  beepOk();
   showVoiceToast(label+' = '+shown+' ✓');
 
   pendingField=null; pendingValue=null; pendingKind=null;
-  // Bez TTS — okamžitě poslouchej dál (maximální rychlost)
+  // Okamžitě poslouchej další pole
   if(sessionActive) runRecognitionCycle('listen', gen);
 }
 
@@ -443,7 +459,7 @@ function showVoiceToast(msg){
   var t=document.getElementById('toast');
   if(!t) return;
   t.textContent=msg; t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show');},2200);
+  setTimeout(function(){t.classList.remove('show');},1600);
 }
 
 function updateVoiceFabVisibility(){
