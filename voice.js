@@ -49,6 +49,18 @@ var FIELD_LABELS = {
   'cid':'název','p-vg':'vizuál','__screw__':'vrut'
 };
 
+// ── Přímý formát "AS1", "as 1", "a s jedna" (fonetická normalizace) ──
+function findDirectFieldCode(text){
+  var t = ' ' + text.toLowerCase() + ' ';
+  t = t.replace(/ á /g, ' a ').replace(/ bé /g, ' b ').replace(/ cé /g, ' c ').replace(/ dé /g, ' d ');
+  t = t.replace(/ eska /g, ' s ').replace(/ es /g, ' s ').replace(/ el /g, ' l ');
+  t = t.replace(/ jedna /g, ' 1 ').replace(/ jeden /g,' 1 ').replace(/ dva /g, ' 2 ').replace(/ dvě /g, ' 2 ');
+  var compact = t.replace(/\s+/g, '');
+  var m = compact.match(/([abcd])(s|l)(1|2)/);
+  if(m) return m[1] + m[2] + m[3];
+  return null;
+}
+
 // ── Nalezení "plocha X rozměr Y" ve textu ─────────────────
 function findPlochaRozmer(text){
   var t = ' ' + text.toLowerCase() + ' ';
@@ -78,6 +90,7 @@ function findPlochaRozmer(text){
   var rozmerKey = null;
 
   // Zkus 2-slovní kombinace pro L (délka jedna, el jedna...)
+
   if(rozmerWords.length >= 2){
     var combo2 = rozmerWords[0] + ' ' + rozmerWords[1];
     if(ROZMER_MAP[combo2]) rozmerKey = ROZMER_MAP[combo2];
@@ -133,7 +146,11 @@ function beep(freq, dur){
   } catch(e){}
 }
 function beepOk(){ beep(880, 0.08); }
-function beepErr(){ beep(220, 0.12); }
+function beepErr(){
+  beep(220, 0.09);
+  setTimeout(function(){ beep(220, 0.09); }, 120);
+  setTimeout(function(){ beep(220, 0.09); }, 240);
+}
 
 // ── Parsování čísla ──────────────────────────────────────────
 var WORD_NUMS = {
@@ -170,10 +187,13 @@ var EQUALS_PATTERNS = ['rovná se','rovnáse','rovna se','='];
 function parseCommand(text){
   text = text.toLowerCase().trim();
 
-  // 1. Zkus "plocha X rozměr Y" formát (preferovaný, nejspolehlivější)
-  var field = findPlochaRozmer(text);
+  // 1. Zkus přímý kód "AS1", "as 1", "a s jedna" (nejrychlejší, krátký formát)
+  var field = findDirectFieldCode(text);
 
-  // 2. Pokud ne, zkus slovní pole (šířka, výška, vrut...)
+  // 2. Zkus "plocha X rozměr Y" formát (delší, ale jednoznačný)
+  if(!field) field = findPlochaRozmer(text);
+
+  // 3. Pokud ne, zkus slovní pole (šířka, výška, vrut...)
   if(!field){
     for(var i=0;i<WORD_FIELD_KEYS_SORTED.length;i++){
       var key = WORD_FIELD_KEYS_SORTED[i];
