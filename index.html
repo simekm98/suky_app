@@ -252,15 +252,15 @@ canvas{display:block;width:100%;height:72px}
       <div class="clbl">Deska</div>
       <div class="frow" style="margin-bottom:8px">
         <div class="fld wide"><label>Název</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="fld"><label>Šířka b (mm)</label><input id="clen" type="number" value="" min="1" inputmode="decimal"></div>
-        <div class="fld"><label>Výška d (mm)</label><input id="cwid" type="number" value="" min="1" step="0.1" inputmode="decimal"></div>
+        <div class="fld"><label>Šířka b (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal"></div>
+        <div class="fld"><label>Výška d (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal"></div>
       </div>
       <div class="frow" id="row-lm">
-        <div class="fld opt-field" data-opt="length"><label>Délka (mm)</label><input id="p-length" type="number" min="1" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="mass"><label>Hmotnost (g)</label><input id="p-mass" type="number" min="0" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="length"><label>Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="mass"><label>Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—"></div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-extra">
-        <div class="fld opt-field" data-opt="moisture"><label>Vlhkost w (%)</label><input id="p-moist" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="moisture"><label>Vlhkost w (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>
         <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
           <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px">Vizuál</label>
           <div style="display:flex;gap:6px" id="vg-row">
@@ -312,56 +312,56 @@ canvas{display:block;width:100%;height:72px}
       <div class="fc" id="fc-a">
         <div class="ft">A — horní</div>
         <div class="ipair">
-          <div class="ic"><span>A1</span><input id="as1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic"><span>A2</span><input id="as2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>A1</span><input id="as1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>A2</span><input id="as2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
         </div>
         <div id="lp-a">
           <div class="lbl-pair"><div class="lsub">A3</div><div class="lsub">A4</div></div>
           <div class="ipair">
-            <div class="ic"><input id="al1" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="al2" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
           </div>
         </div>
       </div>
       <div class="fc" id="fc-b">
         <div class="ft">B — levá</div>
         <div class="ipair">
-          <div class="ic"><span>B1</span><input id="bs1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic"><span>B2</span><input id="bs2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>B1</span><input id="bs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>B2</span><input id="bs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
         </div>
         <div id="lp-b">
           <div class="lbl-pair"><div class="lsub">B3</div><div class="lsub">B4</div></div>
           <div class="ipair">
-            <div class="ic"><input id="bl1" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="bl2" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
           </div>
         </div>
       </div>
       <div class="fc" id="fc-c">
         <div class="ft">C — dolní</div>
         <div class="ipair">
-          <div class="ic"><span>C1</span><input id="cs1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic"><span>C2</span><input id="cs2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>C1</span><input id="cs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>C2</span><input id="cs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
         </div>
         <div id="lp-c">
           <div class="lbl-pair"><div class="lsub">C3</div><div class="lsub">C4</div></div>
           <div class="ipair">
-            <div class="ic"><input id="cl1" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="cl2" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
           </div>
         </div>
       </div>
       <div class="fc" id="fc-d">
         <div class="ft">D — pravá</div>
         <div class="ipair">
-          <div class="ic"><span>D1</span><input id="ds1" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic"><span>D2</span><input id="ds2" type="number" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>D1</span><input id="ds1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
+          <div class="ic"><span>D2</span><input id="ds2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
         </div>
         <div id="lp-d">
           <div class="lbl-pair"><div class="lsub">D3</div><div class="lsub">D4</div></div>
           <div class="ipair">
-            <div class="ic"><input id="dl1" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="dl2" type="number" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+            <div class="ic"><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
           </div>
         </div>
       </div>
@@ -541,10 +541,10 @@ function resetVG(){
 var detailBi=-1; // index desky v detail screenu
 var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true};
 
-function gn(id){var v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;}
+function gn(id){var raw=document.getElementById(id).value;var v=parseFloat(String(raw).replace(',','.'));return isNaN(v)?null:v;}
 function gs(id){var v=document.getElementById(id).value;return v||null;}
-function getB(){return parseFloat(document.getElementById('clen').value)||157;}
-function getD(){return parseFloat(document.getElementById('cwid').value)||50;}
+function getB(){return parseFloat(String(document.getElementById('clen').value).replace(',','.'))||157;}
+function getD(){return parseFloat(String(document.getElementById('cwid').value).replace(',','.'))||50;}
 function getId(){return document.getElementById('cid').value||'?';}
 
 function setVGDisplay(val){
@@ -942,13 +942,13 @@ function renderDetailBody(bi){
   html+='<div class="card"><div class="clbl">Parametry desky</div>';
   html+='<div class="frow" style="margin-bottom:8px">';
   html+='<div class="fld wide"><label>Název</label><input id="d-id" value="'+escH(bd.id)+'" autocomplete="off"></div>';
-  html+='<div class="fld"><label>Šířka b (mm)</label><input id="d-b" type="number" value="'+bd.b+'" min="1" inputmode="decimal"></div>';
-  html+='<div class="fld"><label>Výška d (mm)</label><input id="d-d" type="number" value="'+bd.d+'" min="1" step="0.1" inputmode="decimal"></div>';
+  html+='<div class="fld"><label>Šířka b (mm)</label><input id="d-b" type="text" value="'+bd.b+'" min="1" inputmode="decimal"></div>';
+  html+='<div class="fld"><label>Výška d (mm)</label><input id="d-d" type="text" value="'+bd.d+'" min="1" step="0.1" inputmode="decimal"></div>';
   html+='</div><div class="frow" style="margin-bottom:8px">';
-  html+='<div class="fld"><label>Délka (mm)</label><input id="d-len" type="number" value="'+(bd.length||'')+'" min="1" inputmode="decimal" placeholder="—"></div>';
-  html+='<div class="fld"><label>Hmotnost (g)</label><input id="d-mass" type="number" value="'+(bd.mass||'')+'" min="0" inputmode="decimal" placeholder="—"></div>';
+  html+='<div class="fld"><label>Délka (mm)</label><input id="d-len" type="text" value="'+(bd.length||'')+'" min="1" inputmode="decimal" placeholder="—"></div>';
+  html+='<div class="fld"><label>Hmotnost (g)</label><input id="d-mass" type="text" value="'+(bd.mass||'')+'" min="0" inputmode="decimal" placeholder="—"></div>';
   html+='</div><div class="frow">';
-  html+='<div class="fld"><label>Vlhkost w (%)</label><input id="d-moist" type="number" value="'+(bd.moisture!=null?bd.moisture:'')+'" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>';
+  html+='<div class="fld"><label>Vlhkost w (%)</label><input id="d-moist" type="text" value="'+(bd.moisture!=null?bd.moisture:'')+'" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>';
   html+='<div class="fld"><label>Vizuál</label><select id="d-vg"><option value="">—</option><option'+(bd.vg==='1'?' selected':'')+'>1</option><option'+(bd.vg==='2'?' selected':'')+'>2</option><option'+(bd.vg==='3'?' selected':'')+'>3</option><option'+(bd.vg==='4'?' selected':'')+'>4</option></select></div>';
   html+='<div class="cb-wrap" style="flex:.55;min-width:50px"><label>Vrut</label><button class="cb-box'+(bd.screw?' checked':'')+'" id="d-screw">'+(bd.screw?'✓':'—')+'</button></div>';
   html+='</div></div>';
@@ -975,19 +975,19 @@ function renderDetailBody(bi){
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">A — horní</div>'
       +'<div style="display:flex;gap:6px;margin-bottom:6px">'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as1" type="number" value="'+(k.as1!=null?k.as1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as2" type="number" value="'+(k.as2!=null?k.as2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as1" type="text" value="'+(k.as1!=null?k.as1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as2" type="text" value="'+(k.as2!=null?k.as2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al1" type="number" value="'+(k.al1!=null?k.al1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al2" type="number" value="'+(k.al2!=null?k.al2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al1" type="text" value="'+(k.al1!=null?k.al1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al2" type="text" value="'+(k.al2!=null?k.al2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       // B
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">B — levá</div>'
       +'<div style="display:flex;gap:6px;margin-bottom:6px">'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs1" type="number" value="'+(k.bs1!=null?k.bs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs2" type="number" value="'+(k.bs2!=null?k.bs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs1" type="text" value="'+(k.bs1!=null?k.bs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs2" type="text" value="'+(k.bs2!=null?k.bs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl1" type="number" value="'+(k.bl1!=null?k.bl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl2" type="number" value="'+(k.bl2!=null?k.bl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl1" type="text" value="'+(k.bl1!=null?k.bl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl2" type="text" value="'+(k.bl2!=null?k.bl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
@@ -995,19 +995,19 @@ function renderDetailBody(bi){
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">C — dolní</div>'
       +'<div style="display:flex;gap:6px;margin-bottom:6px">'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs1" type="number" value="'+(k.cs1!=null?k.cs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs2" type="number" value="'+(k.cs2!=null?k.cs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs1" type="text" value="'+(k.cs1!=null?k.cs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs2" type="text" value="'+(k.cs2!=null?k.cs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl1" type="number" value="'+(k.cl1!=null?k.cl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl2" type="number" value="'+(k.cl2!=null?k.cl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl1" type="text" value="'+(k.cl1!=null?k.cl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl2" type="text" value="'+(k.cl2!=null?k.cl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       // D
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">D — pravá</div>'
       +'<div style="display:flex;gap:6px;margin-bottom:6px">'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds1" type="number" value="'+(k.ds1!=null?k.ds1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds2" type="number" value="'+(k.ds2!=null?k.ds2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds1" type="text" value="'+(k.ds1!=null?k.ds1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds2" type="text" value="'+(k.ds2!=null?k.ds2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl1" type="number" value="'+(k.dl1!=null?k.dl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl2" type="number" value="'+(k.dl2!=null?k.dl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl1" type="text" value="'+(k.dl1!=null?k.dl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl2" type="text" value="'+(k.dl2!=null?k.dl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       +'</div>'
       +'<button style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="dsaveknot" data-bi="'+bi+'" data-ki="'+ki+'">Uložit suk '+( ki+1)+'</button>'
@@ -1020,13 +1020,13 @@ function renderDetailBody(bi){
     // A nový
     +'<div style="background:#F2F2F2;border-radius:10px;padding:10px">'
     +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">A — horní</div>'
-    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A1</div><input id="dn-as1" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A2</div><input id="dn-as2" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
+    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A1</div><input id="dn-as1" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A2</div><input id="dn-as2" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
     // C nový
     +'<div style="background:#F2F2F2;border-radius:10px;padding:10px">'
     +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">C — dolní</div>'
-    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C1</div><input id="dn-cs1" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C2</div><input id="dn-cs2" type="number" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
+    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C1</div><input id="dn-cs1" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C2</div><input id="dn-cs2" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
     +'</div>'
     +'<button style="width:100%;padding:11px;background:var(--g9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="daddknot" data-bi="'+bi+'">+ Přidat suk</button>'
     +'</div>';
@@ -1045,8 +1045,8 @@ function saveDetailBoard(){
   if(detailBi<0)return;
   var bd=allBoards[detailBi];
   bd.id=document.getElementById('d-id').value||bd.id;
-  var nb=parseFloat(document.getElementById('d-b').value);if(!isNaN(nb))bd.b=nb;
-  var nd=parseFloat(document.getElementById('d-d').value);if(!isNaN(nd))bd.d=nd;
+  var nb=parseFloat(String(document.getElementById('d-b').value).replace(',','.'));if(!isNaN(nb))bd.b=nb;
+  var nd=parseFloat(String(document.getElementById('d-d').value).replace(',','.'));if(!isNaN(nd))bd.d=nd;
   bd.length=gn('d-len');bd.mass=gn('d-mass');bd.moisture=gn('d-moist');
   bd.vg=document.getElementById('d-vg').value||null;
   var ds=document.getElementById('d-screw');bd.screw=ds?ds.classList.contains('checked'):false;
@@ -1215,7 +1215,7 @@ document.addEventListener('click',function(e){
         editor.style.display='';
         if(row) row.style.background='var(--bll)';
         // Select all na první input
-        var firstInp=editor.querySelector('input[type="number"]');
+        var firstInp=editor.querySelector('input[type="text"]');
         if(firstInp) setTimeout(function(){firstInp.focus();firstInp.select();},50);
       }
     }
@@ -1230,7 +1230,7 @@ document.addEventListener('click',function(e){
     var inputs=editor2.querySelectorAll('.knot-inp');
     inputs.forEach(function(inp){
       var field=inp.getAttribute('data-field');
-      var val=parseFloat(inp.value);
+      var val=parseFloat(String(inp.value).replace(',','.'));
       allBoards[bi2].knots[ki2][field]=isNaN(val)?null:val;
     });
     save();
@@ -1260,7 +1260,7 @@ document.addEventListener('click',function(e){
     if(bi3<0||bi3>=allBoards.length) return;
     var nk={};
     ['as1','as2','cs1','cs2'].forEach(function(f){
-      var v=parseFloat((document.getElementById('dn-'+f)||{}).value);
+      var v=parseFloat(String((document.getElementById('dn-'+f)||{}).value||'').replace(',','.'));
       nk[f]=isNaN(v)?null:v;
     });
     if(!kPts(nk,allBoards[bi3].b,allBoards[bi3].d)){showToast('Zadej alespoň AS nebo CS hodnoty');return;}
@@ -1698,10 +1698,10 @@ document.addEventListener('click',function(e){
       </div>
       <div class="frow" style="margin-top:8px">
         <div class="fld"><label>Min. frekvence (Hz)</label>
-          <input id="fft-fmin" type="number" value="20" min="1" inputmode="decimal">
+          <input id="fft-fmin" type="text" value="20" min="1" inputmode="decimal">
         </div>
         <div class="fld"><label>Max. frekvence (Hz)</label>
-          <input id="fft-fmax" type="number" value="8000" min="100" inputmode="decimal">
+          <input id="fft-fmax" type="text" value="8000" min="100" inputmode="decimal">
         </div>
         <div class="fld"><label>Počet módů</label>
           <select id="fft-nmodes">
@@ -2301,7 +2301,7 @@ function renderModes(){
     html+='<div class="fft-mode-row'+(isSelected?' active':'')+'" data-midx="'+i+'" style="cursor:pointer;border-color:'+(isSelected?colors[i%3]:'transparent')+'">'
       +'<div class="fft-mode-num" style="background:'+colors[i%3]+'">'+( i+1)+'</div>'
       +'<div style="flex:1">'
-      +'<div class="fft-mode-hz"><input id="fft-hz-'+i+'" type="number" value="'+m.hz.toFixed(1)+'" step="0.1" inputmode="decimal"> Hz</div>'
+      +'<div class="fft-mode-hz"><input id="fft-hz-'+i+'" type="text" value="'+m.hz.toFixed(1)+'" step="0.1" inputmode="decimal"> Hz</div>'
       +'<div class="fft-mode-lbl">'+dampStr+(bwStr?' · '+bwStr:'')+'</div>'
       +'</div>'
       +'</div>';
@@ -2314,7 +2314,7 @@ function renderModes(){
     if(inp){
       (function(ii){
         inp.addEventListener('input',function(){
-          var v=parseFloat(this.value);
+          var v=parseFloat(String(this.value).replace(',','.'));
           if(!isNaN(v)){
             detectedModes[ii].hz=v;detectedModes[ii].userEdited=true;
             // Přepočítej half-power pro novou frekvenci
