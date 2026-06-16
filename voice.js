@@ -66,11 +66,12 @@ function dlog(msg, cls){
 
 // ── Mapování "plocha X rozměr Y" ──────────────────────────
 var PLOCHA_MAP = {'a':'a','á':'a','b':'b','bé':'b','c':'c','cé':'c','d':'d','dé':'d'};
+// Rozměr 1=S1, 2=S2, 3=L1, 4=L2 — odpovídá novému zobrazení A1/A2/A3/A4 v UI
 var ROZMER_MAP = {
-  '1':'1','jedna':'1','jeden':'1','první':'1',
-  '2':'2','dva':'2','dvě':'2','druhý':'2',
-  'l1':'l1','l 1':'l1','el jedna':'l1','l jedna':'l1','délka jedna':'l1','délka 1':'l1',
-  'l2':'l2','l 2':'l2','el dva':'l2','l dva':'l2','délka dva':'l2','délka 2':'l2'
+  '1':'s1','jedna':'s1','jeden':'s1','první':'s1',
+  '2':'s2','dva':'s2','dvě':'s2','druhý':'s2',
+  '3':'l1','tři':'l1','třetí':'l1',
+  '4':'l2','čtyři':'l2','čtvrtý':'l2'
 };
 
 // ── Slovní mapování ostatních polí ───────────────────────
@@ -88,10 +89,10 @@ var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ ret
 
 var FIELD_LABELS = {
   'clen':'šířka','cwid':'výška','p-length':'délka','p-mass':'hmotnost','p-moist':'vlhkost',
-  'as1':'A1','as2':'A2','al1':'AL1','al2':'AL2',
-  'bs1':'B1','bs2':'B2','bl1':'BL1','bl2':'BL2',
-  'cs1':'C1','cs2':'C2','cl1':'CL1','cl2':'CL2',
-  'ds1':'D1','ds2':'D2','dl1':'DL1','dl2':'DL2',
+  'as1':'A1','as2':'A2','al1':'A3','al2':'A4',
+  'bs1':'B1','bs2':'B2','bl1':'B3','bl2':'B4',
+  'cs1':'C1','cs2':'C2','cl1':'C3','cl2':'C4',
+  'ds1':'D1','ds2':'D2','dl1':'D3','dl2':'D4',
   'cid':'název','p-vg':'vizuál','__screw__':'vrut'
 };
 
@@ -131,35 +132,28 @@ function findPlochaRozmer(text){
     rozmerPart = rest; // "plocha A jedna" bez slova rozměr
   }
 
-  // Zkus najít L-variant nejdřív (delší shoda), pak číslo
+  // Zkus najít rozměr 1-4 ve slovech po "rozměr"
   var rozmerWords = rozmerPart.split(/\s+/);
   var rozmerKey = null;
 
-  // Zkus 2-slovní kombinace pro L (délka jedna, el jedna...)
-
-  if(rozmerWords.length >= 2){
-    var combo2 = rozmerWords[0] + ' ' + rozmerWords[1];
-    if(ROZMER_MAP[combo2]) rozmerKey = ROZMER_MAP[combo2];
-  }
-  if(!rozmerKey && rozmerWords.length >= 1 && ROZMER_MAP[rozmerWords[0]]){
+  if(rozmerWords.length >= 1 && ROZMER_MAP[rozmerWords[0]]){
     rozmerKey = ROZMER_MAP[rozmerWords[0]];
   }
-  // Přímá číslice
+  // Přímá číslice 1-4
   if(!rozmerKey){
-    var numMatch = rozmerPart.match(/^[12]/);
-    if(numMatch) rozmerKey = numMatch[0];
+    var numMatch = rozmerPart.match(/^[1234]/);
+    if(numMatch) rozmerKey = ROZMER_MAP[numMatch[0]];
   }
   if(!rozmerKey) return null;
 
-  var suffix = rozmerKey.indexOf('l') === 0 ? rozmerKey : 's' + rozmerKey; // '1'->'s1', 'l1'->'l1'
-  return plochaLetter + suffix; // např. "as1", "al1"
+  return plochaLetter + rozmerKey; // např. "as1", "al2"
 }
 
 var FIELD_LABELS_PLOCHA = {
-  'as1':'A1','as2':'A2','al1':'AL1','al2':'AL2',
-  'bs1':'B1','bs2':'B2','bl1':'BL1','bl2':'BL2',
-  'cs1':'C1','cs2':'C2','cl1':'CL1','cl2':'CL2',
-  'ds1':'D1','ds2':'D2','dl1':'DL1','dl2':'DL2'
+  'as1':'A1','as2':'A2','al1':'A3','al2':'A4',
+  'bs1':'B1','bs2':'B2','bl1':'B3','bl2':'B4',
+  'cs1':'C1','cs2':'C2','cl1':'C3','cl2':'C4',
+  'ds1':'D1','ds2':'D2','dl1':'D3','dl2':'D4'
 };
 
 // ── Detekce podpory ────────────────────────────────────────
@@ -313,6 +307,24 @@ function isStopCommand(text){
   return text.indexOf('konec')>=0 || text.indexOf('hotovo')>=0 || text.indexOf('stop')>=0 || text.indexOf('ukončit')>=0;
 }
 
+// ── Akční příkazy bez hodnoty (přidat suk, nová deska) ────
+function findActionCommand(text){
+  text = text.toLowerCase();
+  if(text.indexOf('přidat suk')>=0 || text.indexOf('přidej suk')>=0) return {action:'addknot', label:'Přidat suk'};
+  if(text.indexOf('nová deska')>=0 || text.indexOf('novou desku')>=0 || text.indexOf('nova deska')>=0) return {action:'newboard', label:'Nová deska'};
+  return null;
+}
+
+function executeAction(action){
+  if(action === 'addknot'){
+    var btn = document.getElementById('btn-add');
+    if(btn) btn.click();
+  } else if(action === 'newboard'){
+    var btn2 = document.getElementById('btn-new');
+    if(btn2) btn2.click();
+  }
+}
+
 // ── Mikrofon permission ───────────────────────────────────
 function requestMicPermission(callback){
   if(micPermissionGranted){ callback(true); return; }
@@ -460,6 +472,20 @@ function processFieldValue(transcript, gen){
   dlog('🎤 slyšel: "'+transcript+'"');
   if(isStopCommand(transcript)){ dlog('stop příkaz'); stopVoiceSession(); return; }
 
+  // Akční příkazy (přidat suk, nová deska) — bez hodnoty, jen potvrzení
+  var actionCmd = findActionCommand(transcript);
+  if(actionCmd){
+    dlog('✓ akce rozpoznána: '+actionCmd.label,'ok');
+    pendingField = '__action__';
+    pendingValue = actionCmd.action;
+    pendingKind = 'action';
+    updateVoiceUI('speaking', '🔊 '+actionCmd.label+'…');
+    speak(actionCmd.label, function(){
+      runRecognitionCycle('confirm', gen);
+    });
+    return;
+  }
+
   var parsed = parseCommand(transcript);
   dlog('→ pole='+parsed.field+' hodnotaText="'+parsed.valueText+'"');
   if(!parsed.field){
@@ -498,6 +524,7 @@ function processFieldValue(transcript, gen){
   var label = (FIELD_LABELS_PLOCHA[field] || FIELD_LABELS[field] || field);
   var spokenValue = kind==='bool' ? (value?'ano':'ne') : value;
   dlog('🔊 říkám: "'+label+' '+spokenValue+'"');
+  updateVoiceUI('speaking', '🔊 '+label+' '+spokenValue+'…');
   speak(label + ' ' + spokenValue, function(){
     dlog('🔊 řeč dokončena, spouštím poslech na ano/ne');
     runRecognitionCycle('confirm', gen);
@@ -527,7 +554,10 @@ function processConfirmation(transcript, gen){
 
 function applyVoiceValue(gen){
   dlog('💾 ZAPISUJI: '+pendingField+' = '+pendingValue,'ok');
-  if(pendingField === '__screw__'){
+  if(pendingField === '__action__'){
+    dlog('▶ provádím akci: '+pendingValue,'ok');
+    executeAction(pendingValue);
+  } else if(pendingField === '__screw__'){
     var cb = document.getElementById('cb-screw');
     if(cb){
       var want = !!pendingValue;
@@ -557,9 +587,14 @@ function applyVoiceValue(gen){
     }
   }
 
-  var label = (FIELD_LABELS_PLOCHA[pendingField] || FIELD_LABELS[pendingField] || pendingField);
-  var shown = pendingKind==='bool' ? (pendingValue?'ano':'ne') : pendingValue;
-  showVoiceToast(label+' = '+shown+' ✓');
+  if(pendingKind === 'action'){
+    var actionLabels = {addknot:'Přidat suk', newboard:'Nová deska'};
+    showVoiceToast((actionLabels[pendingValue]||pendingValue)+' ✓ provedeno');
+  } else {
+    var label = (FIELD_LABELS_PLOCHA[pendingField] || FIELD_LABELS[pendingField] || pendingField);
+    var shown = pendingKind==='bool' ? (pendingValue?'ano':'ne') : pendingValue;
+    showVoiceToast(label+' = '+shown+' ✓');
+  }
 
   pendingField=null; pendingValue=null; pendingKind=null;
   // Okamžitě poslouchej další pole, pípnutí pošli až poté
@@ -572,7 +607,10 @@ function updateVoiceUI(state, msg){
   var btn = document.getElementById('btn-voice');
   var indicator = document.getElementById('voice-status');
   if(btn){
-    btn.classList.toggle('voice-active', state==='listening'||state==='confirming'||state==='requesting');
+    // Zelené blikání = appka AKTIVNĚ poslouchá, je čas mluvit
+    btn.classList.toggle('voice-listening', state==='listening'||state==='confirming');
+    // Červené pulzování = příprava/mluvení appky (uživatel by neměl mluvit)
+    btn.classList.toggle('voice-active', state==='requesting'||state==='speaking');
     btn.textContent = sessionActive ? '⏹' : '🎤';
   }
   if(indicator){
