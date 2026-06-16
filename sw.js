@@ -1,5 +1,5 @@
 // WoodGrader 26 — Service Worker
-const CACHE = 'wg26-v23';
+const CACHE = 'wg26-v24';
 
 // Cachujeme jen index.html — všechno ostatní je inline nebo CDN
 const ASSETS = ['./index.html', './manifest.json', './sync.js', './folders.js', './stats.js', './voice.js', './import.js', './icons/icon-192.svg', './icons/icon-512.svg'];
@@ -28,15 +28,18 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Pro navigaci (HTML) vždy zkusíme síť, fallback na cache
-  if (e.request.mode === 'navigate') {
+  // index.html — VŽDY network-first, bez ohledu na request.mode.
+  // V iOS standalone PWA nemusí být request.mode==='navigate' spolehlivě
+  // nastaven, takže kontrolujeme i URL přímo (jinak appka servuje starý HTML).
+  var url = e.request.url;
+  if (e.request.mode === 'navigate' || url.endsWith('/') || url.endsWith('index.html')) {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('./index.html'))
+      fetch(e.request, {cache: 'no-store'}).catch(() => caches.match('./index.html'))
     );
     return;
   }
   // JS soubory — network-only (žádná cache), aby vždy běžela aktuální verze
-  if (e.request.url.endsWith('.js')) {
+  if (url.endsWith('.js')) {
     e.respondWith(
       fetch(e.request, {cache: 'no-store'}).catch(() => caches.match(e.request))
     );
