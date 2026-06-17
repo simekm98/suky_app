@@ -110,6 +110,24 @@ function createFolder(name){
   return f;
 }
 
+// Smaže složku. Desky v ní zůstanou (jen ztratí folderId, "Bez složky").
+function deleteFolder(fid){
+  var idx = allFolders.findIndex(function(f){ return f.id===fid; });
+  if(idx<0) return false;
+  var name = allFolders[idx].name;
+  if(!confirm('Smazat složku "'+name+'"? Desky v ní zůstanou zachované jako "Bez složky".')) return false;
+  allFolders.splice(idx,1);
+  // Odeber folderId z desek které do ní patřily
+  var boards = getBoards();
+  boards.forEach(function(b){ if(b.folderId===fid) b.folderId=null; });
+  if(activeFolderId===fid) activeFolderId = allFolders.length ? allFolders[0].id : null;
+  if(filterFolderId===fid) filterFolderId = '__all';
+  saveFolders();
+  if(window.wgSave) window.wgSave();
+  showToast('Složka "'+name+'" smazána');
+  return true;
+}
+
 // ── CHIPS + SEARCH + SORT v list screenu ─────────────────
 function renderFolderChips(){
   var el = document.getElementById('folder-chips');
@@ -120,7 +138,10 @@ function renderFolderChips(){
 
   allFolders.forEach(function(f){
     var cnt = boards.filter(function(b){ return b.folderId===f.id; }).length;
-    html += '<button class="folder-chip'+(filterFolderId===f.id?' active':'')+'" data-act="filterfolder" data-fid="'+f.id+'">'+escH(f.name)+' ('+cnt+')</button>';
+    html += '<span style="display:inline-flex;align-items:center;gap:2px">'
+      +'<button class="folder-chip'+(filterFolderId===f.id?' active':'')+'" data-act="filterfolder" data-fid="'+f.id+'">'+escH(f.name)+' ('+cnt+')</button>'
+      +'<button data-act="deletefolder" data-fid="'+f.id+'" style="background:none;border:none;color:var(--g5);font-size:14px;padding:2px 4px;cursor:pointer" aria-label="Smazat složku">✕</button>'
+      +'</span>';
   });
 
   var noFolderCnt = boards.filter(function(b){ return !b.folderId; }).length;
@@ -138,6 +159,25 @@ function renderStatsButton(){
 }
 
 // ── HLAVNÍ RENDER LISTU ───────────────────────────────────
+var selectMode = false;
+var selectedBoardIndices = {}; // {realBi: true}
+
+function toggleSelectMode(){
+  selectMode = !selectMode;
+  selectedBoardIndices = {};
+  renderBlistMain();
+  updateSelectBar();
+}
+
+function updateSelectBar(){
+  var bar = document.getElementById('select-action-bar');
+  if(!bar) return;
+  var count = Object.keys(selectedBoardIndices).length;
+  bar.style.display = selectMode ? '' : 'none';
+  var countEl = document.getElementById('select-count');
+  if(countEl) countEl.textContent = count + ' vybráno';
+}
+
 function renderBlistMain(){
   var el = document.getElementById('blist');
   if(!el) return;
@@ -200,17 +240,25 @@ function renderBlistMain(){
     if(bd.screw)           tags.push('Vrut');
     if(bd.fft&&bd.fft[0]) tags.push('f:'+bd.fft[0]+'Hz');
 
-    html += '<div class="bitem" data-act="openboard" data-bi="'+realBi+'">'
+    var checked = selectedBoardIndices[realBi] ? 'checked' : '';
+    var checkboxHtml = selectMode
+      ? '<input type="checkbox" data-act="selectboard" data-bi="'+realBi+'" '+checked+' style="width:22px;height:22px;margin-right:10px;flex-shrink:0">'
+      : '';
+    var clickAct = selectMode ? 'selectboard' : 'openboard';
+
+    html += '<div class="bitem" data-act="'+clickAct+'" data-bi="'+realBi+'">'
+      +checkboxHtml
       +'<div class="binfo">'
       +'<strong>'+escH(bd.id||'')+(tags.length?' <span style="font-size:11px;color:var(--g5)">'+tags.join(' ')+'</span>':'')+'</strong>'
       +'<span>'+folderTag+knots.length+' suků · KAR '+kar.toFixed(1)+'% · '+dt+'</span>'
       +'</div>'
       +'<span class="gp '+gcls(gr)+'">'+gr+'</span>'
-      +'<button class="bdel" data-act="delb" data-bi="'+realBi+'">🗑</button>'
+      +(selectMode ? '' : '<button class="bdel" data-act="delb" data-bi="'+realBi+'">🗑</button>')
       +'</div>';
   });
 
   el.innerHTML = html;
+  updateSelectBar();
 }
 
 // ── EXPORT MODAL ──────────────────────────────────────────
@@ -357,6 +405,22 @@ document.addEventListener('click',function(e){
 
   if(act==='selectfolder'){
     var fid = btn.getAttribute('data-fid');
+    var modalEl = document.getElementById('modal-folder');
+    var isBulkMove = modalEl && modalEl.getAttribute('data-bulk-move')==='1';
+    if(isBulkMove){
+      var ids3 = Object.keys(selectedBoardIndices).map(Number);
+      var boards3 = getBoards();
+      ids3.forEach(function(idx){ if(boards3[idx]) boards3[idx].folderId = fid; });
+      if(window.wgSave) window.wgSave();
+      modalEl.removeAttribute('data-bulk-move');
+      selectedBoardIndices = {};
+      selectMode = false;
+      closeFolderModal();
+      renderBlistMain();
+      renderFolderChips();
+      showToast(ids3.length+' desek přesunuto do "'+getFolderName(fid)+'"');
+      return;
+    }
     activeFolderId = fid;
     saveFolders();
     updateActiveFolderBar();
@@ -391,6 +455,46 @@ document.addEventListener('click',function(e){
     filterFolderId = btn.getAttribute('data-fid');
     renderFolderChips();
     renderBlistMain();
+  }
+  else if(act==='deletefolder'){
+    var fidDel = btn.getAttribute('data-fid');
+    if(deleteFolder(fidDel)){
+      updateActiveFolderBar();
+      renderFolderChips();
+      renderBlistMain();
+    }
+  }
+  else if(act==='togglesetectmode'){
+    toggleSelectMode();
+  }
+  else if(act==='selectboard'){
+    var biSel = parseInt(btn.getAttribute('data-bi'));
+    if(selectedBoardIndices[biSel]) delete selectedBoardIndices[biSel];
+    else selectedBoardIndices[biSel] = true;
+    renderBlistMain();
+  }
+  else if(act==='bulkdelete'){
+    var ids = Object.keys(selectedBoardIndices).map(Number);
+    if(!ids.length){ showToast('Nic není vybráno'); return; }
+    if(!confirm('Smazat '+ids.length+' vybraných desek?')) return;
+    var boards2 = getBoards();
+    ids.sort(function(a,b){return b-a;}).forEach(function(idx){ boards2.splice(idx,1); });
+    if(window.wgSave) window.wgSave();
+    selectedBoardIndices = {};
+    selectMode = false;
+    renderBlistMain();
+    renderFolderChips();
+    showToast(ids.length+' desek smazáno');
+  }
+  else if(act==='bulkmoveopen'){
+    var ids2 = Object.keys(selectedBoardIndices);
+    if(!ids2.length){ showToast('Nic není vybráno'); return; }
+    renderFolderModal();
+    var m = document.getElementById('modal-folder');
+    if(m){
+      m.setAttribute('data-bulk-move','1');
+      m.classList.add('open');
+    }
   }
   else if(act==='setsort'){
     boardSortMode = btn.getAttribute('data-sort');
