@@ -53,7 +53,7 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F2
 .fld input:focus,.fld select:focus{outline:none;border-color:var(--brm);box-shadow:0 0 0 3px rgba(139,94,60,.18)}
 .fld.wide{flex:1.5}.fld.narrow{flex:.7;min-width:55px}
 .cb-wrap{display:flex;flex-direction:column;gap:4px}
-.cb-wrap label{font-size:11px;font-weight:600;color:var(--g5)}
+.cb-wrap label{font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block}
 .cb-box{width:100%;padding:10px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;-webkit-appearance:none;border:none;font-weight:700;color:var(--g5)}
 .cb-box.checked{background:var(--brl);color:var(--br);border:1.5px solid var(--brm)}
 
@@ -251,9 +251,9 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <div class="clbl">Deska</div>
       <div class="frow" style="margin-bottom:8px">
-        <div class="fld wide"><label>Název</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="fld"><label>Šířka b (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal"></div>
-        <div class="fld"><label>Výška d (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal"></div>
+        <div class="fld wide"><label>ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal"></div>
+        <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal"></div>
       </div>
       <div class="frow" id="row-lm">
         <div class="fld opt-field" data-opt="length"><label>Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—"></div>
@@ -262,7 +262,7 @@ canvas{display:block;width:100%;height:72px}
       <div class="frow" style="margin-top:8px" id="row-extra">
         <div class="fld opt-field" data-opt="moisture"><label>Vlhkost w (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>
         <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
-          <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px">Vizuál</label>
+          <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px;text-align:center">Vizuál</label>
           <div style="display:flex;gap:6px" id="vg-row">
             <button class="vg-btn" data-vg="1" data-act="setvg">1</button>
             <button class="vg-btn" data-vg="2" data-act="setvg">2</button>
@@ -290,7 +290,7 @@ canvas{display:block;width:100%;height:72px}
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px" class="mrow">
       <div class="met" id="met-den"><div class="ml">Hustota</div><div class="mv den" id="v-den">—</div><div class="ms">kg/m³</div></div>
       <div class="met"><div class="ml">Třída</div><div id="v-grade"><span class="gp gna">—</span></div></div>
-      <div class="met"><div class="ml">Suků</div><div class="mv" id="v-cnt">0</div></div>
+      <div class="met"><div class="ml">Suky</div><div class="mv" id="v-cnt">0</div></div>
     </div>
     <!-- MOED metriky - zobrazí se po FFT měření -->
     
@@ -678,8 +678,8 @@ function doRedraw(){
   var kar=b*d>0?(ua/(b*d))*100:0;
   var dv=calcDAB(allK,b);
   var gr=grade(kar,dv,allK.length);
-  document.getElementById('v-kar').textContent=kar.toFixed(2)+'%';
-  document.getElementById('v-dab').textContent=dv.toFixed(3);
+  document.getElementById('v-kar').textContent=kar.toFixed(1)+'%';
+  document.getElementById('v-dab').textContent=dv.toFixed(2);
   document.getElementById('v-dabs').textContent=(dv*2*b).toFixed(1)+'/(2×'+b+')';
   document.getElementById('v-cnt').textContent=String(knots.length+(cp?1:0));
   document.getElementById('v-grade').innerHTML=gr==='—'?'<span class="gp gna">—</span>':'<span class="gp '+gcls(gr)+'">'+gr+'</span>';
@@ -785,7 +785,7 @@ function paintDetailCvUnion(cvId,wrapId,ks,b,d){
   var ua=calcUA(polys,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
   ctx.fillStyle='rgba(0,0,0,.7)';ctx.font='bold 10px -apple-system,sans-serif';ctx.textAlign='left';
-  ctx.fillText('KAR: '+kar.toFixed(2)+'%',PL+2,PT+12);
+  ctx.fillText('KAR: '+kar.toFixed(1)+'%',PL+2,PT+12);
 }
 
 function paintDetailCv(cvId,wrapId,ks,b,d){
@@ -909,8 +909,8 @@ function renderDetailBody(bi){
   // stats
   html+='<div class="card"><div class="clbl">Výsledky</div>';
   html+='<div class="detail-stat">';
-  html+='<div class="ds"><div class="ds-lbl">KAR</div><div class="ds-val" style="color:var(--bl)">'+kar.toFixed(2)+'%</div></div>';
-  html+='<div class="ds"><div class="ds-lbl">DAB</div><div class="ds-val" style="color:var(--am)">'+dv.toFixed(3)+'</div></div>';
+  html+='<div class="ds"><div class="ds-lbl">KAR</div><div class="ds-val" style="color:var(--bl)">'+kar.toFixed(1)+'%</div></div>';
+  html+='<div class="ds"><div class="ds-lbl">DAB</div><div class="ds-val" style="color:var(--am)">'+dv.toFixed(2)+'</div></div>';
   html+='<div class="ds"><div class="ds-lbl">Třída</div><div><span class="gp '+gcls(gr)+'" style="font-size:16px">'+gr+'</span></div></div>';
   if(den!=null)html+='<div class="ds"><div class="ds-lbl">Hustota</div><div class="ds-val">'+den+' <span style="font-size:11px">kg/m³</span></div></div>';
   var moedRes=calcMOED(bd);
@@ -941,9 +941,9 @@ function renderDetailBody(bi){
   // board params edit
   html+='<div class="card"><div class="clbl">Parametry desky</div>';
   html+='<div class="frow" style="margin-bottom:8px">';
-  html+='<div class="fld wide"><label>Název</label><input id="d-id" value="'+escH(bd.id)+'" autocomplete="off"></div>';
-  html+='<div class="fld"><label>Šířka b (mm)</label><input id="d-b" type="text" value="'+bd.b+'" min="1" inputmode="decimal"></div>';
-  html+='<div class="fld"><label>Výška d (mm)</label><input id="d-d" type="text" value="'+bd.d+'" min="1" step="0.1" inputmode="decimal"></div>';
+  html+='<div class="fld wide"><label>ID</label><input id="d-id" value="'+escH(bd.id)+'" autocomplete="off"></div>';
+  html+='<div class="fld"><label>Šířka (mm)</label><input id="d-b" type="text" value="'+bd.b+'" min="1" inputmode="decimal"></div>';
+  html+='<div class="fld"><label>Výška (mm)</label><input id="d-d" type="text" value="'+bd.d+'" min="1" step="0.1" inputmode="decimal"></div>';
   html+='</div><div class="frow" style="margin-bottom:8px">';
   html+='<div class="fld"><label>Délka (mm)</label><input id="d-len" type="text" value="'+(bd.length||'')+'" min="1" inputmode="decimal" placeholder="—"></div>';
   html+='<div class="fld"><label>Hmotnost (g)</label><input id="d-mass" type="text" value="'+(bd.mass||'')+'" min="0" inputmode="decimal" placeholder="—"></div>';
@@ -1098,7 +1098,7 @@ function renderBlist(){
     var tags=[];if(bd.vg)tags.push('VG'+bd.vg);if(bd.moisture!=null)tags.push('w:'+bd.moisture+'%');if(bd.screw)tags.push('🔩');
     html+='<div class="bitem" data-act="openboard" data-bi="'+bi+'">'
       +'<div class="binfo"><strong>'+escH(bd.id)+(tags.length?' <span style="font-size:11px;color:var(--g5);font-weight:500">'+tags.join(' ')+'</span>':'')+'</strong>'
-      +'<span>'+bd.knots.length+' suků · KAR '+kar.toFixed(1)+'% · '+dt+'</span></div>'
+      +'<span>'+bd.knots.length+' suky · KAR '+kar.toFixed(1)+'% · '+dt+'</span></div>'
       +'<span class="gp '+gcls(gr)+'">'+gr+'</span>'
       +'<button class="bdel" data-act="delb" data-bi="'+bi+'">🗑</button></div>';
   }
@@ -2591,6 +2591,12 @@ window._renderModes=renderModes;
 window.wgFFTInit=initFFT;
 window.setFftType=setFftType;
 window.wgFFTSave=saveFftToBoard;
+// ── Export pro hlasové ovládání FFT testů ──
+window.wgFFTOpen=function(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('s-fft').classList.add('active');
+};
+window.wgFFTStartRecording=function(dur){ startRecording(dur||3); };
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initFFT);}else{initFFT();}
 })();
 
