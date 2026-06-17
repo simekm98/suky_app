@@ -58,6 +58,16 @@ window.wgCreateFolderByName = function(name){
   var f = createFolder(name);
   return f ? f.id : null;
 };
+// Vytvoří složku A NASTAVÍ ji jako aktivní (pro hlasové vytvoření složky)
+window.wgCreateAndActivateFolder = function(name){
+  var f = createFolder(name);
+  if(!f) return null;
+  activeFolderId = f.id;
+  saveFolders();
+  if(typeof updateActiveFolderBar === 'function') updateActiveFolderBar();
+  if(typeof renderFolderChips === 'function') renderFolderChips();
+  return f.id;
+};
 window.renderFolderChipsGlobal = renderFolderChips;
 
 // ── FOLDER MODAL ──────────────────────────────────────────
