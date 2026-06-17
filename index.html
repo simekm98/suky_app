@@ -201,7 +201,7 @@ canvas{display:block;width:100%;height:72px}
 
 
 /* ── Hlasové ovládání ────────────────────────────────────── */
-.voice-fab{position:fixed;bottom:84px;right:16px;width:56px;height:56px;border-radius:28px;background:var(--br);color:#fff;border:none;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:150;-webkit-appearance:none}
+.voice-fab{flex-shrink:0;width:52px;height:52px;border-radius:26px;background:var(--br);color:#fff;border:none;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);-webkit-appearance:none}
 .voice-fab.voice-active{background:#C0392B;animation:voicePulse 1s infinite}
 .voice-fab.voice-listening{background:#27AE60;animation:voiceGreenBlink .6s infinite}
 @keyframes voiceGreenBlink{0%{box-shadow:0 0 0 0 rgba(39,174,96,.7)}70%{box-shadow:0 0 0 16px rgba(39,174,96,0)}100%{box-shadow:0 0 0 0 rgba(39,174,96,0)}}
@@ -295,6 +295,13 @@ canvas{display:block;width:100%;height:72px}
     <!-- MOED metriky - zobrazí se po FFT měření -->
     
 
+    <!-- Typ profilu dle geometrie -->
+    <div id="profile-type-box" style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:8px 12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
+      <span id="profile-type-icon" style="font-size:18px">📐</span>
+      <span id="profile-type-label" style="font-size:13px;font-weight:700;color:var(--g7)">—</span>
+      <span id="profile-type-dims" style="font-size:11px;color:var(--g5);margin-left:auto"></span>
+    </div>
+
     <!-- Canvas -->
     <div class="crow">
       <div class="cvc" id="wrap1"><div class="cvl">Suky</div><canvas id="cv1"></canvas></div>
@@ -371,6 +378,7 @@ canvas{display:block;width:100%;height:72px}
   <div class="bbar">
     <button class="bmain" id="btn-add">+ Přidat suk</button>
     <button class="bsec" id="btn-new">Nová deska</button>
+    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení.">🎤</button>
   </div>
 </div>
 
@@ -379,8 +387,15 @@ canvas{display:block;width:100%;height:72px}
   <div class="topbar">
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
+    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="font-size:12px;font-weight:700">Vybrat</button>
     <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
+  </div>
+  <!-- Akční lišta pro hromadné operace (zobrazí se v select módu) -->
+  <div id="select-action-bar" style="display:none;background:var(--br);padding:10px 16px;display:flex;align-items:center;gap:10px">
+    <span id="select-count" style="color:#fff;font-size:13px;font-weight:600;flex:1">0 vybráno</span>
+    <button data-act="bulkmoveopen" style="padding:8px 14px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">📁 Přesunout</button>
+    <button data-act="bulkdelete" style="padding:8px 14px;background:var(--rl);color:var(--rd);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">🗑 Smazat</button>
   </div>
   <div class="sbody">
 
@@ -502,6 +517,15 @@ canvas{display:block;width:100%;height:72px}
       <div class="setting-lbl">Vrut<small>Zalomený vrut v desce</small></div>
       <button class="toggle on" data-opt="screw"></button>
     </div>
+    <div class="setting-section">FFT — výchozí délka nahrávání</div>
+    <div class="setting-row">
+      <div class="setting-lbl">Podélné (s)<small>Výchozí délka pro podélný test</small></div>
+      <input type="text" id="set-fft-dur-long" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="3">
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Ohybové (s)<small>Výchozí délka pro ohybový test</small></div>
+      <input type="text" id="set-fft-dur-bend" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="5">
+    </div>
   </div>
 </div>
 
@@ -510,7 +534,6 @@ canvas{display:block;width:100%;height:72px}
 <div id="voice-status"></div>
 <div id="voice-confirm-overlay"></div>
 <div id="voice-debug"></div>
-<button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení.">🎤</button>
 
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -664,6 +687,36 @@ function calcDensity(mass,length,b,d){
   return Math.round((mass/1000)/vol);
 }
 
+// ── Klasifikace typu profilu dle geometrie (trám / řezivo / lať) ──
+// Lať: min. rozměr ≤ 60mm a poměr stran ≤ 2 (malý čtvercovitý profil)
+// Řezivo (prkno/deska): poměr stran > 2 — jeden rozměr výrazně menší (zatěžování na plocho)
+// Trám/hranol: min. rozměr > 60mm a poměr stran ≤ 2 (masivní, blízko čtvercový profil)
+function classifyProfile(b,d){
+  if(!b||!d||b<=0||d<=0) return null;
+  var maxDim=Math.max(b,d), minDim=Math.min(b,d);
+  var ratio=maxDim/minDim;
+  if(minDim<=60 && ratio<=2.5){
+    return {type:'lat', label:'Lať', icon:'📏', desc:'malý profil'};
+  }
+  if(ratio>2){
+    return {type:'rezivo', label:'Řezivo', icon:'🪵', desc:'zatěžováno na plocho'};
+  }
+  return {type:'tram', label:'Trám / hranol', icon:'🏗️', desc:'zatěžováno na hranu'};
+}
+
+function updateProfileType(b,d){
+  var box=document.getElementById('profile-type-box');
+  var icon=document.getElementById('profile-type-icon');
+  var label=document.getElementById('profile-type-label');
+  var dims=document.getElementById('profile-type-dims');
+  if(!box) return;
+  var cls=classifyProfile(b,d);
+  if(!cls){ label.textContent='—'; dims.textContent=''; return; }
+  icon.textContent=cls.icon;
+  label.textContent=cls.label+' ('+cls.desc+')';
+  dims.textContent=b+' × '+d+' mm';
+}
+
 // ── canvas ─────────────────────────────────────────────────
 var CV_H=72;
 function schedDraw(){if(drawPending)return;drawPending=true;requestAnimationFrame(function(){drawPending=false;doRedraw();});}
@@ -674,6 +727,7 @@ function doRedraw(){
   var allK=cp?knots.concat([curK()]):knots.slice();
   paintCv('cv1','wrap1',b,d,saved,cp,false);
   paintCv('cv2','wrap2',b,d,saved,cp,true);
+  updateProfileType(b,d);
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
   var dv=calcDAB(allK,b);
@@ -818,7 +872,12 @@ function applyOpts(){
   ['lp-a','lp-b','lp-c','lp-d'].forEach(function(id){document.getElementById(id).style.display=opts.lpos?'':'none';});
   document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
 }
-function openSettings(){document.getElementById('modal-settings').classList.add('open');}
+function openSettings(){
+  document.getElementById('modal-settings').classList.add('open');
+  var dl=document.getElementById('set-fft-dur-long');
+  var db=document.getElementById('set-fft-dur-bend');
+  if(dl && window.wgGetFftDurations){ var d=window.wgGetFftDurations(); dl.value=d.long; db.value=d.bend; }
+}
 function closeSettings(){document.getElementById('modal-settings').classList.remove('open');}
 
 // ── edit knot ──────────────────────────────────────────────
@@ -927,8 +986,13 @@ function renderDetailBody(bi){
   if(bd.mass)html+='<span class="tag">'+bd.mass+' g</span>';
   if(bd.moisture!=null)html+='<span class="tag">w: '+bd.moisture+'%</span>';
   if(bd.vg)html+='<span class="tag">VG '+bd.vg+'</span>';
-  if(bd.screw)html+='<span class="tag screw">🔩 Vrut</span>';
-  html+='</div></div>';
+  if(bd.fft&&bd.fft.length){
+    if(bd.fft[0])html+='<span class="tag">f₁ podél: '+bd.fft[0]+' Hz</span>';
+    if(bd.fft[1])html+='<span class="tag">f₁ ohyb: '+bd.fft[1]+' Hz</span>';
+  }
+  html+='</div>';
+  html+='<button data-act="dopenfft" data-bi="'+bi+'" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">🎙 '+(bd.fft&&bd.fft.length?'Nahrát FFT znovu':'Nahrát FFT')+'</button>';
+  html+='</div>';
   // canvas
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
     +'<div class="cvc" id="dwrap1" style="background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
@@ -1020,13 +1084,33 @@ function renderDetailBody(bi){
     // A nový
     +'<div style="background:#F2F2F2;border-radius:10px;padding:10px">'
     +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">A — horní</div>'
-    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A1</div><input id="dn-as1" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A2</div><input id="dn-as2" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A1</div><input id="dn-as1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A2</div><input id="dn-as2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>'
+    +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A3</div><input id="dn-al1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A4</div><input id="dn-al2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+    +'</div>'
+    // B nový
+    +'<div style="background:#F2F2F2;border-radius:10px;padding:10px">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">B — levá</div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B1</div><input id="dn-bs1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B2</div><input id="dn-bs2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>'
+    +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B3</div><input id="dn-bl1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B4</div><input id="dn-bl2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+    +'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
     // C nový
     +'<div style="background:#F2F2F2;border-radius:10px;padding:10px">'
     +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">C — dolní</div>'
-    +'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C1</div><input id="dn-cs1" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
-    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C2</div><input id="dn-cs2" type="text" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div></div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C1</div><input id="dn-cs1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C2</div><input id="dn-cs2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>'
+    +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C3</div><input id="dn-cl1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C4</div><input id="dn-cl2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+    +'</div>'
+    // D nový
+    +'<div style="background:#F2F2F2;border-radius:10px;padding:10px">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">D — pravá</div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D1</div><input id="dn-ds1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+    +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D2</div><input id="dn-ds2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>'
+    +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D3</div><input id="dn-dl1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D4</div><input id="dn-dl2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
+    +'</div>'
     +'</div>'
     +'<button style="width:100%;padding:11px;background:var(--g9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="daddknot" data-bi="'+bi+'">+ Přidat suk</button>'
     +'</div>';
@@ -1259,13 +1343,20 @@ document.addEventListener('click',function(e){
     var bi3=parseInt(btn.getAttribute('data-bi'));
     if(bi3<0||bi3>=allBoards.length) return;
     var nk={};
-    ['as1','as2','cs1','cs2'].forEach(function(f){
+    ['as1','as2','bs1','bs2','cs1','cs2','ds1','ds2','al1','al2','bl1','bl2','cl1','cl2','dl1','dl2'].forEach(function(f){
       var v=parseFloat(String((document.getElementById('dn-'+f)||{}).value||'').replace(',','.'));
       nk[f]=isNaN(v)?null:v;
     });
     if(!kPts(nk,allBoards[bi3].b,allBoards[bi3].d)){showToast('Zadej alespoň AS nebo CS hodnoty');return;}
     allBoards[bi3].knots.push(nk);
     save();openBoardDetail(bi3);showToast('Suk přidán ✓');
+  }
+  else if(act==='dopenfft'){
+    var biFft=parseInt(btn.getAttribute('data-bi'));
+    if(biFft<0||biFft>=allBoards.length) return;
+    if(window.wgFFTSetTargetBoard) window.wgFFTSetTargetBoard(biFft);
+    if(window.wgFFTOpenTypeSelect) window.wgFFTOpenTypeSelect();
+    else if(window.wgFFTOpen) window.wgFFTOpen();
   }
   else if(act==='ddel'){
     if(detailBi<0)return;
@@ -1307,6 +1398,14 @@ document.getElementById('btn-back').addEventListener('click',function(){showScre
 document.getElementById('btn-settings').addEventListener('click',openSettings);
 document.getElementById('modal-close').addEventListener('click',closeSettings);
 document.getElementById('modal-settings').addEventListener('click',function(e){if(e.target===this)closeSettings();});
+['set-fft-dur-long','set-fft-dur-bend'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('change',function(){
+    var dl=document.getElementById('set-fft-dur-long').value;
+    var db=document.getElementById('set-fft-dur-bend').value;
+    if(window.wgSetFftDurations) window.wgSetFftDurations(dl,db);
+  });
+});
 document.getElementById('btn-detail-back').addEventListener('click',function(){showScreen('s-list');});
 document.getElementById('btn-detail-save').addEventListener('click',saveDetailBoard);
 
@@ -1514,6 +1613,11 @@ window.pArea      = pArea;
 window.grade      = grade;
 window.gcls       = gcls;
 window.getBoardExtra = getBoardExtra;
+window.wgRefreshDetailIfOpen = function(bi){
+  if(detailBi===bi && document.getElementById('s-detail').classList.contains('active')){
+    renderDetailBody(bi);
+  }
+};
 window.getB = getB;
 window.getD = getD;
 window.wgGoHome = function(){ showScreen('s-entry'); };
@@ -1648,14 +1752,11 @@ document.addEventListener('click',function(e){
     <div class="card" id="fft-type-card">
       <div class="clbl">Typ kmitání</div>
       <div class="frow">
-        <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:14px;padding:12px" data-act="setffttype" data-ftype="longitudinal">📏 Podélné</button>
-        <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:14px;padding:12px" data-act="setffttype" data-ftype="bending">〜 Ohybové</button>
+        <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="longitudinal">📏 Podélné</button>
+        <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="bending">〜 Ohybové</button>
+        <button class="vg-btn" id="fft-type-C" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="combo">🔁 Kombinace</button>
       </div>
       <input type="hidden" id="fft-type" value="longitudinal">
-      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="fft-combo-mode" style="width:18px;height:18px">
-        <label for="fft-combo-mode" style="font-size:13px;color:var(--g7)">Kombinovaný test (podél + ohyb za sebou)</label>
-      </div>
       <div id="fft-estimate-box" style="margin-top:10px;padding:10px 12px;background:#F2F2F2;border-radius:10px;font-size:12px;color:var(--g7);display:none">
         Odhad f₁: <strong id="fft-estimate-val">—</strong> Hz
       </div>
@@ -1756,14 +1857,35 @@ var fftVibType='longitudinal';
 var comboMode=false;        // kombinovaný test podél+ohyb
 var comboStage=null;        // null | 'longitudinal' | 'bending' — aktuální fáze comba
 
+// ── Konfigurovatelné výchozí délky nahrávání (uloženo v localStorage) ──
+var fftDefaultDurLong = 3;
+var fftDefaultDurBend = 5;
+function loadFftDurations(){
+  try{
+    var raw = localStorage.getItem('wg26_fft_durations');
+    if(raw){
+      var d = JSON.parse(raw);
+      if(d.long) fftDefaultDurLong = d.long;
+      if(d.bend) fftDefaultDurBend = d.bend;
+    }
+  }catch(e){}
+}
+function saveFftDurations(){
+  try{ localStorage.setItem('wg26_fft_durations', JSON.stringify({long:fftDefaultDurLong, bend:fftDefaultDurBend})); }catch(e){}
+}
+loadFftDurations();
+
 function setFftType(t){
   fftVibType=t;
   var btnL=document.getElementById('fft-type-L');
   var btnB=document.getElementById('fft-type-B');
+  var btnC=document.getElementById('fft-type-C');
   if(btnL) btnL.classList.toggle('selected',t==='longitudinal');
   if(btnB) btnB.classList.toggle('selected',t==='bending');
-  // Přenastav frekvenční rozsah dle typu
-  if(t==='longitudinal'){
+  if(btnC) btnC.classList.toggle('selected',t==='combo');
+  // Přenastav frekvenční rozsah dle typu (combo začíná na podélném rozsahu)
+  var effType = t==='combo' ? 'longitudinal' : t;
+  if(effType==='longitudinal'){
     document.getElementById('fft-fmin').value='200';
     document.getElementById('fft-fmax').value='8000';
   } else {
@@ -1774,17 +1896,19 @@ function setFftType(t){
   zoomEnd=parseFloat(document.getElementById('fft-fmax').value);
   updateRecLabel();
   updateEstimateBox();
-  var active=fftDataByType[t];
-  if(active){detectPeaksFor(t);drawFFTFor(t);renderModesFor(t);}
+  var active=fftDataByType[effType];
+  if(active){detectPeaksFor(effType);drawFFTFor(effType);renderModesFor(effType);}
 }
 
 function updateRecLabel(){
   var lbl=document.getElementById('fft-rec-label');
   var btn=document.getElementById('btn-rec');
-  var dur=fftVibType==='bending'?5:3;
-  if(lbl) lbl.textContent='Nahrávání signálu — '+(fftVibType==='bending'?'Ohybové':'Podélné');
-  if(btn) btn.textContent='🎙 Nahrát ('+dur+' s)';
+  var dur=fftVibType==='bending'?fftDefaultDurBend:fftDefaultDurLong;
+  var label = fftVibType==='bending'?'Ohybové':(fftVibType==='combo'?'Kombinace (podél + ohyb)':'Podélné');
+  if(lbl) lbl.textContent='Nahrávání signálu — '+label;
+  if(btn) btn.textContent=fftVibType==='combo' ? ('🎙 Nahrát (podél '+fftDefaultDurLong+'s → ohyb '+fftDefaultDurBend+'s)') : ('🎙 Nahrát ('+dur+' s)');
 }
+
 
 // ── Odhad rezonanční frekvence dle vzorců ze studie ───────
 // Podélné: f = c / (2L), c≈4500 m/s (rozsah 4000-5500)
@@ -1932,15 +2056,32 @@ function startRecording(type, dur){
 
 // Veřejná vstupní funkce — řeší i kombinovaný režim (podél pak ohyb)
 function beginFftSequence(){
-  comboMode = document.getElementById('fft-combo-mode') ? document.getElementById('fft-combo-mode').checked : false;
+  comboMode = (fftVibType === 'combo');
   if(comboMode){
     comboStage='longitudinal';
-    setFftType('longitudinal');
-    startRecordingWithCountdown('longitudinal', 3);
+    // Nastav interní typ na longitudinal pro průběh testu (UI tlačítko 'combo' zůstává vybráno)
+    var prevType=fftVibType;
+    fftVibType='longitudinal';
+    setFftTypeRangeOnly('longitudinal');
+    fftVibType=prevType; // vrať combo pro UI zobrazení
+    startRecordingWithCountdown('longitudinal', fftDefaultDurLong);
   } else {
-    var dur=fftVibType==='bending'?5:3;
+    var dur=fftVibType==='bending'?fftDefaultDurBend:fftDefaultDurLong;
     startRecordingWithCountdown(fftVibType, dur);
   }
+}
+
+// Nastaví jen frekvenční rozsah pro daný typ bez měnění vybraného UI tlačítka (pro combo mód)
+function setFftTypeRangeOnly(effType){
+  if(effType==='longitudinal'){
+    document.getElementById('fft-fmin').value='200';
+    document.getElementById('fft-fmax').value='8000';
+  } else {
+    document.getElementById('fft-fmin').value='20';
+    document.getElementById('fft-fmax').value='1000';
+  }
+  zoomStart=parseFloat(document.getElementById('fft-fmin').value);
+  zoomEnd=parseFloat(document.getElementById('fft-fmax').value);
 }
 
 function stopWaveformVis(){if(waveAnimId){cancelAnimationFrame(waveAnimId);waveAnimId=null;}waveAnalyser=null;}
@@ -2164,9 +2305,9 @@ function runFFT(buffer, type){
   if(comboMode && comboStage==='longitudinal'){
     comboStage='bending';
     setTimeout(function(){
-      setFftType('bending');
+      setFftTypeRangeOnly('bending');
       setStatus('Podélné hotovo — připrav se na ohybový test…');
-      startRecordingWithCountdown('bending', 5);
+      startRecordingWithCountdown('bending', fftDefaultDurBend);
     }, 800);
   } else {
     comboStage=null;
@@ -2601,6 +2742,8 @@ function snapToNearestPeakFor(hz,type){
 }
 
 // ── Uložení do desky — OBĚ typy najednou ──────────────────
+var fftTargetBoardIdx = null; // pokud nastaveno, ukládá se do TÉTO desky (z detailu), ne do poslední
+
 function saveFftToBoard(){
   var modesL=(detectedModesByType.longitudinal||[]).map(function(m){return Math.round(m.hz*10)/10;});
   var modesB=(detectedModesByType.bending||[]).map(function(m){return Math.round(m.hz*10)/10;});
@@ -2619,7 +2762,15 @@ function saveFftToBoard(){
   if(modesL.length) msgParts.push('podélná '+modesL[0]+' Hz');
   if(modesB.length) msgParts.push('ohybová '+modesB[0]+' Hz');
 
-  if(boards.length){
+  if(fftTargetBoardIdx!=null && boards[fftTargetBoardIdx]){
+    var target=boards[fftTargetBoardIdx];
+    target.fft=mergeFft(target.fft);
+    if(window.wgSave) window.wgSave();
+    if(window.wgRefreshDetailIfOpen) window.wgRefreshDetailIfOpen(fftTargetBoardIdx);
+    showToast(msgParts.join(', ')+' uloženo do '+target.id+' ✓');
+    fftTargetBoardIdx=null;
+    if(window.updateMoedDisplay) window.updateMoedDisplay();
+  } else if(boards.length){
     var last=boards[boards.length-1];
     last.fft=mergeFft(last.fft);
     if(window.wgSave) window.wgSave();
@@ -2721,11 +2872,36 @@ window.wgFFTOpen=function(){
   updateEstimateBox();
 };
 window.wgFFTStartRecording=function(dur){ beginFftSequence(); };
+window.wgFFTSetCombo=function(on){ if(on){ setFftType('combo'); } };
+window.wgFFTIsRecording=function(){
+  return !!(preCountdownTimer || (mediaRecorder && mediaRecorder.state==='recording'));
+};
+window.wgFFTStopRecording=function(){
+  if(preCountdownTimer){ clearInterval(preCountdownTimer); preCountdownTimer=null; }
+  if(mediaRecorder && mediaRecorder.state!=='inactive'){ try{ mediaRecorder.stop(); }catch(e){} }
+  clearTimeout(recTimer); clearInterval(recCountdown); stopWaveformVis();
+  comboMode=false; comboStage=null;
+  var btn=document.getElementById('btn-rec'); if(btn) btn.disabled=false;
+  var cd=document.getElementById('fft-countdown'); if(cd) cd.textContent='';
+  setStatus('Zastaveno');
+};
+window.wgFFTRestartRecording=function(){
+  window.wgFFTStopRecording();
+  setTimeout(function(){ beginFftSequence(); }, 300);
+};
 window.wgFFTOpenTypeSelect=function(){
   // Otevři FFT obrazovku bez automatického spuštění — uživatel zvolí typ hlasem
   window.wgFFTOpen();
-  setStatus('Řekni "podélné" nebo "ohybové" pro spuštění testu');
+  setStatus('Řekni "podélné", "ohybové" nebo "kombinace" pro spuštění testu');
 };
+window.wgGetFftDurations=function(){ return {long:fftDefaultDurLong, bend:fftDefaultDurBend}; };
+window.wgSetFftDurations=function(long,bend){
+  if(long&&!isNaN(long)) fftDefaultDurLong=parseFloat(long);
+  if(bend&&!isNaN(bend)) fftDefaultDurBend=parseFloat(bend);
+  saveFftDurations();
+  updateRecLabel();
+};
+window.wgFFTSetTargetBoard=function(idx){ fftTargetBoardIdx=idx; };
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initFFT);}else{initFFT();}
 })();
 
