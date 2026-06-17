@@ -421,7 +421,20 @@ function parseCommand(text){
     var idx = text.indexOf(p);
     if(idx >= 0 && (splitIdx===-1 || idx < splitIdx)){ splitIdx=idx; splitLen=p.length; }
   });
-  if(splitIdx >= 0){
+
+  // Pro ID pole (cid) potřebujeme CELÝ text za klíčovým slovem, ne jen čísla —
+  // jinak by se "id 20 pé" zkrátilo na pouhé "20" a písmeno "pé" by se ztratilo.
+  if(field === 'cid' && splitIdx < 0){
+    var idKeyIdx = -1, idKeyLen = 0;
+    WORD_FIELD_KEYS_SORTED.forEach(function(key){
+      if(WORD_FIELD_MAP[key] !== 'cid') return;
+      var idx2 = text.indexOf(key);
+      if(idx2 >= 0 && (idKeyIdx===-1 || idx2 < idKeyIdx)){ idKeyIdx = idx2; idKeyLen = key.length; }
+    });
+    if(idKeyIdx >= 0){
+      valueText = text.substring(idKeyIdx + idKeyLen).trim();
+    }
+  } else if(splitIdx >= 0){
     valueText = text.substring(splitIdx+splitLen).trim();
   } else {
     // Speciální případ: STT přepsal "A2 30" jako "a 2:30" (interpretoval jako čas),
@@ -529,6 +542,7 @@ function executeFftCommand(type){
 // (po příkazu "FFT" bez typu — uživatel řekne "podélné", "ohybové" nebo "kombinace")
 var awaitingFftTypeChoice = false;
 var awaitingFolderName = false;
+var awaitingFreqConfirm = false; // appka nabídla detekovanou frekvenci 1. módu k potvrzení
 
 function findFftTypeChoice(text){
   var t = text.toLowerCase();
@@ -670,7 +684,7 @@ function actuallyStartRecognition(gen){
 
   voicePhase = 'listening';
   dlog('▶ start recognition gen='+gen+' (current='+cycleGeneration+')');
-  updateVoiceUI('listening', '🎤 A1 20  ·  Délka 1500  ·  Vrut ano');
+  updateVoiceUI('listening', 'A1 20 / Delka 1500 / Vrut ano');
 
   var gotResult = false;
 
@@ -771,7 +785,7 @@ function processCommand(transcript, gen){
     if(window.wgFFTIsRecording && window.wgFFTIsRecording()){
       dlog('🔄 restart FFT nahrávání','ok');
       if(window.wgFFTRestartRecording) window.wgFFTRestartRecording();
-      showConfirmOverlay('Nahrávání', '🔄 znovu…');
+      showConfirmOverlay('Nahravani', 'znovu...');
       beepOk();
       if(sessionActive) continueOrRefresh(gen);
       return;
@@ -863,7 +877,7 @@ function processCommand(transcript, gen){
     dlog('✓ spouštím: '+fftCmd.label,'ok');
     awaitingFftTypeChoice = false;
     executeFftCommand(fftCmd.type);
-    showConfirmOverlay(fftCmd.label, '🎙 spouštím…');
+    showConfirmOverlay(fftCmd.label, 'spoustim...');
     beepOk();
     // Po spuštění testu KONČÍME hlasovou session pro pole — appka teď čeká na
     // fyzické bouchnutí do desky, ne na další hlasový příkaz.
@@ -878,7 +892,7 @@ function processCommand(transcript, gen){
       dlog('✓ vybrán typ: '+chosenType,'ok');
       awaitingFftTypeChoice = false;
       executeFftCommand(chosenType);
-      showConfirmOverlay(chosenType==='bending'?'FFT ohyb':(chosenType==='combo'?'FFT kombinace':'FFT podél'), '🎙 spouštím…');
+      showConfirmOverlay(chosenType==='bending'?'FFT ohyb':(chosenType==='combo'?'FFT kombinace':'FFT podel'), 'spoustim...');
       beepOk();
       stopVoiceSession();
       return;
@@ -886,6 +900,42 @@ function processCommand(transcript, gen){
     // Nerozpoznáno — appka zůstává v čekacím stavu, poslouchá dál
     beepErr();
     showVoiceToast('Řekni "podélné" nebo "ohybové"');
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // Appka nabídla frekvenci 1. módu po FFT testu — "ano" potvrdí a uloží do
+  // desky, jinak appka zkusí přečíst nové číslo jako opravenou hodnotu.
+  if(awaitingFreqConfirm){
+    var t2 = transcript.toLowerCase();
+    var isYes = /\bano\b/.test(t2) || /\bjo\b/.test(t2) || t2.indexOf('okej')>=0 || t2.indexOf('potvrz')>=0;
+    var isNo  = !isYes && /\bne\b/.test(t2);
+    if(isYes){
+      awaitingFreqConfirm = false;
+      if(window.wgFFTSave) window.wgFFTSave();
+      showConfirmOverlay('Frekvence', 'uložena');
+      beepOk();
+      if(sessionActive) continueOrRefresh(gen);
+      return;
+    }
+    if(isNo){
+      awaitingFreqConfirm = false;
+      showVoiceToast('Zrušeno — uprav frekvenci manuálně nebo zopakuj test');
+      beepErr();
+      if(sessionActive) continueOrRefresh(gen);
+      return;
+    }
+    // Zkus, zda uživatel řekl novou hodnotu frekvence místo ano/ne
+    var newFreq = parseSpokenNumber(transcript);
+    if(newFreq!==null && !isNaN(newFreq)){
+      if(window.wgSetPrimaryModeFreq) window.wgSetPrimaryModeFreq(newFreq);
+      showConfirmOverlay('Frekvence 1. mód', newFreq+' Hz — potvrď ano/ne');
+      beepOk();
+      if(sessionActive) continueOrRefresh(gen);
+      return;
+    }
+    beepErr();
+    showVoiceToast('Řekni "ano" pro uložení, nebo novou hodnotu frekvence');
     if(sessionActive) continueOrRefresh(gen);
     return;
   }
@@ -1062,6 +1112,18 @@ function updateVoiceFabVisibility(){
   // desky, metodika, statistiky) — appka tak reaguje na hlasové příkazy
   // odkudkoli, jen ovládací tlačítko je viditelné pouze na hlavní stránce.
 }
+
+// ── Restart hlasové session po dokončení FFT testu ────────
+// Nabídne detekovanou frekvenci 1. módu (primárně) k potvrzení hlasem.
+window.wgVoiceRestartAfterFft = function(){
+  if(sessionActive) return; // už běží, nic dělat
+  var freq = window.wgGetPrimaryModeFreq ? window.wgGetPrimaryModeFreq() : null;
+  if(freq){
+    awaitingFreqConfirm = true;
+    showConfirmOverlay('Frekvence 1. mód', freq+' Hz — potvrď ano/ne');
+  }
+  startVoiceSession();
+};
 
 function initVoice(){
   document.addEventListener('click', function(e){
