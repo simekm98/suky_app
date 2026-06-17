@@ -112,12 +112,25 @@ function findDirectFieldCode(text){
   // písmena foneticky, a slovní číslovky (dva/čtyři) až výše ošetřeny rozdělením.
   var m4 = null;
 
-  // Případ A: písmeno a číslo jsou oddělená slova: "á", "1", "30" → words[0]="á", words[1]="1"
-  if(words.length >= 2 && PLOCHA_MAP.hasOwnProperty(words[0]) && /^[1234]$/.test(words[1])){
-    m4 = [PLOCHA_MAP[words[0]], words[1]];
+  // Pomocná: vytáhne VEDOUCÍ číslici 1-4 ze slova, i když STT přepsal "2" jako
+  // čas "2:30", desetinné "2,5" nebo s interpunkcí "2." — typický problém,
+  // kdy uživatel zaváhá nebo udělá pauzu po číslu plochy.
+  function leadingDigit1to4(w){
+    var m = w.match(/^([1234])(?:[:.,]|$)/);
+    return m ? m[1] : null;
+  }
+
+  // Případ A: písmeno a číslo jsou oddělená slova: "á", "2:30", "30" → words[0]="á", words[1]="2:30"
+  if(words.length >= 2 && PLOCHA_MAP.hasOwnProperty(words[0])){
+    var dig = leadingDigit1to4(words[1]);
+    if(dig) m4 = [PLOCHA_MAP[words[0]], dig];
   }
   // Případ B: písmeno a číslo slita v jednom slově: "a1", "30" → words[0]="a1"
+  // Případ B2: slita varianta s dvojtečkou (STT interpretoval jako čas): "a2:30"
   else if(words.length >= 1 && /^[abcd][1234]$/.test(words[0])){
+    m4 = [words[0][0], words[0][1]];
+  }
+  else if(words.length >= 1 && /^[abcd][1234]:/.test(words[0])){
     m4 = [words[0][0], words[0][1]];
   }
   if(m4){
@@ -230,6 +243,43 @@ var WORD_NUMS = {
   'čtyřista':400,'pětset':500,'šestset':600,'sedmset':700,'osmset':800,'devětset':900,
   'tisíc':1000,'tisíce':1000,'tisícù':1000
 };
+
+// Fonetické vyslovení písmen latinky (pro ID typu "20L" = "dvacet el")
+var LETTER_PHONETIC = {
+  'á':'A','a':'A','bé':'B','cé':'C','dé':'D','é':'E','ef':'F','gé':'G','há':'H',
+  'í':'I','jé':'J','ká':'K','el':'L','em':'M','en':'N','ó':'O','pé':'P',
+  'kvé':'Q','er':'R','es':'S','té':'T','ú':'U','vé':'V','iks':'X',
+  'ypsilon':'Y','zet':'Z'
+};
+
+// Parsuje alfanumerický kód desky ("dvacet el" → "20L", "sedm pé" → "7P")
+function parseAlphaNumericId(text){
+  text = text.toLowerCase().trim();
+  var words = text.split(/\s+/);
+  var result = '';
+  var numBuf = 0, hasNum = false;
+  words.forEach(function(w){
+    w = w.replace(/[.,]/g,'');
+    if(WORD_NUMS.hasOwnProperty(w)){
+      numBuf += WORD_NUMS[w]; hasNum = true;
+    } else if(LETTER_PHONETIC.hasOwnProperty(w)){
+      if(hasNum){ result += numBuf; numBuf=0; hasNum=false; }
+      result += LETTER_PHONETIC[w];
+    } else if(/^\d+$/.test(w)){
+      if(hasNum){ result += numBuf; numBuf=0; hasNum=false; }
+      result += w;
+    } else if(/^[a-z]$/.test(w)){
+      if(hasNum){ result += numBuf; numBuf=0; hasNum=false; }
+      result += w.toUpperCase();
+    } else {
+      // Neznámé slovo — připoj jak je (zachová diakritiku pro plně textové názvy)
+      if(hasNum){ result += numBuf; numBuf=0; hasNum=false; }
+      result += w;
+    }
+  });
+  if(hasNum) result += numBuf;
+  return result || text.toUpperCase().replace(/\s+/g,'');
+}
 
 function parseSpokenNumber(text){
   text = text.toLowerCase().trim();
@@ -374,12 +424,18 @@ function parseCommand(text){
   if(splitIdx >= 0){
     valueText = text.substring(splitIdx+splitLen).trim();
   } else {
-    var allNums = text.match(/-?\d+[.,]?\d*/g);
-    if(allNums && allNums.length){
-      valueText = allNums[allNums.length-1];
+    // Speciální případ: STT přepsal "A2 30" jako "a 2:30" (interpretoval jako čas),
+    // nebo "a2 30" jako "a2:30" (slitě). Vytáhneme číslo PO dvojtečce.
+    var timeLike = text.match(/[1234]:(\d+)/);
+    if(timeLike){
+      valueText = timeLike[1]; // číslo PO dvojtečce je skutečná hodnota
     } else {
-      // Zkus slovní čísla na konci věty
-      valueText = text;
+      var allNums = text.match(/-?\d+[.,]?\d*/g);
+      if(allNums && allNums.length){
+        valueText = allNums[allNums.length-1];
+      } else {
+        valueText = text;
+      }
     }
   }
   return {field:field, valueText:valueText};
@@ -394,7 +450,9 @@ function parseBoolFromText(text){
 
 function isStopCommand(text){
   text = text.toLowerCase();
-  return text.indexOf('konec')>=0 || text.indexOf('hotovo')>=0 || text.indexOf('stop')>=0 || text.indexOf('ukončit')>=0;
+  return text.indexOf('konec')>=0 || text.indexOf('hotovo')>=0 || text.indexOf('stop')>=0
+      || text.indexOf('ukončit')>=0 || text.indexOf('ukoncit')>=0
+      || text.indexOf('znovu')>=0 || text.indexOf('opakovat')>=0 || text.indexOf('opakuj')>=0;
 }
 
 // ── Akční příkazy bez hodnoty (přidat suk, nová deska) ────
@@ -425,17 +483,20 @@ function findCreateFolderCommand(text){
 function findFftCommand(text){
   var t = text.toLowerCase();
   // Fonetické varianty pro "FFT": efefté, ef ef té, eféfté, samotné "ft" (často přeslechne první f)
-  // Plus alternativní názvy: akustické testy, měření frekvencí, frekvence
+  // Plus alternativní názvy: akustické testy, měření frekvencí, frekvence, akustika
   var isFft = t.indexOf('fft') >= 0 || t.indexOf('efefté') >= 0 || t.indexOf('ef ef té') >= 0
             || t.indexOf('eféfté') >= 0 || t.indexOf('ef ef te') >= 0 || t.indexOf('efefte') >= 0
             || /\bft\b/.test(t)
-            || t.indexOf('akustick') >= 0 || t.indexOf('měření frekven') >= 0 || t.indexOf('mereni frekven') >= 0
+            || t.indexOf('akustick') >= 0 || t.indexOf('akustika') >= 0
+            || t.indexOf('měření frekven') >= 0 || t.indexOf('mereni frekven') >= 0
             || t.indexOf('frekvence') >= 0 || t.indexOf('frekvenci') >= 0;
   if(!isFft) return null;
 
   var isBending = t.indexOf('ohyb') >= 0;
   var isLong = t.indexOf('podél') >= 0 || t.indexOf('podel') >= 0;
+  var isCombo = t.indexOf('kombinac') >= 0 || t.indexOf('kombinovan') >= 0 || (isBending && isLong);
 
+  if(isCombo) return {type:'combo', label:'FFT kombinace'};
   if(isBending) return {type:'bending', label:'FFT ohyb'};
   if(isLong) return {type:'longitudinal', label:'FFT podél'};
   // Typ nezazněl — vrátíme akci bez typu, appka jen otevře obrazovku a počká na volbu
@@ -444,26 +505,38 @@ function findFftCommand(text){
 
 function executeFftCommand(type){
   if(type===null){
-    // Jen otevři obrazovku a nech appku poslouchat volbu typu (podélné/ohybové)
+    // Jen otevři obrazovku a nech appku poslouchat volbu typu (podélné/ohybové/kombinace)
     if(window.wgFFTOpenTypeSelect) window.wgFFTOpenTypeSelect();
     return;
   }
   if(window.wgFFTOpen) window.wgFFTOpen();
+  if(type==='combo'){
+    if(window.wgFFTSetCombo) window.wgFFTSetCombo(true);
+    setTimeout(function(){
+      if(window.wgFFTStartRecording) window.wgFFTStartRecording();
+    }, 300);
+    return;
+  }
+  if(window.wgFFTSetCombo) window.wgFFTSetCombo(false);
   if(window.setFftType) window.setFftType(type);
   // Krátké zpoždění aby se FFT screen stihl vykreslit před spuštěním nahrávání
   setTimeout(function(){
-    if(window.wgFFTStartRecording) window.wgFFTStartRecording(3);
+    if(window.wgFFTStartRecording) window.wgFFTStartRecording();
   }, 300);
 }
 
 // ── Volba typu kmitání hlasem, KDYŽ appka čeká na obrazovce FFT ──
-// (po příkazu "FFT" bez typu — uživatel řekne jen "podélné" nebo "ohybové")
+// (po příkazu "FFT" bez typu — uživatel řekne "podélné", "ohybové" nebo "kombinace")
 var awaitingFftTypeChoice = false;
+var awaitingFolderName = false;
 
 function findFftTypeChoice(text){
   var t = text.toLowerCase();
-  if(t.indexOf('podél') >= 0 || t.indexOf('podel') >= 0) return 'longitudinal';
-  if(t.indexOf('ohyb') >= 0) return 'bending';
+  var isBending = t.indexOf('ohyb') >= 0;
+  var isLong = t.indexOf('podél') >= 0 || t.indexOf('podel') >= 0;
+  if(t.indexOf('kombinac') >= 0 || t.indexOf('kombinovan') >= 0 || (isBending && isLong)) return 'combo';
+  if(isLong) return 'longitudinal';
+  if(isBending) return 'bending';
   return null;
 }
 
@@ -678,7 +751,35 @@ function continueOrRefresh(gen){
 
 function processCommand(transcript, gen){
   dlog('🎤 slyšel: "'+transcript+'"');
-  if(isStopCommand(transcript)){ dlog('stop příkaz'); stopVoiceSession(); return; }
+
+  // "domů" / "hlavní stránka" — VŽDY zastaví vše a vrátí na hlavní stránku,
+  // bez ohledu na to, co appka právě dělá (i uprostřed FFT nahrávání).
+  if(/hlavní stránka|hlavni stranka|\bdomů\b|\bdomu\b/.test(transcript.toLowerCase())){
+    dlog('✓ návrat na hlavní stránku','ok');
+    if(window.wgFFTStopRecording) window.wgFFTStopRecording();
+    if(window.wgGoHome) window.wgGoHome();
+    showConfirmOverlay('Hlavní stránka', '✓');
+    beepOk();
+    stopVoiceSession();
+    return;
+  }
+
+  // "konec" / "stop" / "ukončit" / "znovu" / "opakovat":
+  // - Pokud appka právě nahrává/odpočítává FFT → zastaví nahrávání a SPUSTÍ HO ZNOVU
+  // - Jinak (běžné zadávání polí) → ukončí hlasovou session jako dřív
+  if(isStopCommand(transcript)){
+    if(window.wgFFTIsRecording && window.wgFFTIsRecording()){
+      dlog('🔄 restart FFT nahrávání','ok');
+      if(window.wgFFTRestartRecording) window.wgFFTRestartRecording();
+      showConfirmOverlay('Nahrávání', '🔄 znovu…');
+      beepOk();
+      if(sessionActive) continueOrRefresh(gen);
+      return;
+    }
+    dlog('stop příkaz — konec session');
+    stopVoiceSession();
+    return;
+  }
 
   // "zpět" — vrátí poslední zapsanou hodnotu
   if(/\bzpět\b/.test(transcript.toLowerCase()) || /\bzpátky\b/.test(transcript.toLowerCase())){
@@ -688,6 +789,7 @@ function processCommand(transcript, gen){
   }
 
   // "nová složka NÁZEV" — vytvoří a aktivuje složku pro ukládání desek
+  // Pokud zazní jen "nová složka" bez názvu, appka čeká na pojmenování dalším povelem
   var folderName = findCreateFolderCommand(transcript);
   if(folderName){
     dlog('✓ vytvářím složku: "'+folderName+'"','ok');
@@ -700,6 +802,47 @@ function processCommand(transcript, gen){
       beepErr();
       showVoiceToast('Nepodařilo se vytvořit složku');
     }
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+  if(/^nová složka\s*$|^novou složku\s*$|^založ složku\s*$/.test(transcript.toLowerCase().trim())){
+    dlog('✓ čekám na název složky','ok');
+    awaitingFolderName = true;
+    showConfirmOverlay('Nová složka', 'řekni název…');
+    beepOk();
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+  if(awaitingFolderName){
+    awaitingFolderName = false;
+    var name2 = transcript.trim();
+    if(name2){
+      dlog('✓ vytvářím složku: "'+name2+'"','ok');
+      var fid2 = window.wgCreateAndActivateFolder ? window.wgCreateAndActivateFolder(name2) : null;
+      if(fid2){ showConfirmOverlay('Složka', name2); beepOk(); }
+      else { beepErr(); showVoiceToast('Nepodařilo se vytvořit složku'); }
+    }
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "statistika" — zobrazí přehled statistiky aktuální složky
+  if(/statistik/.test(transcript.toLowerCase())){
+    dlog('✓ otevírám statistiku','ok');
+    var statFid = window.getCurrentFilterFolderId ? window.getCurrentFilterFolderId() : '__all';
+    if(window.openStatsModal) window.openStatsModal(statFid);
+    showConfirmOverlay('Statistika', '✓');
+    beepOk();
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "export" — spustí export dat z aktuální složky
+  if(/^export|exportovat|exportuj/.test(transcript.toLowerCase().trim())){
+    dlog('✓ spouštím export','ok');
+    if(window.openExportModal) window.openExportModal();
+    showConfirmOverlay('Export', '✓');
+    beepOk();
     if(sessionActive) continueOrRefresh(gen);
     return;
   }
@@ -735,7 +878,7 @@ function processCommand(transcript, gen){
       dlog('✓ vybrán typ: '+chosenType,'ok');
       awaitingFftTypeChoice = false;
       executeFftCommand(chosenType);
-      showConfirmOverlay(chosenType==='bending'?'FFT ohyb':'FFT podél', '🎙 spouštím…');
+      showConfirmOverlay(chosenType==='bending'?'FFT ohyb':(chosenType==='combo'?'FFT kombinace':'FFT podél'), '🎙 spouštím…');
       beepOk();
       stopVoiceSession();
       return;
@@ -744,16 +887,6 @@ function processCommand(transcript, gen){
     beepErr();
     showVoiceToast('Řekni "podélné" nebo "ohybové"');
     if(sessionActive) continueOrRefresh(gen);
-    return;
-  }
-
-  // "Hlavní stránka" — návrat na entry screen
-  if(/hlavní stránka|hlavni stranka|domů|domu\b/.test(transcript.toLowerCase())){
-    dlog('✓ návrat na hlavní stránku','ok');
-    if(window.wgGoHome) window.wgGoHome();
-    showConfirmOverlay('Hlavní stránka', '✓');
-    beepOk();
-    stopVoiceSession();
     return;
   }
 
@@ -802,10 +935,8 @@ function processCommand(transcript, gen){
     value = Math.round(value);
   } else if(field === 'cid'){
     kind = 'text';
-    value = parsed.valueText.trim();
+    value = parseAlphaNumericId(parsed.valueText);
     if(!value){ dlog('❌ ID prázdné','err'); beepErr(); showVoiceToast('ID: řekni text nebo kód'); if(sessionActive) continueOrRefresh(gen); return; }
-    // Kapitalizace jednotlivých "slov" jak je u kódů desek běžné (např. "7p" -> "7P")
-    value = value.toUpperCase().replace(/\s+/g,'');
   } else {
     kind = 'number';
     value = parseSpokenNumber(parsed.valueText);
@@ -926,19 +1057,20 @@ function showVoiceToast(msg){
 }
 
 function updateVoiceFabVisibility(){
-  var fab = document.querySelector('.voice-fab');
-  if(!fab) return;
-  var entryActive = document.getElementById('s-entry') && document.getElementById('s-entry').classList.contains('active');
-  var fftActive = document.getElementById('s-fft') && document.getElementById('s-fft').classList.contains('active');
-  // Mikrofon viditelný na entry i FFT screenu (FFT potřebuje hlasové "Uložit"/"Hlavní stránka")
-  fab.style.display = (entryActive || fftActive) ? '' : 'none';
+  // Mikrofon je nyní statické tlačítko v bbar na entry screenu (vedle "Nová deska").
+  // Hlasová session ale zůstává aktivní i po přepnutí na jiné screeny (detail
+  // desky, metodika, statistiky) — appka tak reaguje na hlasové příkazy
+  // odkudkoli, jen ovládací tlačítko je viditelné pouze na hlavní stránce.
 }
 
 function initVoice(){
   document.addEventListener('click', function(e){
-    // Explicitní opuštění entry screenu uživatelem — bezpečně ukončí session
-    var navBtn = e.target.closest('#btn-list, #btn-fft-open, #btn-metodika, #btn-settings');
-    if(navBtn && sessionActive){ stopVoiceSession(); }
+    // Hlasová session NEukončuje při běžné navigaci (seznam desek, nastavení,
+    // metodika) — funguje napříč celou appkou. Ukončuje se jen explicitně
+    // přes "konec/domů" nebo automaticky při spuštění FFT nahrávání (mikrofon
+    // je potřeba pro samotné nahrávání zvuku desky).
+    var fftBtn = e.target.closest('#btn-fft-open');
+    if(fftBtn && sessionActive){ stopVoiceSession(); }
   });
   document.addEventListener('click', function(e){
     var btn = e.target.closest('#btn-voice');
