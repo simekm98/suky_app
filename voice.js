@@ -424,9 +424,13 @@ function findCreateFolderCommand(text){
 // ── "FFT podél" / "FFT ohyb" (i foneticky "efefté") — spustí test ────
 function findFftCommand(text){
   var t = text.toLowerCase();
-  // Fonetické varianty pro "FFT": efefté, ef ef té, eféfté
+  // Fonetické varianty pro "FFT": efefté, ef ef té, eféfté, samotné "ft" (často přeslechne první f)
+  // Plus alternativní názvy: akustické testy, měření frekvencí, frekvence
   var isFft = t.indexOf('fft') >= 0 || t.indexOf('efefté') >= 0 || t.indexOf('ef ef té') >= 0
-            || t.indexOf('eféfté') >= 0 || t.indexOf('ef ef te') >= 0 || t.indexOf('efefte') >= 0;
+            || t.indexOf('eféfté') >= 0 || t.indexOf('ef ef te') >= 0 || t.indexOf('efefte') >= 0
+            || /\bft\b/.test(t)
+            || t.indexOf('akustick') >= 0 || t.indexOf('měření frekven') >= 0 || t.indexOf('mereni frekven') >= 0
+            || t.indexOf('frekvence') >= 0 || t.indexOf('frekvenci') >= 0;
   if(!isFft) return null;
 
   var isBending = t.indexOf('ohyb') >= 0;
@@ -434,16 +438,33 @@ function findFftCommand(text){
 
   if(isBending) return {type:'bending', label:'FFT ohyb'};
   if(isLong) return {type:'longitudinal', label:'FFT podél'};
-  return null; // "FFT" samo bez typu — nejednoznačné, appka neudělá nic
+  // Typ nezazněl — vrátíme akci bez typu, appka jen otevře obrazovku a počká na volbu
+  return {type:null, label:'FFT'};
 }
 
 function executeFftCommand(type){
+  if(type===null){
+    // Jen otevři obrazovku a nech appku poslouchat volbu typu (podélné/ohybové)
+    if(window.wgFFTOpenTypeSelect) window.wgFFTOpenTypeSelect();
+    return;
+  }
   if(window.wgFFTOpen) window.wgFFTOpen();
   if(window.setFftType) window.setFftType(type);
   // Krátké zpoždění aby se FFT screen stihl vykreslit před spuštěním nahrávání
   setTimeout(function(){
     if(window.wgFFTStartRecording) window.wgFFTStartRecording(3);
   }, 300);
+}
+
+// ── Volba typu kmitání hlasem, KDYŽ appka čeká na obrazovce FFT ──
+// (po příkazu "FFT" bez typu — uživatel řekne jen "podélné" nebo "ohybové")
+var awaitingFftTypeChoice = false;
+
+function findFftTypeChoice(text){
+  var t = text.toLowerCase();
+  if(t.indexOf('podél') >= 0 || t.indexOf('podel') >= 0) return 'longitudinal';
+  if(t.indexOf('ohyb') >= 0) return 'bending';
+  return null;
 }
 
 function executeAction(action){
@@ -684,15 +705,65 @@ function processCommand(transcript, gen){
   }
 
   // "FFT podél" / "FFT ohyb" — otevře FFT screen, nastaví typ, spustí test
+  // Pokud typ nezazněl, jen otevře obrazovku a NADÁLE poslouchá na "podélné"/"ohybové"
   var fftCmd = findFftCommand(transcript);
   if(fftCmd){
+    if(fftCmd.type===null){
+      dlog('✓ FFT otevřeno, čekám na volbu typu','ok');
+      executeFftCommand(null);
+      showConfirmOverlay('FFT', 'řekni podélné / ohybové');
+      beepOk();
+      awaitingFftTypeChoice = true;
+      if(sessionActive) continueOrRefresh(gen);
+      return;
+    }
     dlog('✓ spouštím: '+fftCmd.label,'ok');
+    awaitingFftTypeChoice = false;
     executeFftCommand(fftCmd.type);
     showConfirmOverlay(fftCmd.label, '🎙 spouštím…');
     beepOk();
-    // Po FFT příkazu KONČÍME hlasovou session pro pole — appka teď čeká na
+    // Po spuštění testu KONČÍME hlasovou session pro pole — appka teď čeká na
     // fyzické bouchnutí do desky, ne na další hlasový příkaz.
     stopVoiceSession();
+    return;
+  }
+
+  // Pokud appka čeká na volbu typu kmitání po předchozím "FFT" bez typu
+  if(awaitingFftTypeChoice){
+    var chosenType = findFftTypeChoice(transcript);
+    if(chosenType){
+      dlog('✓ vybrán typ: '+chosenType,'ok');
+      awaitingFftTypeChoice = false;
+      executeFftCommand(chosenType);
+      showConfirmOverlay(chosenType==='bending'?'FFT ohyb':'FFT podél', '🎙 spouštím…');
+      beepOk();
+      stopVoiceSession();
+      return;
+    }
+    // Nerozpoznáno — appka zůstává v čekacím stavu, poslouchá dál
+    beepErr();
+    showVoiceToast('Řekni "podélné" nebo "ohybové"');
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "Hlavní stránka" — návrat na entry screen
+  if(/hlavní stránka|hlavni stranka|domů|domu\b/.test(transcript.toLowerCase())){
+    dlog('✓ návrat na hlavní stránku','ok');
+    if(window.wgGoHome) window.wgGoHome();
+    showConfirmOverlay('Hlavní stránka', '✓');
+    beepOk();
+    stopVoiceSession();
+    return;
+  }
+
+  // "Uložit" — uloží FFT data (funguje jen na FFT screenu)
+  if(/^ulož|^uloz/.test(transcript.toLowerCase().trim())){
+    dlog('✓ ukládám FFT','ok');
+    if(window.wgFFTSave) window.wgFFTSave();
+    showConfirmOverlay('Uloženo', '✓');
+    beepOk();
+    if(sessionActive) continueOrRefresh(gen);
     return;
   }
 
@@ -858,11 +929,9 @@ function updateVoiceFabVisibility(){
   var fab = document.querySelector('.voice-fab');
   if(!fab) return;
   var entryActive = document.getElementById('s-entry') && document.getElementById('s-entry').classList.contains('active');
-  fab.style.display = entryActive ? '' : 'none';
-  // Pozn.: NEukončujeme session zde — krátkodobé "mizení" active class při
-  // re-renderu (showScreen toggluje class) by jinak omylem zabilo aktivní
-  // hlasovou session. Místo toho zastavíme session jen na explicitní akci
-  // uživatele (klik na ☰/jiné tlačítko navigace), viz initVoice().
+  var fftActive = document.getElementById('s-fft') && document.getElementById('s-fft').classList.contains('active');
+  // Mikrofon viditelný na entry i FFT screenu (FFT potřebuje hlasové "Uložit"/"Hlavní stránka")
+  fab.style.display = (entryActive || fftActive) ? '' : 'none';
 }
 
 function initVoice(){
