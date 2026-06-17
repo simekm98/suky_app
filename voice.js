@@ -66,7 +66,11 @@ var WORD_FIELD_MAP = {
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
   'název':'cid','nazev':'cid','id':'cid','ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
-  'vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__'
+  'vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
+  'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
+  'hniloba':'p-hniloba','hnilobu':'p-hniloba','zbarvení':'p-hniloba','zbarveni':'p-hniloba',
+  'reakční dřevo':'p-reakcni','reakcni drevo':'p-reakcni','tlakové dřevo':'p-reakcni','tlakove drevo':'p-reakcni',
+  'oblina':'p-oblina','oblinu':'p-oblina'
 };
 var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
@@ -288,6 +292,13 @@ function parseSpokenNumber(text){
   var digitMatch = text.match(/-?\d+[.,]\d+/);
   if(digitMatch) return parseFloat(digitMatch[0].replace(',', '.'));
 
+  // "X a půl" — slovní polovina, např. "dvacet a půl" = 20.5
+  var halfMatch = text.match(/(.+?)\s+a\s+půl\s*$/);
+  if(halfMatch){
+    var wholeH = parseIntegerWords(halfMatch[1]);
+    if(wholeH !== null) return wholeH + 0.5;
+  }
+
   // "X celá Y" / "X celých Y" — slovní desetinné číslo
   var celaMatch = text.match(/(.+?)\s+cel[áých]+\s+(.+)/);
   if(celaMatch){
@@ -295,6 +306,17 @@ function parseSpokenNumber(text){
     var fracPart = parseIntegerWords(celaMatch[2]);
     if(wholePart !== null && fracPart !== null){
       return wholePart + fracPart / Math.pow(10, String(fracPart).length);
+    }
+  }
+
+  // "X a Y" — desetinné číslo bez slova "celá", např. "dvacet a čtyři" = 20.4
+  // (jen pokud Y je jednociferné číslo 1-9, jinak by "dvacet a deset" = 30 dávalo nesmysl)
+  var andMatch = text.match(/(.+?)\s+a\s+(.+)\s*$/);
+  if(andMatch){
+    var wholeA = parseIntegerWords(andMatch[1]);
+    var fracA = parseIntegerWords(andMatch[2]);
+    if(wholeA !== null && fracA !== null && fracA >= 0 && fracA <= 9){
+      return wholeA + fracA / 10;
     }
   }
 
@@ -443,9 +465,29 @@ function parseCommand(text){
     if(timeLike){
       valueText = timeLike[1]; // číslo PO dvojtečce je skutečná hodnota
     } else {
-      var allNums = text.match(/-?\d+[.,]?\d*/g);
+      // KLÍČOVÉ: odstraň ze textu část, která byla použita jako KÓD POLE
+      // (např. "a1" v "a1 nula" nebo "a1" v "a1 0") — jinak by se z "a1 nula"
+      // omylem vzala číslice "1" patřící kódu pole, a slovní hodnota "nula"
+      // (která neobsahuje žádnou číslici) by se úplně ztratila.
+      var textForValue = text;
+      var directCodeMatch = text.match(/^[abcd][1234](?::\d+)?\s*/);
+      if(directCodeMatch){
+        textForValue = text.substring(directCodeMatch[0].length).trim();
+      } else {
+        // Formát "á 1 30" nebo "plocha a rozměr 1 30" — odstraň jen vedoucí
+        // písmeno+číslo jako samostatná slova, ne celý zbytek věty.
+        var words0 = text.split(/\s+/);
+        if(words0.length>=2 && PLOCHA_MAP.hasOwnProperty(words0[0]) && /^[1234]/.test(words0[1])){
+          textForValue = words0.slice(2).join(' ');
+        }
+      }
+      var allNums = textForValue.match(/-?\d+[.,]?\d*/g);
       if(allNums && allNums.length){
         valueText = allNums[allNums.length-1];
+      } else if(textForValue.trim()){
+        // Žádná číslice nezbyla — hodnota je čistě slovní (např. "nula", "pět").
+        // Předáme celý zbytek textu dál; parseSpokenNumber zkusí slovní číslovku.
+        valueText = textForValue.trim();
       } else {
         valueText = text;
       }
@@ -473,6 +515,17 @@ function findActionCommand(text){
   text = text.toLowerCase();
   if(text.indexOf('přidat suk')>=0 || text.indexOf('přidej suk')>=0) return {action:'addknot', label:'Přidat suk'};
   if(text.indexOf('nová deska')>=0 || text.indexOf('novou desku')>=0 || text.indexOf('nova deska')>=0) return {action:'newboard', label:'Nová deska'};
+  return null;
+}
+
+// ── "upravit suk N" / "uprav suk N" — vrátí 1-indexované číslo suku ──
+function findEditKnotCommand(text){
+  var t = text.toLowerCase();
+  if(t.indexOf('upravit suk')<0 && t.indexOf('uprav suk')<0 && t.indexOf('upravit suka')<0) return null;
+  var afterIdx = t.indexOf('suk');
+  var rest = t.substring(afterIdx+3).trim();
+  var num = parseSpokenNumber(rest);
+  if(num!==null && !isNaN(num) && num>=1) return Math.round(num);
   return null;
 }
 
@@ -946,6 +999,29 @@ function processCommand(transcript, gen){
     if(window.wgFFTSave) window.wgFFTSave();
     showConfirmOverlay('Uloženo', '✓');
     beepOk();
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "upravit suk N" — otevře editaci konkrétního suku z hlavní stránky
+  var editKnotNum = findEditKnotCommand(transcript);
+  if(editKnotNum !== null){
+    var totalKnots = window.wgGetKnotCount ? window.wgGetKnotCount() : 0;
+    if(editKnotNum > totalKnots){
+      dlog('❌ suk '+editKnotNum+' neexistuje (celkem '+totalKnots+')','err');
+      beepErr();
+      showVoiceToast('Suk '+editKnotNum+' neexistuje');
+    } else {
+      var ok = window.wgEnterEditKnot ? window.wgEnterEditKnot(editKnotNum) : false;
+      if(ok){
+        dlog('✓ upravuji suk '+editKnotNum,'ok');
+        showConfirmOverlay('Suk '+editKnotNum, 'upravuji');
+        beepOk();
+      } else {
+        beepErr();
+        showVoiceToast('Nepodařilo se otevřít suk');
+      }
+    }
     if(sessionActive) continueOrRefresh(gen);
     return;
   }
