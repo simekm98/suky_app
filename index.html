@@ -49,8 +49,9 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F2
 .frow{display:flex;gap:8px;flex-wrap:wrap}
 .fld{display:flex;flex-direction:column;gap:4px;flex:1;min-width:65px}
 .fld label{font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block}
-.fld input,.fld select{font-size:16px;padding:10px 11px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);width:100%;-webkit-appearance:none}
+.fld input,.fld select{font-size:16px;padding:10px 11px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);width:100%;-webkit-appearance:none;touch-action:manipulation}
 .fld input:focus,.fld select:focus{outline:none;border-color:var(--brm);box-shadow:0 0 0 3px rgba(139,94,60,.18)}
+input,select,textarea{touch-action:manipulation}
 .fld.wide{flex:1.5}.fld.narrow{flex:.7;min-width:55px}
 .cb-wrap{display:flex;flex-direction:column;gap:4px}
 .cb-wrap label{font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block}
@@ -241,11 +242,20 @@ canvas{display:block;width:100%;height:72px}
   </div>
   <div class="sbody" id="entry-body">
     <!-- Board params -->
-    <!-- Aktivní složka -->
-    <div id="active-folder-bar" style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
-      <span style="font-size:12px;color:var(--g5);font-weight:600">SLOŽKA:</span>
-      <span id="active-folder-label" style="flex:1;font-size:14px;font-weight:700;color:var(--br)">—</span>
-      <button data-act="openfolder" style="padding:5px 12px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">Změnit</button>
+    <!-- Aktivní složka / dřevo / produkt — kompaktní proklikovací řádek -->
+    <div id="active-folder-bar" style="display:flex;gap:6px;margin-bottom:10px">
+      <div data-act="openfolder" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer">
+        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Složka</div>
+        <div id="active-folder-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+      </div>
+      <div data-act="opensplistwood" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer">
+        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Dřevo</div>
+        <div id="active-wood-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+      </div>
+      <div data-act="opensplistproduct" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer">
+        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Produkt</div>
+        <div id="active-product-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+      </div>
     </div>
 
     <div class="card">
@@ -275,6 +285,14 @@ canvas{display:block;width:100%;height:72px}
           <label>Vrut</label>
           <button class="cb-box" id="cb-screw">—</button>
         </div>
+      </div>
+      <div class="frow" style="margin-top:8px" id="row-csn">
+        <div class="fld opt-field" data-opt="trhlina"><label>Trhlina R</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="hniloba"><label>Zbarvení/hniloba V</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—"></div>
+      </div>
+      <div class="frow" style="margin-top:8px" id="row-csn2">
+        <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo V</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="oblina"><label>Oblina K</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—"></div>
       </div>
     </div>
 
@@ -376,7 +394,7 @@ canvas{display:block;width:100%;height:72px}
   </div>
   <div class="bbar">
     <button class="bmain" id="btn-add">+ Přidat suk</button>
-    <button class="bsec" id="btn-new">Nová deska</button>
+    <button class="bsec" id="btn-new" style="background:var(--br);color:#fff;border:none">Nová deska</button>
     <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení.">🎤</button>
   </div>
 </div>
@@ -516,6 +534,23 @@ canvas{display:block;width:100%;height:72px}
       <div class="setting-lbl">Vrut<small>Zalomený vrut v desce</small></div>
       <button class="toggle on" data-opt="screw"></button>
     </div>
+    <div class="setting-section">Znaky třídění dle ČSN 73 2824-1</div>
+    <div class="setting-row">
+      <div class="setting-lbl">Trhlina R<small>Hloubka trhliny / rozměr strany</small></div>
+      <button class="toggle" data-opt="trhlina"></button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Zbarvení / hniloba V<small>Podíl zbarvených pruhů</small></div>
+      <button class="toggle" data-opt="hniloba"></button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Reakční dřevo V<small>Tlakové dřevo — podíl</small></div>
+      <button class="toggle" data-opt="reakcni"></button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Oblina K<small>Podíl chybějící hrany</small></div>
+      <button class="toggle" data-opt="oblina"></button>
+    </div>
     <div class="setting-section">FFT — výchozí typ testu</div>
     <div class="setting-row">
       <div class="setting-lbl">Typ kmitání<small>Předvolený typ při otevření FFT</small></div>
@@ -572,6 +607,18 @@ canvas{display:block;width:100%;height:72px}
 <div id="voice-confirm-overlay"></div>
 <div id="voice-debug"></div>
 
+<!-- Generický picker pro výběr dřeva/produktu -->
+<div class="folder-modal" id="modal-picker">
+  <div class="folder-modal-inner">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="display:flex;align-items:center">
+      <span style="flex:1" id="picker-title">Vyber</span>
+      <button class="modal-close" data-act="closepicker">✕</button>
+    </div>
+    <div id="picker-list" style="max-height:50dvh;overflow-y:auto;padding:6px 16px 16px"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -599,7 +646,7 @@ function resetVG(){
 }
 
 var detailBi=-1; // index desky v detail screenu
-var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true};
+var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true,trhlina:false,hniloba:false,reakcni:false,oblina:false};
 
 function gn(id){var raw=document.getElementById(id).value;var v=parseFloat(String(raw).replace(',','.'));return isNaN(v)?null:v;}
 function gs(id){var v=document.getElementById(id).value;return v||null;}
@@ -615,7 +662,9 @@ function setVGDisplay(val){
 }
 function getBoardExtra(){
   return{length:opts.length?gn('p-length'):null,mass:opts.mass?gn('p-mass'):null,
-    moisture:opts.moisture?gn('p-moist'):null,vg:opts.vg?boardVG:null,screw:opts.screw?boardScrew:false};
+    moisture:opts.moisture?gn('p-moist'):null,vg:opts.vg?boardVG:null,screw:opts.screw?boardScrew:false,
+    trhlina:opts.trhlina?gn('p-trhlina'):null,hniloba:opts.hniloba?gn('p-hniloba'):null,
+    reakcni:opts.reakcni?gn('p-reakcni'):null,oblina:opts.oblina?gn('p-oblina'):null};
 }
 function curK(){
   var k={};
@@ -947,6 +996,74 @@ function saveAppPrefs(prefs){
   try{ localStorage.setItem('wg26_prefs', JSON.stringify(prefs)); }catch(e){}
 }
 
+var WOOD_OPTIONS = [
+  {value:'', label:'—'},
+  {value:'SM', label:'SM — Smrk'},
+  {value:'BK', label:'BK — Buk'},
+  {value:'BO', label:'BO — Borovice'},
+  {value:'MD', label:'MD — Modřín'}
+];
+var PRODUCT_OPTIONS = [
+  {value:'auto', label:'Automaticky (dle rozměrů)'},
+  {value:'rezivo-plocha', label:'Řezivo — na plochu'},
+  {value:'rezivo-hrana', label:'Řezivo — na hranu'},
+  {value:'tram', label:'Trám / hranol'},
+  {value:'lat', label:'Lať'}
+];
+
+function updateWoodProductLabels(){
+  var prefs = loadAppPrefs();
+  var woodLbl = document.getElementById('active-wood-label');
+  var prodLbl = document.getElementById('active-product-label');
+  if(woodLbl){
+    var w = WOOD_OPTIONS.find(function(o){return o.value===prefs.woodSpecies;});
+    woodLbl.textContent = (w && w.value) ? w.value : '—';
+  }
+  if(prodLbl){
+    var p = PRODUCT_OPTIONS.find(function(o){return o.value===prefs.productType;});
+    prodLbl.textContent = (p && p.value && p.value!=='auto') ? p.label.split(' — ')[0] : 'Auto';
+  }
+}
+
+function openPicker(title, options, currentValue, onSelect){
+  document.getElementById('picker-title').textContent = title;
+  var list = document.getElementById('picker-list');
+  var html = '';
+  options.forEach(function(o){
+    var isSel = o.value===currentValue;
+    html += '<div data-picker-val="'+escH(o.value)+'" style="padding:13px 4px;font-size:15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:.5px solid var(--g1)'+(isSel?';font-weight:700;color:var(--br)':'')+'">'
+      +escH(o.label)+(isSel?'<span>✓</span>':'')+'</div>';
+  });
+  list.innerHTML = html;
+  list.onclick = function(e){
+    var row = e.target.closest('[data-picker-val]');
+    if(!row) return;
+    onSelect(row.getAttribute('data-picker-val'));
+    document.getElementById('modal-picker').classList.remove('open');
+  };
+  document.getElementById('modal-picker').classList.add('open');
+}
+
+function openWoodPicker(){
+  var prefs = loadAppPrefs();
+  openPicker('Druh dřeva', WOOD_OPTIONS, prefs.woodSpecies||'', function(val){
+    var p = loadAppPrefs();
+    p.woodSpecies = val;
+    saveAppPrefs(p);
+    updateWoodProductLabels();
+  });
+}
+function openProductPicker(){
+  var prefs = loadAppPrefs();
+  openPicker('Druh produktu', PRODUCT_OPTIONS, prefs.productType||'auto', function(val){
+    var p = loadAppPrefs();
+    p.productType = val;
+    saveAppPrefs(p);
+    updateWoodProductLabels();
+    if(window.wgSchedDraw) window.wgSchedDraw();
+  });
+}
+
 // ── edit knot ──────────────────────────────────────────────
 function enterEdit(ki){
   editState={ki:ki};
@@ -994,10 +1111,11 @@ function newBoard(skipConfirm){
   var pendFft=window.wgPendingFft||null;window.wgPendingFft=null;
   allBoards.push({id:getId(),b:getB(),d:getD(),folderId:window.getFolderActivId?window.getFolderActivId():null,fft:pendFft,
     length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,
+    trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
     knots:knots.slice(),savedAt:new Date().toISOString()});
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
-  ['p-length','p-mass','p-moist'].forEach(function(id){document.getElementById(id).value='';});
+  ['p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina'].forEach(function(id){document.getElementById(id).value='';});
   resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
   var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
   if(editState)cancelEdit();
@@ -1009,7 +1127,7 @@ function delBoard(bi){allBoards.splice(bi,1);save();renderBlist();toast('Deska s
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
-  if(id==='s-entry')setTimeout(schedDraw,150);
+  if(id==='s-entry'){setTimeout(schedDraw,150);updateWoodProductLabels();}
   if(id==='s-list'){renderKlist();renderBlist();}
 }
 function openBoardDetail(bi){
@@ -1310,6 +1428,40 @@ function load(){
 }
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);}
 
+// ── Globální fix skrolování ──────────────────────────────────────
+// Na iOS/Android se může stát, že touchstart na inputu/selectu "spotřebuje"
+// gesto a vertikální scroll nadřazeného .sbody pak nezareaguje. Sledujeme
+// vertikální posun prstu a pokud přesáhne práh, explicitně posuneme
+// nejbližší scrollovatelný kontejner — funguje to i když prst začal na poli.
+(function(){
+  var touchStartY=null, scrollParent=null;
+  function findScrollParent(el){
+    while(el && el!==document.body){
+      var style=window.getComputedStyle(el);
+      if((style.overflowY==='auto'||style.overflowY==='scroll') && el.scrollHeight>el.clientHeight) return el;
+      el=el.parentElement;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+  document.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1) return;
+    touchStartY=e.touches[0].clientY;
+    scrollParent=findScrollParent(e.target);
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(touchStartY===null || !scrollParent || e.touches.length!==1) return;
+    var dy=touchStartY-e.touches[0].clientY;
+    // Pouze pro vstupní pole — ta jediná mohou blokovat výchozí scroll.
+    // Canvas a jiné prvky s vlastním touch handlingem (FFT graf) necháváme být.
+    var tag=(e.target.tagName||'').toLowerCase();
+    if((tag==='input'||tag==='select') && Math.abs(dy)>4){
+      scrollParent.scrollTop += dy*0.6;
+      touchStartY=e.touches[0].clientY;
+    }
+  },{passive:true});
+  document.addEventListener('touchend',function(){ touchStartY=null; scrollParent=null; });
+})();
+
 // ── events ────────────────────────────────────────────────────
 document.addEventListener('click',function(e){
   var btn=e.target.closest('[data-act]');if(!btn)return;
@@ -1317,6 +1469,9 @@ document.addEventListener('click',function(e){
   var ki=parseInt(btn.getAttribute('data-ki'));
   var bi=parseInt(btn.getAttribute('data-bi'));
   if(act==='setvg'){var vgVal=parseInt(btn.getAttribute('data-vg'));setVG(vgVal);return;}
+  if(act==='opensplistwood'){openWoodPicker();return;}
+  if(act==='opensplistproduct'){openProductPicker();return;}
+  if(act==='closepicker'){document.getElementById('modal-picker').classList.remove('open');return;}
   if(act==='setffttype'){setFftType(btn.getAttribute('data-ftype'));return;}
   if(act==='fftnav'){
     if(window.wgFftNav) window.wgFftNav(btn.getAttribute('data-ftype'), btn.getAttribute('data-nav'));
@@ -1537,6 +1692,7 @@ if(window.ResizeObserver){
 load();
 document.querySelectorAll('.toggle').forEach(function(btn){btn.classList.toggle('on',!!opts[btn.getAttribute('data-opt')]);});
 applyOpts();renderKlist();
+updateWoodProductLabels();
 setTimeout(schedDraw,200);
 
 
@@ -1704,6 +1860,16 @@ window.wgRefreshDetailIfOpen = function(bi){
 window.getB = getB;
 window.getD = getD;
 window.wgGoHome = function(){ showScreen('s-entry'); };
+window.wgEnterEditKnot = function(idx){
+  // idx je 1-indexované (jak to uživatel řekne hlasem: "suk 1" = první suk)
+  var ki = idx-1;
+  if(ki<0 || ki>=knots.length) return false;
+  showScreen('s-entry');
+  enterEdit(ki);
+  setTimeout(function(){ if(window.wgSchedDraw) window.wgSchedDraw(); },150);
+  return true;
+};
+window.wgGetKnotCount = function(){ return knots.length; };
 window.wgGetAllBoards = function(){ return allBoards; };
 window.wgSchedDraw = schedDraw;
 window.wgSave = save;
@@ -1876,13 +2042,6 @@ document.addEventListener('click',function(e){
           <canvas id="cv-fft-long" style="width:100%;display:block;cursor:crosshair"></canvas>
           <div id="fft-cursor-info-long" style="display:none;position:absolute;top:6px;right:6px;background:rgba(92,58,30,.9);color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;pointer-events:none"></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <button data-act="fftnav" data-ftype="longitudinal" data-nav="left" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&lt;</button>
-          <button data-act="fftnav" data-ftype="longitudinal" data-nav="zoomout" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">-</button>
-          <button data-act="fftnav" data-ftype="longitudinal" data-nav="reset" style="flex:1.4;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:12px;cursor:pointer">Reset</button>
-          <button data-act="fftnav" data-ftype="longitudinal" data-nav="zoomin" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">+</button>
-          <button data-act="fftnav" data-ftype="longitudinal" data-nav="right" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&gt;</button>
-        </div>
         <div id="fft-estimate-row-long" style="margin-top:8px;font-size:12px;color:var(--g5);display:none">
           Odhad: <strong id="fft-estimate-long-val">—</strong> Hz
         </div>
@@ -1904,13 +2063,6 @@ document.addEventListener('click',function(e){
           <canvas id="cv-fft-bend" style="width:100%;display:block;cursor:crosshair"></canvas>
           <div id="fft-cursor-info-bend" style="display:none;position:absolute;top:6px;right:6px;background:rgba(92,58,30,.9);color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;pointer-events:none"></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <button data-act="fftnav" data-ftype="bending" data-nav="left" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&lt;</button>
-          <button data-act="fftnav" data-ftype="bending" data-nav="zoomout" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">-</button>
-          <button data-act="fftnav" data-ftype="bending" data-nav="reset" style="flex:1.4;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:12px;cursor:pointer">Reset</button>
-          <button data-act="fftnav" data-ftype="bending" data-nav="zoomin" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">+</button>
-          <button data-act="fftnav" data-ftype="bending" data-nav="right" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&gt;</button>
-        </div>
         <div id="fft-estimate-row-bend" style="margin-top:8px;font-size:12px;color:var(--g5);display:none">
           Odhad: <strong id="fft-estimate-bend-val">—</strong> Hz
         </div>
@@ -1926,7 +2078,7 @@ document.addEventListener('click',function(e){
       <div class="clbl">Nastavení analýzy</div>
       <div class="frow" style="margin-top:8px">
         <div class="fld"><label>Min. frekvence (Hz)</label>
-          <input id="fft-fmin" type="text" value="200" min="1" inputmode="decimal">
+          <input id="fft-fmin" type="text" value="16" min="1" inputmode="decimal">
         </div>
         <div class="fld"><label>Max. frekvence (Hz)</label>
           <input id="fft-fmax" type="text" value="8000" min="100" inputmode="decimal">
@@ -1983,10 +2135,10 @@ function setFftType(t){
   // Přenastav frekvenční rozsah dle typu (combo začíná na podélném rozsahu)
   var effType = t==='combo' ? 'longitudinal' : t;
   if(effType==='longitudinal'){
-    document.getElementById('fft-fmin').value='200';
+    document.getElementById('fft-fmin').value='16';
     document.getElementById('fft-fmax').value='8000';
   } else {
-    document.getElementById('fft-fmin').value='20';
+    document.getElementById('fft-fmin').value='16';
     document.getElementById('fft-fmax').value='1000';
   }
   zoomStart=parseFloat(document.getElementById('fft-fmin').value);
@@ -2058,7 +2210,7 @@ var audioBuffer = null;
 var fftDataByType = {longitudinal:null, bending:null};
 var detectedModesByType = {longitudinal:[], bending:[]};
 var recordDuration = 3;
-var zoomStart = 200;
+var zoomStart = 16;
 var zoomEnd = 8000;
 var isDragging = false;
 var lastTouchX = null;
@@ -2183,10 +2335,10 @@ function beginFftSequence(){
 // Nastaví jen frekvenční rozsah pro daný typ bez měnění vybraného UI tlačítka (pro combo mód)
 function setFftTypeRangeOnly(effType){
   if(effType==='longitudinal'){
-    document.getElementById('fft-fmin').value='200';
+    document.getElementById('fft-fmin').value='16';
     document.getElementById('fft-fmax').value='8000';
   } else {
-    document.getElementById('fft-fmin').value='20';
+    document.getElementById('fft-fmin').value='16';
     document.getElementById('fft-fmax').value='1000';
   }
   zoomStart=parseFloat(document.getElementById('fft-fmin').value);
@@ -2440,7 +2592,7 @@ function detectPeaksFor(type){
   var freqs=fftData.freqs, mags=fftData.mags, df=fftData.df;
   var nModes=parseInt(document.getElementById('fft-nmodes').value)||1;
   var fMin, fMax;
-  if(type==='longitudinal'){ fMin=200; fMax=8000; } else { fMin=20; fMax=1000; }
+  if(type==='longitudinal'){ fMin=16; fMax=8000; } else { fMin=16; fMax=1000; }
   // Pokud appka má aktuálně otevřený tento typ, respektuj uživatelské pole
   if(fftVibType===type){
     fMin=parseFloat(document.getElementById('fft-fmin').value)||fMin;
@@ -2585,6 +2737,15 @@ function drawFFTFor(type){
       ctx.strokeStyle='rgba(92,58,30,.4)';ctx.lineWidth=0.8;ctx.setLineDash([3,3]);
       ctx.beginPath();ctx.moveTo(x1,hpY);ctx.lineTo(x2,hpY);ctx.stroke();
       ctx.setLineDash([]);
+    }
+    // Výrazný aktivní kurzor — svislý proužek přesně na frekvenci vybraného módu,
+    // aby bylo na první pohled jasné, KTERÝ mód se právě upravuje/potvrzuje.
+    var xActive=fx(m.hz);
+    if(xActive>=PL && xActive<=PL+PW){
+      ctx.fillStyle='rgba(192,57,43,.14)';
+      ctx.fillRect(xActive-3,PT,6,PH);
+      ctx.strokeStyle='#C0392B';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(xActive,PT);ctx.lineTo(xActive,PT+PH);ctx.stroke();
     }
   }
 
@@ -3067,8 +3228,8 @@ window.wgFftNav=function(type, nav){
     zoomStart=Math.max(0,center2-newRange2/2);
     zoomEnd=Math.min(maxF,zoomStart+newRange2);
   } else if(nav==='reset'){
-    if(type==='longitudinal'){ zoomStart=200; zoomEnd=8000; }
-    else { zoomStart=20; zoomEnd=1000; }
+    if(type==='longitudinal'){ zoomStart=16; zoomEnd=8000; }
+    else { zoomStart=16; zoomEnd=1000; }
     document.getElementById('fft-fmin').value=zoomStart;
     document.getElementById('fft-fmax').value=zoomEnd;
   }
