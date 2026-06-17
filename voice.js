@@ -64,7 +64,7 @@ var WORD_FIELD_MAP = {
   'délka':'p-length','délku':'p-length','delka':'p-length','delku':'p-length',
   'hmotnost':'p-mass','hmotnosti':'p-mass','hmotnost je':'p-mass',
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
-  'název':'cid','nazev':'cid',
+  'název':'cid','nazev':'cid','id':'cid','ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
   'vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__'
 };
@@ -405,6 +405,47 @@ function findActionCommand(text){
   return null;
 }
 
+// ── "nová složka NÁZEV" / "vytvoř složku NÁZEV" — extrahuje název za klíčovým slovem ──
+function findCreateFolderCommand(text){
+  var t = text.toLowerCase();
+  var patterns = ['nová složka','novou složku','vytvoř složku','vytvořit složku','založ složku'];
+  for(var i=0;i<patterns.length;i++){
+    var idx = t.indexOf(patterns[i]);
+    if(idx >= 0){
+      var name = text.substring(idx + patterns[i].length).trim();
+      // Odstraň případné spojky na začátku ("s názvem", "jménem")
+      name = name.replace(/^(s názvem|s jménem|název|jméno)\s+/i, '').trim();
+      if(name) return name;
+    }
+  }
+  return null;
+}
+
+// ── "FFT podél" / "FFT ohyb" (i foneticky "efefté") — spustí test ────
+function findFftCommand(text){
+  var t = text.toLowerCase();
+  // Fonetické varianty pro "FFT": efefté, ef ef té, eféfté
+  var isFft = t.indexOf('fft') >= 0 || t.indexOf('efefté') >= 0 || t.indexOf('ef ef té') >= 0
+            || t.indexOf('eféfté') >= 0 || t.indexOf('ef ef te') >= 0 || t.indexOf('efefte') >= 0;
+  if(!isFft) return null;
+
+  var isBending = t.indexOf('ohyb') >= 0;
+  var isLong = t.indexOf('podél') >= 0 || t.indexOf('podel') >= 0;
+
+  if(isBending) return {type:'bending', label:'FFT ohyb'};
+  if(isLong) return {type:'longitudinal', label:'FFT podél'};
+  return null; // "FFT" samo bez typu — nejednoznačné, appka neudělá nic
+}
+
+function executeFftCommand(type){
+  if(window.wgFFTOpen) window.wgFFTOpen();
+  if(window.setFftType) window.setFftType(type);
+  // Krátké zpoždění aby se FFT screen stihl vykreslit před spuštěním nahrávání
+  setTimeout(function(){
+    if(window.wgFFTStartRecording) window.wgFFTStartRecording(3);
+  }, 300);
+}
+
 function executeAction(action){
   try{
     if(action === 'addknot'){
@@ -625,6 +666,36 @@ function processCommand(transcript, gen){
     return;
   }
 
+  // "nová složka NÁZEV" — vytvoří a aktivuje složku pro ukládání desek
+  var folderName = findCreateFolderCommand(transcript);
+  if(folderName){
+    dlog('✓ vytvářím složku: "'+folderName+'"','ok');
+    var fid = window.wgCreateAndActivateFolder ? window.wgCreateAndActivateFolder(folderName) : null;
+    if(fid){
+      showConfirmOverlay('Složka', folderName);
+      beepOk();
+    } else {
+      dlog('❌ vytvoření složky selhalo','err');
+      beepErr();
+      showVoiceToast('Nepodařilo se vytvořit složku');
+    }
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "FFT podél" / "FFT ohyb" — otevře FFT screen, nastaví typ, spustí test
+  var fftCmd = findFftCommand(transcript);
+  if(fftCmd){
+    dlog('✓ spouštím: '+fftCmd.label,'ok');
+    executeFftCommand(fftCmd.type);
+    showConfirmOverlay(fftCmd.label, '🎙 spouštím…');
+    beepOk();
+    // Po FFT příkazu KONČÍME hlasovou session pro pole — appka teď čeká na
+    // fyzické bouchnutí do desky, ne na další hlasový příkaz.
+    stopVoiceSession();
+    return;
+  }
+
   // Akční příkazy (přidat suk, nová deska)
   var actionCmd = findActionCommand(transcript);
   if(actionCmd){
@@ -658,6 +729,12 @@ function processCommand(transcript, gen){
     value = parseSpokenNumber(parsed.valueText);
     if(value===null || value<1 || value>4){ dlog('❌ vizuál mimo 1-4','err'); beepErr(); showVoiceToast('Vizuál: 1 až 4'); if(sessionActive) continueOrRefresh(gen); return; }
     value = Math.round(value);
+  } else if(field === 'cid'){
+    kind = 'text';
+    value = parsed.valueText.trim();
+    if(!value){ dlog('❌ ID prázdné','err'); beepErr(); showVoiceToast('ID: řekni text nebo kód'); if(sessionActive) continueOrRefresh(gen); return; }
+    // Kapitalizace jednotlivých "slov" jak je u kódů desek běžné (např. "7p" -> "7P")
+    value = value.toUpperCase().replace(/\s+/g,'');
   } else {
     kind = 'number';
     value = parseSpokenNumber(parsed.valueText);
