@@ -297,7 +297,6 @@ canvas{display:block;width:100%;height:72px}
 
     <!-- Typ profilu dle geometrie -->
     <div id="profile-type-box" style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:8px 12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
-      <span id="profile-type-icon" style="font-size:18px">📐</span>
       <span id="profile-type-label" style="font-size:13px;font-weight:700;color:var(--g7)">—</span>
       <span id="profile-type-dims" style="font-size:11px;color:var(--g5);margin-left:auto"></span>
     </div>
@@ -517,6 +516,23 @@ canvas{display:block;width:100%;height:72px}
       <div class="setting-lbl">Vrut<small>Zalomený vrut v desce</small></div>
       <button class="toggle on" data-opt="screw"></button>
     </div>
+    <div class="setting-section">FFT — výchozí typ testu</div>
+    <div class="setting-row">
+      <div class="setting-lbl">Typ kmitání<small>Předvolený typ při otevření FFT</small></div>
+      <select id="set-fft-default-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        <option value="longitudinal" selected>Podelne</option>
+        <option value="bending">Ohybove</option>
+        <option value="combo">Kombinace</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Pocet modu<small>Kolik vlastnich frekvenci detekovat (max 3)</small></div>
+      <select id="set-fft-default-nmodes" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
+    </div>
     <div class="setting-section">FFT — výchozí délka nahrávání</div>
     <div class="setting-row">
       <div class="setting-lbl">Podélné (s)<small>Výchozí délka pro podélný test</small></div>
@@ -525,6 +541,27 @@ canvas{display:block;width:100%;height:72px}
     <div class="setting-row">
       <div class="setting-lbl">Ohybové (s)<small>Výchozí délka pro ohybový test</small></div>
       <input type="text" id="set-fft-dur-bend" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="5">
+    </div>
+    <div class="setting-section">Drevo a produkt</div>
+    <div class="setting-row">
+      <div class="setting-lbl">Druh dreva<small>Pouzije se jako vychozi pro nove desky</small></div>
+      <select id="set-wood-species" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        <option value="">—</option>
+        <option value="SM">SM — Smrk</option>
+        <option value="BK">BK — Buk</option>
+        <option value="BO">BO — Borovice</option>
+        <option value="MD">MD — Modrin</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Druh produktu<small>Pouzije se jako vychozi pro nove desky</small></div>
+      <select id="set-product-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        <option value="auto" selected>Automaticky (dle rozmeru)</option>
+        <option value="rezivo-plocha">Rezivo — zatezovano na plochu</option>
+        <option value="rezivo-hrana">Rezivo — zatezovano na hranu</option>
+        <option value="tram">Tram / hranol</option>
+        <option value="lat">Lat</option>
+      </select>
     </div>
   </div>
 </div>
@@ -693,26 +730,40 @@ function calcDensity(mass,length,b,d){
 // Trám/hranol: min. rozměr > 60mm a poměr stran ≤ 2 (masivní, blízko čtvercový profil)
 function classifyProfile(b,d){
   if(!b||!d||b<=0||d<=0) return null;
+
+  // Respektuj manuální nastavení produktu, pokud uživatel zvolil konkrétní typ
+  // (jinak "auto" = odhad podle geometrie níže)
+  try{
+    var prefs = JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
+    if(prefs.productType && prefs.productType!=='auto'){
+      var manualMap = {
+        'rezivo-plocha': {type:'rezivo', label:'Řezivo', desc:'zatěžováno na plochu'},
+        'rezivo-hrana':  {type:'rezivo', label:'Řezivo', desc:'zatěžováno na hranu'},
+        'tram':          {type:'tram',   label:'Trám / hranol', desc:'zatěžováno na hranu'},
+        'lat':           {type:'lat',    label:'Lať', desc:'malý profil'}
+      };
+      if(manualMap[prefs.productType]) return manualMap[prefs.productType];
+    }
+  }catch(e){}
+
   var maxDim=Math.max(b,d), minDim=Math.min(b,d);
   var ratio=maxDim/minDim;
   if(minDim<=60 && ratio<=2.5){
-    return {type:'lat', label:'Lať', icon:'📏', desc:'malý profil'};
+    return {type:'lat', label:'Lať', desc:'malý profil'};
   }
   if(ratio>2){
-    return {type:'rezivo', label:'Řezivo', icon:'🪵', desc:'zatěžováno na plocho'};
+    return {type:'rezivo', label:'Řezivo', desc:'zatěžováno na plochu'};
   }
-  return {type:'tram', label:'Trám / hranol', icon:'🏗️', desc:'zatěžováno na hranu'};
+  return {type:'tram', label:'Trám / hranol', desc:'zatěžováno na hranu'};
 }
 
 function updateProfileType(b,d){
   var box=document.getElementById('profile-type-box');
-  var icon=document.getElementById('profile-type-icon');
   var label=document.getElementById('profile-type-label');
   var dims=document.getElementById('profile-type-dims');
   if(!box) return;
   var cls=classifyProfile(b,d);
   if(!cls){ label.textContent='—'; dims.textContent=''; return; }
-  icon.textContent=cls.icon;
   label.textContent=cls.label+' ('+cls.desc+')';
   dims.textContent=b+' × '+d+' mm';
 }
@@ -877,8 +928,24 @@ function openSettings(){
   var dl=document.getElementById('set-fft-dur-long');
   var db=document.getElementById('set-fft-dur-bend');
   if(dl && window.wgGetFftDurations){ var d=window.wgGetFftDurations(); dl.value=d.long; db.value=d.bend; }
+  var dt=document.getElementById('set-fft-default-type');
+  var dnm=document.getElementById('set-fft-default-nmodes');
+  try{
+    var prefs=JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
+    if(dt && prefs.fftDefaultType) dt.value=prefs.fftDefaultType;
+    if(dnm && prefs.fftDefaultNModes) dnm.value=prefs.fftDefaultNModes;
+    var ws=document.getElementById('set-wood-species'); if(ws && prefs.woodSpecies) ws.value=prefs.woodSpecies;
+    var pt=document.getElementById('set-product-type'); if(pt && prefs.productType) pt.value=prefs.productType;
+  }catch(e){}
 }
 function closeSettings(){document.getElementById('modal-settings').classList.remove('open');}
+
+function loadAppPrefs(){
+  try{ return JSON.parse(localStorage.getItem('wg26_prefs')||'{}'); }catch(e){ return {}; }
+}
+function saveAppPrefs(prefs){
+  try{ localStorage.setItem('wg26_prefs', JSON.stringify(prefs)); }catch(e){}
+}
 
 // ── edit knot ──────────────────────────────────────────────
 function enterEdit(ki){
@@ -991,7 +1058,7 @@ function renderDetailBody(bi){
     if(bd.fft[1])html+='<span class="tag">f₁ ohyb: '+bd.fft[1]+' Hz</span>';
   }
   html+='</div>';
-  html+='<button data-act="dopenfft" data-bi="'+bi+'" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">🎙 '+(bd.fft&&bd.fft.length?'Nahrát FFT znovu':'Nahrát FFT')+'</button>';
+  html+='<button data-act="dopenfft" data-bi="'+bi+'" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">'+(bd.fft&&bd.fft.length?'Nahrát FFT znovu':'Nahrát FFT')+'</button>';
   html+='</div>';
   // canvas
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
@@ -1251,6 +1318,10 @@ document.addEventListener('click',function(e){
   var bi=parseInt(btn.getAttribute('data-bi'));
   if(act==='setvg'){var vgVal=parseInt(btn.getAttribute('data-vg'));setVG(vgVal);return;}
   if(act==='setffttype'){setFftType(btn.getAttribute('data-ftype'));return;}
+  if(act==='fftnav'){
+    if(window.wgFftNav) window.wgFftNav(btn.getAttribute('data-ftype'), btn.getAttribute('data-nav'));
+    return;
+  }
   if(act==='metback'){
     document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
     document.getElementById('s-entry').classList.add('active');
@@ -1404,6 +1475,18 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
     var dl=document.getElementById('set-fft-dur-long').value;
     var db=document.getElementById('set-fft-dur-bend').value;
     if(window.wgSetFftDurations) window.wgSetFftDurations(dl,db);
+  });
+});
+['set-fft-default-type','set-fft-default-nmodes','set-wood-species','set-product-type'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('change',function(){
+    var prefs=loadAppPrefs();
+    prefs.fftDefaultType=document.getElementById('set-fft-default-type').value;
+    prefs.fftDefaultNModes=document.getElementById('set-fft-default-nmodes').value;
+    prefs.woodSpecies=document.getElementById('set-wood-species').value;
+    prefs.productType=document.getElementById('set-product-type').value;
+    saveAppPrefs(prefs);
+    if(window.wgApplyFftDefaultType) window.wgApplyFftDefaultType(prefs.fftDefaultType, prefs.fftDefaultNModes);
   });
 });
 document.getElementById('btn-detail-back').addEventListener('click',function(){showScreen('s-list');});
@@ -1752,9 +1835,9 @@ document.addEventListener('click',function(e){
     <div class="card" id="fft-type-card">
       <div class="clbl">Typ kmitání</div>
       <div class="frow">
-        <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="longitudinal">📏 Podélné</button>
-        <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="bending">〜 Ohybové</button>
-        <button class="vg-btn" id="fft-type-C" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="combo">🔁 Kombinace</button>
+        <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="longitudinal">Podélné</button>
+        <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="bending">Ohybové</button>
+        <button class="vg-btn" id="fft-type-C" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="combo">Kombinace</button>
       </div>
       <input type="hidden" id="fft-type" value="longitudinal">
       <div id="fft-estimate-box" style="margin-top:10px;padding:10px 12px;background:#F2F2F2;border-radius:10px;font-size:12px;color:var(--g7);display:none">
@@ -1777,7 +1860,7 @@ document.addEventListener('click',function(e){
         <div id="fft-countdown" style="font-size:32px;font-weight:800;color:var(--br);height:40px;display:flex;align-items:center;justify-content:center"></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:4px">
-        <button class="bmain" id="btn-rec" style="font-size:15px">🎙 Nahrát</button>
+        <button class="bmain" id="btn-rec" style="font-size:15px">Nahrát</button>
         <button class="bsec" id="btn-rec-clear" style="font-size:14px">✕</button>
       </div>
     </div>
@@ -1785,13 +1868,20 @@ document.addEventListener('click',function(e){
     <!-- FFT výsledky — PODÉLNÉ (překlikávací panel) -->
     <div class="card fft-result-panel" id="fft-result-card-long" style="display:none">
       <div class="clbl" id="fft-toggle-long" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
-        <span>📏 Podélné — spektrum <span id="fft-long-summary" style="font-weight:400;color:var(--g5)"></span></span>
+        <span>Podélné — spektrum <span id="fft-long-summary" style="font-weight:400;color:var(--g5)"></span></span>
         <span id="fft-long-chevron">▾</span>
       </div>
       <div id="fft-long-body">
         <div style="position:relative;touch-action:none" id="fft-chart-wrap-long">
           <canvas id="cv-fft-long" style="width:100%;display:block;cursor:crosshair"></canvas>
           <div id="fft-cursor-info-long" style="display:none;position:absolute;top:6px;right:6px;background:rgba(92,58,30,.9);color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;pointer-events:none"></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button data-act="fftnav" data-ftype="longitudinal" data-nav="left" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&lt;</button>
+          <button data-act="fftnav" data-ftype="longitudinal" data-nav="zoomout" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">-</button>
+          <button data-act="fftnav" data-ftype="longitudinal" data-nav="reset" style="flex:1.4;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:12px;cursor:pointer">Reset</button>
+          <button data-act="fftnav" data-ftype="longitudinal" data-nav="zoomin" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">+</button>
+          <button data-act="fftnav" data-ftype="longitudinal" data-nav="right" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&gt;</button>
         </div>
         <div id="fft-estimate-row-long" style="margin-top:8px;font-size:12px;color:var(--g5);display:none">
           Odhad: <strong id="fft-estimate-long-val">—</strong> Hz
@@ -1806,13 +1896,20 @@ document.addEventListener('click',function(e){
     <!-- FFT výsledky — OHYB (překlikávací panel) -->
     <div class="card fft-result-panel" id="fft-result-card-bend" style="display:none">
       <div class="clbl" id="fft-toggle-bend" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
-        <span>〜 Ohybové — spektrum <span id="fft-bend-summary" style="font-weight:400;color:var(--g5)"></span></span>
+        <span>Ohybové — spektrum <span id="fft-bend-summary" style="font-weight:400;color:var(--g5)"></span></span>
         <span id="fft-bend-chevron">▾</span>
       </div>
       <div id="fft-bend-body">
         <div style="position:relative;touch-action:none" id="fft-chart-wrap-bend">
           <canvas id="cv-fft-bend" style="width:100%;display:block;cursor:crosshair"></canvas>
           <div id="fft-cursor-info-bend" style="display:none;position:absolute;top:6px;right:6px;background:rgba(92,58,30,.9);color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;pointer-events:none"></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button data-act="fftnav" data-ftype="bending" data-nav="left" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&lt;</button>
+          <button data-act="fftnav" data-ftype="bending" data-nav="zoomout" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">-</button>
+          <button data-act="fftnav" data-ftype="bending" data-nav="reset" style="flex:1.4;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:12px;cursor:pointer">Reset</button>
+          <button data-act="fftnav" data-ftype="bending" data-nav="zoomin" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">+</button>
+          <button data-act="fftnav" data-ftype="bending" data-nav="right" style="flex:1;padding:9px;border:1px solid var(--g3);border-radius:8px;background:#fff;font-size:14px;cursor:pointer">&gt;</button>
         </div>
         <div id="fft-estimate-row-bend" style="margin-top:8px;font-size:12px;color:var(--g5);display:none">
           Odhad: <strong id="fft-estimate-bend-val">—</strong> Hz
@@ -1836,9 +1933,9 @@ document.addEventListener('click',function(e){
         </div>
         <div class="fld"><label>Počet módů</label>
           <select id="fft-nmodes">
-            <option value="1">1</option>
-            <option value="3" selected>3</option>
-            <option value="5">5</option>
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
           </select>
         </div>
       </div>
@@ -1906,7 +2003,19 @@ function updateRecLabel(){
   var dur=fftVibType==='bending'?fftDefaultDurBend:fftDefaultDurLong;
   var label = fftVibType==='bending'?'Ohybové':(fftVibType==='combo'?'Kombinace (podél + ohyb)':'Podélné');
   if(lbl) lbl.textContent='Nahrávání signálu — '+label;
-  if(btn) btn.textContent=fftVibType==='combo' ? ('🎙 Nahrát (podél '+fftDefaultDurLong+'s → ohyb '+fftDefaultDurBend+'s)') : ('🎙 Nahrát ('+dur+' s)');
+  if(btn) btn.textContent=fftVibType==='combo' ? ('Nahrát (podél '+fftDefaultDurLong+'s -> ohyb '+fftDefaultDurBend+'s)') : ('Nahrát ('+dur+' s)');
+}
+
+// ── Aplikace výchozích preferencí (typ kmitání, počet módů) z nastavení ──
+function applyDefaultFftPrefs(){
+  try{
+    var prefs = JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
+    if(prefs.fftDefaultType) setFftType(prefs.fftDefaultType);
+    if(prefs.fftDefaultNModes){
+      var sel=document.getElementById('fft-nmodes');
+      if(sel) sel.value=prefs.fftDefaultNModes;
+    }
+  }catch(e){}
 }
 
 
@@ -2311,6 +2420,11 @@ function runFFT(buffer, type){
     }, 800);
   } else {
     comboStage=null;
+    // Test (nebo celý kombinovaný test) skutečně skončil — znovu spusť
+    // hlasové ovládání, aby šlo frekvenci hned potvrdit hlasem ("ano"/"první mód 1250").
+    setTimeout(function(){
+      if(window.wgVoiceRestartAfterFft) window.wgVoiceRestartAfterFft();
+    }, 600);
   }
 }
 
@@ -2324,7 +2438,7 @@ function detectPeaksFor(type){
   var fftData=fftDataByType[type];
   if(!fftData) return;
   var freqs=fftData.freqs, mags=fftData.mags, df=fftData.df;
-  var nModes=parseInt(document.getElementById('fft-nmodes').value)||3;
+  var nModes=parseInt(document.getElementById('fft-nmodes').value)||1;
   var fMin, fMax;
   if(type==='longitudinal'){ fMin=200; fMax=8000; } else { fMin=20; fMax=1000; }
   // Pokud appka má aktuálně otevřený tento typ, respektuj uživatelské pole
@@ -2609,9 +2723,15 @@ function setupChartInteractionFor(type){
   var cv=document.getElementById(cvId);
   if(!cv) return;
 
+  var touchStartX=null, touchMoved=false;
+  var TAP_THRESHOLD=8; // px — pod touto hranicí je to tap (výběr píku), ne posun
+
   cv.addEventListener('touchstart',function(e){
     if(fftVibType!==type) return; // zoom/pan jen pro aktuálně vybraný typ
-    if(e.touches.length===1){isDragging=true;lastTouchX=e.touches[0].clientX;}
+    if(e.touches.length===1){
+      isDragging=true;lastTouchX=e.touches[0].clientX;
+      touchStartX=e.touches[0].clientX; touchMoved=false;
+    }
     else if(e.touches.length===2){
       pinchStartDist=Math.abs(e.touches[0].clientX-e.touches[1].clientX);
       pinchStartZoom={start:zoomStart,end:zoomEnd};isDragging=false;
@@ -2625,13 +2745,18 @@ function setupChartInteractionFor(type){
     if(!fftData) return;
     var PW=cv.offsetWidth-48;
     if(e.touches.length===1&&isDragging){
-      var dx=e.touches[0].clientX-lastTouchX;lastTouchX=e.touches[0].clientX;
-      var dHz=-(dx/PW)*(zoomEnd-zoomStart);
-      var range=zoomEnd-zoomStart;
-      var maxF=fftData.sampleRate/2;
-      zoomStart=Math.max(0,Math.min(zoomStart+dHz,maxF-range));
-      zoomEnd=zoomStart+range;drawFFTFor(type);
+      var curX=e.touches[0].clientX;
+      if(Math.abs(curX-touchStartX)>TAP_THRESHOLD) touchMoved=true;
+      var dx=curX-lastTouchX;lastTouchX=curX;
+      if(touchMoved){
+        var dHz=-(dx/PW)*(zoomEnd-zoomStart);
+        var range=zoomEnd-zoomStart;
+        var maxF=fftData.sampleRate/2;
+        zoomStart=Math.max(0,Math.min(zoomStart+dHz,maxF-range));
+        zoomEnd=zoomStart+range;drawFFTFor(type);
+      }
     } else if(e.touches.length===2&&pinchStartDist){
+      touchMoved=true;
       var dist=Math.abs(e.touches[0].clientX-e.touches[1].clientX);
       var scale=pinchStartDist/dist;
       var center=(pinchStartZoom.start+pinchStartZoom.end)/2;
@@ -2644,26 +2769,30 @@ function setupChartInteractionFor(type){
 
   cv.addEventListener('touchend',function(e){
     if(fftVibType!==type) return;
-    if(isDragging&&e.changedTouches.length===1){
+    // Pouze SKUTEČNÝ tap (malý pohyb) vybere/přepíše pík — posun grafu hodnotu nezmění.
+    if(!touchMoved&&e.changedTouches.length===1){
       var touch=e.changedTouches[0];
       handleTapFor(touch.clientX,cv,type);
     }
-    isDragging=false;pinchStartDist=null;lastTouchX=null;
+    isDragging=false;pinchStartDist=null;lastTouchX=null;touchMoved=false;
   });
 
-  var mDown=false,mLastX=null;
-  cv.addEventListener('mousedown',function(e){if(fftVibType!==type)return;mDown=true;mLastX=e.clientX;e.preventDefault();});
+  var mDown=false,mLastX=null,mMoved=false,mStartX=null;
+  cv.addEventListener('mousedown',function(e){if(fftVibType!==type)return;mDown=true;mLastX=e.clientX;mStartX=e.clientX;mMoved=false;e.preventDefault();});
   cv.addEventListener('mousemove',function(e){
     if(fftVibType!==type) return;
     var fftData=fftDataByType[type];
     if(!fftData) return;
     if(mDown){
+      if(Math.abs(e.clientX-mStartX)>TAP_THRESHOLD) mMoved=true;
       var dx=e.clientX-mLastX;mLastX=e.clientX;
-      var PW2=cv.offsetWidth-48;
-      var dHz=-(dx/PW2)*(zoomEnd-zoomStart);
-      var range=zoomEnd-zoomStart,maxF=fftData.sampleRate/2;
-      zoomStart=Math.max(0,Math.min(zoomStart+dHz,maxF-range));
-      zoomEnd=zoomStart+range;drawFFTFor(type);
+      if(mMoved){
+        var PW2=cv.offsetWidth-48;
+        var dHz=-(dx/PW2)*(zoomEnd-zoomStart);
+        var range=zoomEnd-zoomStart,maxF=fftData.sampleRate/2;
+        zoomStart=Math.max(0,Math.min(zoomStart+dHz,maxF-range));
+        zoomEnd=zoomStart+range;drawFFTFor(type);
+      }
     }
     var rect=cv.getBoundingClientRect();
     var PL=38,PW3=cv.offsetWidth-48;
@@ -2677,7 +2806,9 @@ function setupChartInteractionFor(type){
   });
   cv.addEventListener('mouseup',function(e){
     if(fftVibType!==type) return;
-    mDown=false;handleTapFor(e.clientX,cv,type);
+    mDown=false;
+    if(!mMoved) handleTapFor(e.clientX,cv,type);
+    mMoved=false;
   });
   cv.addEventListener('mouseleave',function(){
     mDown=false;
@@ -2796,6 +2927,7 @@ function initFFT(){
   if(btnOpen) btnOpen.addEventListener('click',function(){
     document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
     document.getElementById('s-fft').classList.add('active');
+    applyDefaultFftPrefs();
     updateEstimateBox();
   });
   var btnBack=document.getElementById('btn-fft-back');
@@ -2902,6 +3034,72 @@ window.wgSetFftDurations=function(long,bend){
   updateRecLabel();
 };
 window.wgFFTSetTargetBoard=function(idx){ fftTargetBoardIdx=idx; };
+window.wgApplyFftDefaultType=function(type, nmodes){
+  if(type) setFftType(type);
+  if(nmodes){
+    var sel=document.getElementById('fft-nmodes');
+    if(sel) sel.value=nmodes;
+  }
+};
+
+// ── Tlačítková navigace v grafu — spolehlivá alternativa ke gestům ──
+window.wgFftNav=function(type, nav){
+  var fftData=fftDataByType[type];
+  if(!fftData) return;
+  var range=zoomEnd-zoomStart;
+  var maxF=fftData.sampleRate/2;
+  if(nav==='left'){
+    var shift=range*0.3;
+    zoomStart=Math.max(0,zoomStart-shift);
+    zoomEnd=zoomStart+range;
+  } else if(nav==='right'){
+    var shift2=range*0.3;
+    zoomEnd=Math.min(maxF,zoomEnd+shift2);
+    zoomStart=zoomEnd-range;
+  } else if(nav==='zoomin'){
+    var newRange=Math.max(50,range*0.6);
+    var center=(zoomStart+zoomEnd)/2;
+    zoomStart=Math.max(0,center-newRange/2);
+    zoomEnd=zoomStart+newRange;
+  } else if(nav==='zoomout'){
+    var newRange2=Math.min(maxF,range/0.6);
+    var center2=(zoomStart+zoomEnd)/2;
+    zoomStart=Math.max(0,center2-newRange2/2);
+    zoomEnd=Math.min(maxF,zoomStart+newRange2);
+  } else if(nav==='reset'){
+    if(type==='longitudinal'){ zoomStart=200; zoomEnd=8000; }
+    else { zoomStart=20; zoomEnd=1000; }
+    document.getElementById('fft-fmin').value=zoomStart;
+    document.getElementById('fft-fmax').value=zoomEnd;
+  }
+  drawFFTFor(type);
+};
+
+// ── Primární (1.) mód aktuálně zobrazeného typu — pro hlasové potvrzení ──
+window.wgGetPrimaryModeFreq=function(){
+  var effType = fftVibType==='combo' ? 'longitudinal' : fftVibType;
+  var modes = detectedModesByType[effType];
+  if(modes && modes.length) return Math.round(modes[0].hz*10)/10;
+  // Pokud podélné nemá data, zkus ohybové (typicky po combo testu)
+  var other = detectedModesByType['bending'];
+  if(other && other.length) return Math.round(other[0].hz*10)/10;
+  return null;
+};
+window.wgSetPrimaryModeFreq=function(hz){
+  var effType = fftVibType==='combo' ? 'longitudinal' : fftVibType;
+  var modes = detectedModesByType[effType];
+  if(!modes || !modes.length){
+    modes = detectedModesByType['bending'];
+    effType = 'bending';
+  }
+  if(modes && modes.length){
+    modes[0].hz = hz;
+    modes[0].userEdited = true;
+    drawFFTFor(effType);
+    renderModesFor(effType);
+  }
+};
+
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initFFT);}else{initFFT();}
 })();
 
