@@ -259,7 +259,6 @@ canvas{display:block;width:100%;height:72px}
     </div>
 
     <div class="card">
-      <div class="clbl">Deska</div>
       <div class="frow" style="margin-bottom:8px">
         <div class="fld wide"><label>ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
         <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal"></div>
@@ -312,12 +311,6 @@ canvas{display:block;width:100%;height:72px}
     </div>
     <!-- MOED metriky - zobrazí se po FFT měření -->
     
-
-    <!-- Typ profilu dle geometrie -->
-    <div id="profile-type-box" style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:8px 12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
-      <span id="profile-type-label" style="font-size:13px;font-weight:700;color:var(--g7)">—</span>
-      <span id="profile-type-dims" style="font-size:11px;color:var(--g5);margin-left:auto"></span>
-    </div>
 
     <!-- Canvas -->
     <div class="crow">
@@ -394,7 +387,7 @@ canvas{display:block;width:100%;height:72px}
   </div>
   <div class="bbar">
     <button class="bmain" id="btn-add">+ Přidat suk</button>
-    <button class="bsec" id="btn-new" style="background:var(--br);color:#fff;border:none">Nová deska</button>
+    <button class="bmain" id="btn-new" style="background:#fff;color:var(--br);border:1.5px solid var(--g3)">Nová deska</button>
     <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení.">🎤</button>
   </div>
 </div>
@@ -646,6 +639,7 @@ function resetVG(){
 }
 
 var detailBi=-1; // index desky v detail screenu
+var detailOpenedViaVoiceSearch=false; // true = po uložení/nové desce se vrátí na prázdnou hlavní stránku
 var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true,trhlina:false,hniloba:false,reakcni:false,oblina:false};
 
 function gn(id){var raw=document.getElementById(id).value;var v=parseFloat(String(raw).replace(',','.'));return isNaN(v)?null:v;}
@@ -788,7 +782,7 @@ function classifyProfile(b,d){
       var manualMap = {
         'rezivo-plocha': {type:'rezivo', label:'Řezivo', desc:'zatěžováno na plochu'},
         'rezivo-hrana':  {type:'rezivo', label:'Řezivo', desc:'zatěžováno na hranu'},
-        'tram':          {type:'tram',   label:'Trám / hranol', desc:'zatěžováno na hranu'},
+        'tram':          {type:'tram',   label:'Hranol', desc:'zatěžováno na hranu'},
         'lat':           {type:'lat',    label:'Lať', desc:'malý profil'}
       };
       if(manualMap[prefs.productType]) return manualMap[prefs.productType];
@@ -803,7 +797,7 @@ function classifyProfile(b,d){
   if(ratio>2){
     return {type:'rezivo', label:'Řezivo', desc:'zatěžováno na plochu'};
   }
-  return {type:'tram', label:'Trám / hranol', desc:'zatěžováno na hranu'};
+  return {type:'tram', label:'Hranol', desc:'zatěžováno na hranu'};
 }
 
 function updateProfileType(b,d){
@@ -1007,7 +1001,7 @@ var PRODUCT_OPTIONS = [
   {value:'auto', label:'Automaticky (dle rozměrů)'},
   {value:'rezivo-plocha', label:'Řezivo — na plochu'},
   {value:'rezivo-hrana', label:'Řezivo — na hranu'},
-  {value:'tram', label:'Trám / hranol'},
+  {value:'tram', label:'Hranol'},
   {value:'lat', label:'Lať'}
 ];
 
@@ -1132,6 +1126,7 @@ function showScreen(id){
 }
 function openBoardDetail(bi){
   detailBi=bi;
+  detailOpenedViaVoiceSearch=false; // safe default — přepíše se na true jen z wgFindAndOpenBoard
   var bd=allBoards[bi];
   document.getElementById('detail-title').textContent=bd.id;
   renderDetailBody(bi);
@@ -1320,6 +1315,13 @@ function saveDetailBoard(){
   bd.vg=document.getElementById('d-vg').value||null;
   var ds=document.getElementById('d-screw');bd.screw=ds?ds.classList.contains('checked'):false;
   save();renderBlist();toast('Deska uložena ✓');
+  if(detailOpenedViaVoiceSearch){
+    // Deska byla otevřena hlasovým vyhledáním — po uložení appka vrátí
+    // prázdnou hlavní stránku, aby uživatel mohl rovnou zadávat další desku.
+    detailOpenedViaVoiceSearch=false;
+    showScreen('s-entry');
+    return;
+  }
   // překresli canvas
   renderDetailBody(detailBi);
   setTimeout(function(){paintDetailCv('dcv1','dwrap1',bd.knots,bd.b,bd.d);},200);
@@ -1644,7 +1646,7 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
     if(window.wgApplyFftDefaultType) window.wgApplyFftDefaultType(prefs.fftDefaultType, prefs.fftDefaultNModes);
   });
 });
-document.getElementById('btn-detail-back').addEventListener('click',function(){showScreen('s-list');});
+document.getElementById('btn-detail-back').addEventListener('click',function(){detailOpenedViaVoiceSearch=false;showScreen('s-list');});
 document.getElementById('btn-detail-save').addEventListener('click',saveDetailBoard);
 
 
@@ -1860,6 +1862,21 @@ window.wgRefreshDetailIfOpen = function(bi){
 window.getB = getB;
 window.getD = getD;
 window.wgGoHome = function(){ showScreen('s-entry'); };
+window.wgSetWoodSpecies = function(code){
+  var valid = WOOD_OPTIONS.find(function(o){ return o.value===code; });
+  if(!valid) return false;
+  var p = loadAppPrefs(); p.woodSpecies = code; saveAppPrefs(p);
+  updateWoodProductLabels();
+  return true;
+};
+window.wgSetProductType = function(code){
+  var valid = PRODUCT_OPTIONS.find(function(o){ return o.value===code; });
+  if(!valid) return false;
+  var p = loadAppPrefs(); p.productType = code; saveAppPrefs(p);
+  updateWoodProductLabels();
+  if(window.wgSchedDraw) window.wgSchedDraw();
+  return true;
+};
 window.wgEnterEditKnot = function(idx){
   // idx je 1-indexované (jak to uživatel řekne hlasem: "suk 1" = první suk)
   var ki = idx-1;
@@ -1872,8 +1889,36 @@ window.wgEnterEditKnot = function(idx){
 window.wgGetKnotCount = function(){ return knots.length; };
 window.wgGetAllBoards = function(){ return allBoards; };
 window.wgSchedDraw = schedDraw;
+window.wgFindAndOpenBoard = function(idQuery){
+  if(!idQuery) return false;
+  var q = String(idQuery).trim().toLowerCase();
+  var idx = allBoards.findIndex(function(b){ return (b.id||'').toLowerCase()===q; });
+  if(idx<0){
+    // fuzzy: deska obsahuje dotaz, nebo dotaz obsahuje desku
+    idx = allBoards.findIndex(function(b){
+      var bid=(b.id||'').toLowerCase();
+      return bid.indexOf(q)>=0 || q.indexOf(bid)>=0;
+    });
+  }
+  if(idx<0) return false;
+  openBoardDetail(idx);
+  detailOpenedViaVoiceSearch = true; // nastav AŽ PO openBoardDetail (ten flag resetuje jako safe default)
+  return true;
+};
 window.wgSave = save;
-window.wgNewBoard = function(){ newBoard(true); }; // hlasové volání — vždy skipConfirm
+window.wgSaveDetailBoard = saveDetailBoard;
+window.wgNewBoard = function(){
+  var isDetailActive = document.getElementById('s-detail') && document.getElementById('s-detail').classList.contains('active');
+  if(isDetailActive && detailOpenedViaVoiceSearch){
+    // Uživatel byl v editaci desky nalezené hlasem a chce začít novou —
+    // opusť editaci (bez uložení změn provedených od otevření) a vrať
+    // prázdnou hlavní stránku, kde appka už čeká na novou desku.
+    detailOpenedViaVoiceSearch=false;
+    showScreen('s-entry');
+    return;
+  }
+  newBoard(true);
+}; // hlasové volání — vždy skipConfirm
 window.wgAddKnot = function(){ addKnot(); };
 
 
