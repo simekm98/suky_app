@@ -529,6 +529,22 @@ function findEditKnotCommand(text){
   return null;
 }
 
+// ── "vyhledat X" / "najdi X" / "otevři desku X" — vyhledá desku podle ID ──
+function findSearchBoardCommand(text){
+  var t = text.toLowerCase();
+  var patterns = ['vyhledat','vyhledej','najdi desku','najít desku','otevři desku','otevřit desku'];
+  for(var i=0;i<patterns.length;i++){
+    var idx = t.indexOf(patterns[i]);
+    if(idx >= 0){
+      var rest = text.substring(idx+patterns[i].length).trim();
+      // ID může být alfanumerické (jako "20L") — použij stejný parser jako pro ID pole
+      var parsed = parseAlphaNumericId(rest);
+      if(parsed) return parsed;
+    }
+  }
+  return null;
+}
+
 // ── "nová složka NÁZEV" / "vytvoř složku NÁZEV" — extrahuje název za klíčovým slovem ──
 function findCreateFolderCommand(text){
   var t = text.toLowerCase();
@@ -542,6 +558,51 @@ function findCreateFolderCommand(text){
       if(name) return name;
     }
   }
+  return null;
+}
+
+// ── "vyber složku X" / "změna složky X" / "změň složku X" — aktivuje
+// existující složku. Bez jména pouze otevře výběr (modal).
+function findSelectFolderCommand(text){
+  var t = text.toLowerCase();
+  var patterns = ['vyber složku','vyber slozku','výběr složky','vyber folder','změna složky','zmena slozky','změň složku','zmen slozku'];
+  for(var i=0;i<patterns.length;i++){
+    var idx = t.indexOf(patterns[i]);
+    if(idx >= 0){
+      var name = text.substring(idx + patterns[i].length).trim();
+      name = name.replace(/^(na|s názvem|s jménem|název|jméno)\s+/i, '').trim();
+      return {name: name || null};
+    }
+  }
+  return null;
+}
+
+// ── Druh dřeva hlasem: "smrk", "buk", "borovice", "modřín" (i kódy SM/BK/BO/MD) ──
+var WOOD_VOICE_MAP = {
+  'smrk':'SM','sm':'SM',
+  'buk':'BK','bk':'BK',
+  'borovice':'BO','borovici':'BO','bo':'BO',
+  'modřín':'MD','modrin':'MD','md':'MD'
+};
+function findWoodSpeciesCommand(text){
+  var t = text.toLowerCase();
+  if(t.indexOf('dřevo')<0 && t.indexOf('drevo')<0 && t.indexOf('druh dřeva')<0) return null;
+  for(var key in WOOD_VOICE_MAP){
+    if(t.indexOf(key)>=0) return WOOD_VOICE_MAP[key];
+  }
+  return null;
+}
+
+// ── Druh produktu hlasem: "trám"/"hranol", "lať", "řezivo na plochu/na hranu" ──
+function findProductTypeCommand(text){
+  var t = text.toLowerCase();
+  if(t.indexOf('produkt')<0 && t.indexOf('hranol')<0 && t.indexOf('trám')<0 && t.indexOf('tram')<0
+     && t.indexOf('lať')<0 && t.indexOf('lat')<0 && t.indexOf('řezivo')<0 && t.indexOf('rezivo')<0) return null;
+  if(t.indexOf('na plochu')>=0) return 'rezivo-plocha';
+  if(t.indexOf('na hranu')>=0) return 'rezivo-hrana';
+  if(t.indexOf('hranol')>=0 || t.indexOf('trám')>=0 || t.indexOf('tram')>=0) return 'tram';
+  if(t.indexOf('lať')>=0 || t.indexOf('lat')>=0) return 'lat';
+  if(t.indexOf('automatick')>=0) return 'auto';
   return null;
 }
 
@@ -855,6 +916,62 @@ function processCommand(transcript, gen){
     return;
   }
 
+  // "dřevo smrk" / "druh dřeva buk" — nastaví výchozí druh dřeva
+  var woodCmd = findWoodSpeciesCommand(transcript);
+  if(woodCmd){
+    var woodOk = window.wgSetWoodSpecies ? window.wgSetWoodSpecies(woodCmd) : false;
+    if(woodOk){
+      dlog('✓ druh dřeva: '+woodCmd,'ok');
+      showConfirmOverlay('Druh dřeva', woodCmd);
+      beepOk();
+    } else {
+      beepErr();
+      showVoiceToast('Nerozpoznán druh dřeva');
+    }
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "produkt hranol" / "řezivo na plochu" — nastaví výchozí druh produktu
+  var productCmd = findProductTypeCommand(transcript);
+  if(productCmd){
+    var prodOk = window.wgSetProductType ? window.wgSetProductType(productCmd) : false;
+    if(prodOk){
+      dlog('✓ druh produktu: '+productCmd,'ok');
+      showConfirmOverlay('Druh produktu', productCmd);
+      beepOk();
+    } else {
+      beepErr();
+      showVoiceToast('Nerozpoznán druh produktu');
+    }
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "vyber složku X" / "změna složky X" — aktivuje EXISTUJÍCÍ složku (ne vytváří novou)
+  var selectFolderCmd = findSelectFolderCommand(transcript);
+  if(selectFolderCmd){
+    if(selectFolderCmd.name){
+      var actFid = window.wgActivateFolderByName ? window.wgActivateFolderByName(selectFolderCmd.name) : null;
+      if(actFid){
+        dlog('✓ aktivována složka: "'+selectFolderCmd.name+'"','ok');
+        showConfirmOverlay('Složka', selectFolderCmd.name);
+        beepOk();
+      } else {
+        dlog('❌ složka "'+selectFolderCmd.name+'" nenalezena','err');
+        beepErr();
+        showVoiceToast('Složka "'+selectFolderCmd.name+'" nenalezena');
+      }
+    } else {
+      // Bez jména — otevři výběr složky manuálně
+      if(window.wgOpenFolderPicker) window.wgOpenFolderPicker();
+      showConfirmOverlay('Výběr složky', 'otevřeno');
+      beepOk();
+    }
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
   // "nová složka NÁZEV" — vytvoří a aktivuje složku pro ukládání desek
   // Pokud zazní jen "nová složka" bez názvu, appka čeká na pojmenování dalším povelem
   var folderName = findCreateFolderCommand(transcript);
@@ -993,12 +1110,20 @@ function processCommand(transcript, gen){
     return;
   }
 
-  // "Uložit" — uloží FFT data (funguje jen na FFT screenu)
+  // "Uložit" — uloží rozpracovanou desku (detail screen) nebo FFT data (FFT screen)
   if(/^ulož|^uloz/.test(transcript.toLowerCase().trim())){
-    dlog('✓ ukládám FFT','ok');
-    if(window.wgFFTSave) window.wgFFTSave();
-    showConfirmOverlay('Uloženo', '✓');
-    beepOk();
+    var isDetailActive = document.getElementById('s-detail') && document.getElementById('s-detail').classList.contains('active');
+    if(isDetailActive && window.wgSaveDetailBoard){
+      dlog('✓ ukládám desku','ok');
+      window.wgSaveDetailBoard();
+      showConfirmOverlay('Uloženo', '✓');
+      beepOk();
+    } else {
+      dlog('✓ ukládám FFT','ok');
+      if(window.wgFFTSave) window.wgFFTSave();
+      showConfirmOverlay('Uloženo', '✓');
+      beepOk();
+    }
     if(sessionActive) continueOrRefresh(gen);
     return;
   }
@@ -1021,6 +1146,23 @@ function processCommand(transcript, gen){
         beepErr();
         showVoiceToast('Nepodařilo se otevřít suk');
       }
+    }
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+
+  // "vyhledat X" — najde desku podle ID a otevře ji k úpravě
+  var searchBoardId = findSearchBoardCommand(transcript);
+  if(searchBoardId){
+    var foundOk = window.wgFindAndOpenBoard ? window.wgFindAndOpenBoard(searchBoardId) : false;
+    if(foundOk){
+      dlog('✓ otevřena deska: '+searchBoardId,'ok');
+      showConfirmOverlay('Deska '+searchBoardId, 'otevřena');
+      beepOk();
+    } else {
+      dlog('❌ deska "'+searchBoardId+'" nenalezena','err');
+      beepErr();
+      showVoiceToast('Deska "'+searchBoardId+'" nenalezena');
     }
     if(sessionActive) continueOrRefresh(gen);
     return;
