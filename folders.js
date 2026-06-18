@@ -70,6 +70,28 @@ window.wgCreateAndActivateFolder = function(name){
 };
 window.renderFolderChipsGlobal = renderFolderChips;
 
+// Aktivuje EXISTUJÍCÍ složku podle jména (fuzzy match) — pro hlasový příkaz
+// "vyber složku X" / "změna složky X". Nevytváří novou, jen přepne aktivní.
+window.wgActivateFolderByName = function(name){
+  if(!name) return null;
+  var n = name.trim().toLowerCase();
+  var found = allFolders.find(function(f){ return f.name.toLowerCase()===n; });
+  if(!found){
+    // zkus částečnou shodu (obsahuje/je obsaženo)
+    found = allFolders.find(function(f){
+      var fn=f.name.toLowerCase();
+      return fn.indexOf(n)>=0 || n.indexOf(fn)>=0;
+    });
+  }
+  if(!found) return null;
+  activeFolderId = found.id;
+  saveFolders();
+  if(typeof updateActiveFolderBar === 'function') updateActiveFolderBar();
+  if(typeof renderFolderChips === 'function') renderFolderChips();
+  return found.id;
+};
+window.wgOpenFolderPicker = function(){ openFolderModal(); };
+
 // ── FOLDER MODAL ──────────────────────────────────────────
 function openFolderModal(){
   renderFolderModal();
