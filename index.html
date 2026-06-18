@@ -293,6 +293,21 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo V</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—"></div>
         <div class="fld opt-field" data-opt="oblina"><label>Oblina K</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—"></div>
       </div>
+      <div class="frow" style="margin-top:8px" id="row-csn3">
+        <div class="fld opt-field" data-opt="odklon"><label>Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="letokruh"><label>Šířka letokruhů (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—"></div>
+      </div>
+      <div class="frow" style="margin-top:8px" id="row-csn4">
+        <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení podélné (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="cb-wrap opt-field" data-opt="dren" style="flex:.6;min-width:60px">
+          <label>Dřeň</label>
+          <button class="cb-box" id="cb-dren">—</button>
+        </div>
+        <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:.6;min-width:60px">
+          <label>Hmyz</label>
+          <button class="cb-box" id="cb-hmyz">—</button>
+        </div>
+      </div>
     </div>
 
     <!-- Metrics: KAR | DAB | Hustota | Třída | Suků -->
@@ -544,6 +559,26 @@ canvas{display:block;width:100%;height:72px}
       <div class="setting-lbl">Oblina K<small>Podíl chybějící hrany</small></div>
       <button class="toggle" data-opt="oblina"></button>
     </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Odklon vláken<small>Odchylka vláken v %</small></div>
+      <button class="toggle" data-opt="odklon"></button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Šířka letokruhů<small>Průměrná šířka v mm</small></div>
+      <button class="toggle" data-opt="letokruh"></button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Zakřivení podélné<small>Vzepětí na 2000mm</small></div>
+      <button class="toggle" data-opt="zakriveni"></button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Dřeň<small>Přítomnost dřeně v řezivu</small></div>
+      <button class="toggle" data-opt="dren"></button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Poškození hmyzem<small>Chodbičky &gt; 2mm</small></div>
+      <button class="toggle" data-opt="hmyz"></button>
+    </div>
     <div class="setting-section">FFT — výchozí typ testu</div>
     <div class="setting-row">
       <div class="setting-lbl">Typ kmitání<small>Předvolený typ při otevření FFT</small></div>
@@ -640,7 +675,7 @@ function resetVG(){
 
 var detailBi=-1; // index desky v detail screenu
 var detailOpenedViaVoiceSearch=false; // true = po uložení/nové desce se vrátí na prázdnou hlavní stránku
-var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true,trhlina:false,hniloba:false,reakcni:false,oblina:false};
+var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true,trhlina:false,hniloba:false,reakcni:false,oblina:false,odklon:false,letokruh:false,zakriveni:false,dren:false,hmyz:false};
 
 function gn(id){var raw=document.getElementById(id).value;var v=parseFloat(String(raw).replace(',','.'));return isNaN(v)?null:v;}
 function gs(id){var v=document.getElementById(id).value;return v||null;}
@@ -655,10 +690,16 @@ function setVGDisplay(val){
   });
 }
 function getBoardExtra(){
+  var dr=document.getElementById('cb-dren');
+  var hm=document.getElementById('cb-hmyz');
   return{length:opts.length?gn('p-length'):null,mass:opts.mass?gn('p-mass'):null,
     moisture:opts.moisture?gn('p-moist'):null,vg:opts.vg?boardVG:null,screw:opts.screw?boardScrew:false,
     trhlina:opts.trhlina?gn('p-trhlina'):null,hniloba:opts.hniloba?gn('p-hniloba'):null,
-    reakcni:opts.reakcni?gn('p-reakcni'):null,oblina:opts.oblina?gn('p-oblina'):null};
+    reakcni:opts.reakcni?gn('p-reakcni'):null,oblina:opts.oblina?gn('p-oblina'):null,
+    odklon:opts.odklon?gn('p-odklon'):null,letokruh:opts.letokruh?gn('p-letokruh'):null,
+    zakriveni:opts.zakriveni?gn('p-zakriveni'):null,
+    dren:opts.dren?(dr?dr.classList.contains('checked'):false):false,
+    hmyz:opts.hmyz?(hm?hm.classList.contains('checked'):false):false};
 }
 function curK(){
   var k={};
@@ -719,6 +760,111 @@ function calcUA(polys,b,d){
   return f/(R*R);
 }
 function mkPolys(ks,b,d){return ks.map(function(k){return kPts(k,b,d);}).filter(Boolean);}
+// ══════════════════════════════════════════════════════════
+//  ČSN 73 2824-1 — KOMPLETNÍ KLASIFIKACE DLE NORMY
+//  11 znaků třídění, tabulky 2 (hranol/K), 3 (prkno/fošna), 4 (lať)
+//  Výsledná třída = nejhorší ze všech posuzovaných znaků
+// ══════════════════════════════════════════════════════════
+
+// Mezní hodnoty suků (poměrný rozměr A) — Tabulka 2 (hranoly, prkna/fošny "K")
+var CSN_LIMITS_HRANOL = {
+  S13:{suky:1/5, odklon:0.07, dren:false, letokruh:4, letokruh_dougl:6, trhliny_vysusne:1/5, trhliny_blesk:false, oblina:1/5, zakriveni_podelne:8, zakriveni_sroubove:1/25, zbarveni_zamodrani:true, zbarveni_pruh:1/5, hniloba:false, tlakdrevo:1/5},
+  S10:{suky:1/3, odklon:0.12, dren:true,  letokruh:6, letokruh_dougl:8, trhliny_vysusne:1/2, trhliny_blesk:false, oblina:1/4, zakriveni_podelne:8, zakriveni_sroubove:1/25, zbarveni_zamodrani:true, zbarveni_pruh:2/5, hniloba:false, tlakdrevo:2/5},
+  S7: {suky:3/5, odklon:0.12, dren:true,  letokruh:6, letokruh_dougl:8, trhliny_vysusne:1/2, trhliny_blesk:false, oblina:1/4, zakriveni_podelne:8, zakriveni_sroubove:1/25, zbarveni_zamodrani:true, zbarveni_pruh:2/5, hniloba:false, tlakdrevo:2/5}
+};
+// Mezní hodnoty — Tabulka 3 (prkna/fošny, nenamáhané na ohyb ve stojaté poloze)
+var CSN_LIMITS_REZIVO = {
+  S13:{suky_jednotlivy:1/5, suky_skupinovy:1/3, odklon:0.07, dren:false, letokruh:4, letokruh_dougl:6, trhliny_vysusne:true, trhliny_blesk:false, oblina:1/4, zakriveni_podelne:8, zakriveni_sroubove:1/25, zakriveni_pricne:1/50, zbarveni_zamodrani:true, zbarveni_pruh:1/5, hniloba:false, tlakdrevo:1/5},
+  S10:{suky_jednotlivy:1/3, suky_skupinovy:1/2, odklon:0.12, dren:true,  letokruh:6, letokruh_dougl:8, trhliny_vysusne:true, trhliny_blesk:false, oblina:1/3, zakriveni_podelne:8, zakriveni_sroubove:1/25, zakriveni_pricne:1/30, zbarveni_zamodrani:true, zbarveni_pruh:2/5, hniloba:false, tlakdrevo:2/5},
+  S7: {suky_jednotlivy:1/2, suky_skupinovy:2/3, odklon:0.16, dren:true,  letokruh:6, letokruh_dougl:8, trhliny_vysusne:true, trhliny_blesk:false, oblina:1/3, zakriveni_podelne:12,zakriveni_sroubove:2/25, zakriveni_pricne:1/20, zbarveni_zamodrani:true, zbarveni_pruh:3/5, hniloba:false, tlakdrevo:3/5}
+};
+// Mezní hodnoty — Tabulka 4 (lať)
+var CSN_LIMITS_LAT = {
+  S13:{suky:1/3, suky_borovice:1/5, odklon:0.07, dren:false, letokruh_dougl:8, trhliny_vysusne:true, trhliny_blesk:false, oblina:1/4, zakriveni_podelne:8, zakriveni_sroubove:1/25, zbarveni_zamodrani:true, zbarveni_pruh:2/5, hniloba:false, tlakdrevo:2/5},
+  S10:{suky:1/2, suky_borovice:2/5, odklon:0.12, dren:false, letokruh_dougl:8, trhliny_vysusne:true, trhliny_blesk:false, oblina:1/3, zakriveni_podelne:12,zakriveni_sroubove:1/25, zbarveni_zamodrani:true, zbarveni_pruh:3/5, hniloba:false, tlakdrevo:3/5}
+};
+
+// Lidsky čitelný název znaku třídění pro zobrazení důvodu klasifikace
+function CSN_ZNAK_LABEL(key){
+  var labels = {
+    suky:'Suky (KAR)', suky_jednotlivy:'Suky — jednotlivý', suky_skupinovy:'Suky — skupinový (DAB)',
+    odklon:'Odklon vláken', dren:'Dřeň', letokruh:'Šířka letokruhů',
+    trhliny_vysusne:'Trhlina', oblina:'Oblina', zakriveni_podelne:'Zakřivení podélné',
+    zbarveni_pruh:'Zbarvení/hniloba', tlakdrevo:'Reakční dřevo'
+  };
+  return labels[key] || key;
+}
+
+// Vrátí typ tabulky podle Tabulky 1 — Lať / Prkno+Fošna (=řezivo) / Hranol
+// Hranol: b≤h≤3b a b>40mm. Lať: d≤40mm a b<80mm. Jinak prkno/fošna (řezivo).
+function csnDetermineGroup(b,d){
+  if(!b||!d) return 'hranol';
+  var minD=Math.min(b,d), maxD=Math.max(b,d);
+  if(minD<=40 && maxD<80) return 'lat';
+  if(minD<=maxD && maxD<=3*minD && minD>40) return 'hranol';
+  return 'rezivo';
+}
+
+// Pomocná: porovná naměřenou hodnotu s mezní (zlomek nebo bool nebo mm)
+// Vrátí true pokud VYHOVUJE dané třídě (hodnota <= limit, nebo limit===false a hodnota je 0/false)
+function csnCheckLimit(value, limit){
+  if(value==null) return true; // nezadáno = nehodnotí se
+  if(typeof limit === 'boolean'){
+    // limit=false znamená "nedovoluje se" → hodnota musí být 0/false
+    if(limit===false) return !value;
+    return true; // limit=true znamená "dovoluje se" vždy
+  }
+  return value <= limit;
+}
+
+// Hlavní vyhodnocovací funkce — vrátí {grade, reasons:[{znak,trida,hodnota,limit}]}
+// kar, dab = z KAR/DAB výpočtu (0-1), b,d v mm, extra = getBoardExtra() + suky count
+function csnEvaluate(kar, dab, nKnots, b, d, extra){
+  if(nKnots===0 && !extra.trhlina && !extra.hniloba && !extra.reakcni && !extra.oblina) return {grade:'OK', reasons:[]};
+
+  var group = csnDetermineGroup(b,d);
+  var limits = group==='lat' ? CSN_LIMITS_LAT : (group==='rezivo' ? CSN_LIMITS_REZIVO : CSN_LIMITS_HRANOL);
+  var classes = group==='lat' ? ['S13','S10'] : ['S13','S10','S7']; // lať nemá S7
+
+  // Hodnoty znaků — KAR/DAB už jsou poměrné (0-1). Uživatelská pole (trhlina,
+  // hniloba, reakční dřevo, oblina, odklon) se zadávají v PROCENTECH (0-100)
+  // pro konzistentní a uživatelsky srozumitelné zadávání — zde se převedou
+  // na podíl 0-1 odpovídající jednotkám v tabulkách normy.
+  var vals = {
+    suky: kar,                  // poměrný rozměr suku (KAR slouží jako aproximace A)
+    suky_jednotlivy: kar,
+    suky_skupinovy: dab,
+    odklon: extra.odklon!=null ? extra.odklon/100 : null,
+    dren: extra.dren ? true : false,
+    letokruh: extra.letokruh,
+    trhliny_vysusne: extra.trhlina!=null ? extra.trhlina/100 : null,
+    oblina: extra.oblina!=null ? extra.oblina/100 : null,
+    zakriveni_podelne: extra.zakriveni,
+    zbarveni_pruh: extra.hniloba!=null ? extra.hniloba/100 : null,
+    tlakdrevo: extra.reakcni!=null ? extra.reakcni/100 : null
+  };
+
+  // Pro každou třídu (od nejlepší S13) zkontroluj všechny zadané znaky.
+  // Zaznamenáme si i důvody neúspěchu na nejvyšší (nejlepší) zkoušené třídě,
+  // aby uživatel viděl PROČ deska nedosáhla lepší třídy.
+  var bestAttemptReasons = [];
+  for(var ci=0; ci<classes.length; ci++){
+    var cls = classes[ci];
+    var lim = limits[cls];
+    var allOk = true;
+    var reasons = [];
+    for(var key in vals){
+      if(vals[key]==null) continue;
+      if(!(key in lim)) continue;
+      var ok = csnCheckLimit(vals[key], lim[key]);
+      if(!ok){ allOk=false; reasons.push({znak:key, hodnota:vals[key], limit:lim[key]}); }
+    }
+    if(ci===0) bestAttemptReasons = reasons; // důvody, proč to není S13 (nejlepší)
+    if(allOk) return {grade:cls, reasons:[], group:group};
+  }
+  return {grade:'Reject', reasons:bestAttemptReasons, group:group};
+}
+
 function grade(kar,dv,nKnots){
   if(nKnots===0)return'OK'; // deska bez suků
   var r=kar/100;
@@ -825,7 +971,8 @@ function doRedraw(){
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
   var dv=calcDAB(allK,b);
-  var gr=grade(kar,dv,allK.length);
+  var ex=getBoardExtra();
+  var gr=csnEvaluate(kar/100,dv,allK.length,b,d,ex).grade;
   document.getElementById('v-kar').textContent=kar.toFixed(1)+'%';
   document.getElementById('v-dab').textContent=dv.toFixed(2);
   document.getElementById('v-dabs').textContent=(dv*2*b).toFixed(1)+'/(2×'+b+')';
@@ -1106,12 +1253,15 @@ function newBoard(skipConfirm){
   allBoards.push({id:getId(),b:getB(),d:getD(),folderId:window.getFolderActivId?window.getFolderActivId():null,fft:pendFft,
     length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,
     trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
+    odklon:ex.odklon,letokruh:ex.letokruh,zakriveni:ex.zakriveni,dren:ex.dren,hmyz:ex.hmyz,
     knots:knots.slice(),savedAt:new Date().toISOString()});
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
-  ['p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina'].forEach(function(id){document.getElementById(id).value='';});
+  ['p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
   resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
   var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
+  var cbd=document.getElementById('cb-dren');if(cbd){cbd.textContent='—';cbd.classList.remove('checked');}
+  var cbh=document.getElementById('cb-hmyz');if(cbh){cbh.textContent='—';cbh.classList.remove('checked');}
   if(editState)cancelEdit();
   save();schedDraw();renderKlist();renderBlist();toast('Deska uložena ✓');
 }
@@ -1141,7 +1291,9 @@ function renderDetailBody(bi){
   var bd=allBoards[bi];
   var ps=mkPolys(bd.knots,bd.b,bd.d);
   var ua=calcUA(ps,bd.b,bd.d);
-  var kar=ua/(bd.b*bd.d)*100,dv=calcDAB(bd.knots,bd.b),gr=grade(kar,dv);
+  var kar=ua/(bd.b*bd.d)*100,dv=calcDAB(bd.knots,bd.b);
+  var csnRes=csnEvaluate(kar/100,dv,bd.knots.length,bd.b,bd.d,bd);
+  var gr=csnRes.grade;
   var den=calcDensity(bd.mass,bd.length,bd.b,bd.d);
   var body=document.getElementById('detail-body');
   var html='';
@@ -1152,13 +1304,26 @@ function renderDetailBody(bi){
   html+='<div class="ds"><div class="ds-lbl">DAB</div><div class="ds-val" style="color:var(--am)">'+dv.toFixed(2)+'</div></div>';
   html+='<div class="ds"><div class="ds-lbl">Třída</div><div><span class="gp '+gcls(gr)+'" style="font-size:16px">'+gr+'</span></div></div>';
   if(den!=null)html+='<div class="ds"><div class="ds-lbl">Hustota</div><div class="ds-val">'+den+' <span style="font-size:11px">kg/m³</span></div></div>';
+  html+='</div>'; // konec detail-stat (KAR/DAB/Třída/Hustota)
+  if(csnRes.reasons && csnRes.reasons.length){
+    html+='<div style="margin-top:8px;padding:8px 10px;background:#FFF4E5;border-radius:8px;font-size:12px;color:var(--g7)">';
+    html+='<strong>Důvod nedosažení vyšší třídy (skupina '+(csnRes.group==='lat'?'lať':(csnRes.group==='rezivo'?'řezivo':'hranol'))+'):</strong><br>';
+    csnRes.reasons.forEach(function(r){
+      var isMm = (r.znak==='letokruh' || r.znak==='zakriveni_podelne');
+      var isBool = (typeof r.limit === 'boolean');
+      var hodnotaStr = isBool ? (r.hodnota?'přítomno':'nepřítomno') : (isMm ? r.hodnota.toFixed(1)+' mm' : (r.hodnota*100).toFixed(1)+'%');
+      var limitStr = isBool ? (r.limit?'dovoleno':'nedovoleno') : (isMm ? r.limit.toFixed(1)+' mm' : (r.limit*100).toFixed(1)+'%');
+      html+='&bull; '+CSN_ZNAK_LABEL(r.znak)+': naměřeno '+hodnotaStr+', limit '+limitStr+'<br>';
+    });
+    html+='</div>';
+  }
   var moedRes=calcMOED(bd);
   if(moedRes.moedL||moedRes.moedB){
-    html+='</div><div class="detail-stat" style="margin-top:8px">';
+    html+='<div class="detail-stat" style="margin-top:8px">';
     if(moedRes.moedL) html+='<div class="ds"><div class="ds-lbl" style="color:var(--brm)">MOED<sub>L</sub></div><div class="ds-val" style="color:var(--br)">'+moedRes.moedL+'<span style="font-size:10px"> MPa</span></div></div>';
     if(moedRes.moedB) html+='<div class="ds"><div class="ds-lbl" style="color:var(--blm)">MOED<sub>B</sub></div><div class="ds-val" style="color:var(--bl)">'+moedRes.moedB+'<span style="font-size:10px"> MPa</span></div></div>';
+    html+='</div>';
   }
-  html+='</div>';
   // tags
   html+='<div class="detail-extra">';
   html+='<span class="tag">b: '+bd.b+' mm</span><span class="tag">d: '+bd.d+' mm</span>';
@@ -1364,7 +1529,7 @@ function renderBlist(){
   for(var ri=0;ri<indices.length;ri++){
     var bi=indices[ri];var bd=allBoards[bi];
     var ps=mkPolys(bd.knots,bd.b,bd.d);var ua=calcUA(ps,bd.b,bd.d);
-    var kar=ua/(bd.b*bd.d)*100,dv=calcDAB(bd.knots,bd.b),gr=grade(kar,dv);
+    var kar=ua/(bd.b*bd.d)*100,dv=calcDAB(bd.knots,bd.b),gr=csnEvaluate(kar/100,dv,bd.knots.length,bd.b,bd.d,bd).grade;
     var dt=bd.savedAt?new Date(bd.savedAt).toLocaleString('cs',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
     var tags=[];if(bd.vg)tags.push('VG'+bd.vg);if(bd.moisture!=null)tags.push('w:'+bd.moisture+'%');if(bd.screw)tags.push('🔩');
     html+='<div class="bitem" data-act="openboard" data-bi="'+bi+'">'
@@ -1387,7 +1552,7 @@ function doExport(){
   var rows=[];
   boards.forEach(function(bd){
     var ps=mkPolys(bd.knots,bd.b,bd.d);var ua=calcUA(ps,bd.b,bd.d);
-    var kar=ua/(bd.b*bd.d)*100,dv=calcDAB(bd.knots,bd.b),gr=grade(kar,dv);
+    var kar=ua/(bd.b*bd.d)*100,dv=calcDAB(bd.knots,bd.b),gr=csnEvaluate(kar/100,dv,bd.knots.length,bd.b,bd.d,bd).grade;
     var den=calcDensity(bd.mass,bd.length,bd.b,bd.d);
     bd.knots.forEach(function(k,ki){
       var pts=kPts(k,bd.b,bd.d);var area=pts?pArea(pts):0,ai=kAi(k,bd.b);
@@ -1669,6 +1834,12 @@ document.getElementById('vg-row').addEventListener('click',function(e){
 
 document.getElementById('cb-screw').addEventListener('click',function(){
   boardScrew=!boardScrew;this.textContent=boardScrew?'✓':'—';this.classList.toggle('checked',boardScrew);
+});
+document.getElementById('cb-dren').addEventListener('click',function(){
+  var on=this.classList.toggle('checked');this.textContent=on?'✓':'—';
+});
+document.getElementById('cb-hmyz').addEventListener('click',function(){
+  var on=this.classList.toggle('checked');this.textContent=on?'✓':'—';
 });
 
 document.querySelectorAll('.toggle').forEach(function(btn){
