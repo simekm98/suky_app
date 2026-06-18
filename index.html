@@ -48,8 +48,9 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F2
 /* inputs */
 .frow{display:flex;gap:6px;flex-wrap:wrap}
 .fld{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
-.fld label{font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block}
-.fld input,.fld select{font-size:16px;padding:10px 11px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);width:100%;-webkit-appearance:none;touch-action:manipulation}
+.fld label{font-size:12px;font-weight:600;color:var(--g5);text-align:center;display:block}
+.fld input,.fld select{font-size:16px;padding:10px 11px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);width:100%;-webkit-appearance:none;touch-action:manipulation;text-align:center}
+.fld input::placeholder{color:var(--g5);text-align:center}
 .fld input:focus,.fld select:focus{outline:none;border-color:var(--brm);box-shadow:0 0 0 3px rgba(139,94,60,.18)}
 input,select,textarea{touch-action:manipulation}
 .fld.wide{flex:1.5}.fld.narrow{flex:.7;min-width:55px}
@@ -261,15 +262,15 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <div class="frow" style="margin-bottom:8px">
         <div class="fld wide"><label>ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal"></div>
-        <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal"></div>
+        <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <div class="frow" id="row-lm">
-        <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-extra">
-        <div class="fld opt-field" data-opt="moisture"><label>Vlhkost w (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="moisture"><label>Vlhkost (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
           <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px;text-align:center">Vizuál</label>
           <div style="display:flex;gap:6px" id="vg-row">
@@ -286,17 +287,17 @@ canvas{display:block;width:100%;height:72px}
         </div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-csn">
-        <div class="fld opt-field" data-opt="trhlina"><label>Trhlina (%)</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="trhlina"><label>Trhlina (%)</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-csn2">
-        <div class="fld opt-field" data-opt="oblina"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="odklon"><label>Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="letokruh"><label>Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="oblina"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="odklon"><label>Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="letokruh"><label>Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-csn3">
-        <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:65px">
           <label>Dřeň</label>
           <button class="cb-box" id="cb-dren">—</button>
@@ -529,7 +530,7 @@ canvas{display:block;width:100%;height:72px}
       <button class="toggle on" data-opt="mass"></button>
     </div>
     <div class="setting-row">
-      <div class="setting-lbl">Vlhkost w (%)</div>
+      <div class="setting-lbl">Vlhkost (%)</div>
       <button class="toggle on" data-opt="moisture"></button>
     </div>
     <div class="setting-row">
@@ -1010,8 +1011,8 @@ function classifyProfile(b,d){
     var prefs = JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
     if(prefs.productType && prefs.productType!=='auto'){
       var manualMap = {
-        'rezivo-plocha': {type:'rezivo', label:'Řezivo', desc:'zatěžováno na plochu'},
-        'rezivo-hrana':  {type:'rezivo', label:'Řezivo', desc:'zatěžováno na hranu'},
+        'rezivo-plocha': {type:'rezivo', label:'Řezivo P', desc:'zatěžováno na plochu'},
+        'rezivo-hrana':  {type:'rezivo', label:'Řezivo H', desc:'zatěžováno na hranu'},
         'tram':          {type:'tram',   label:'Hranol', desc:'zatěžováno na hranu'},
         'lat':           {type:'lat',    label:'Lať', desc:'malý profil'}
       };
@@ -1250,14 +1251,22 @@ function updateWoodProductLabels(){
   }
   if(prodLbl){
     if(prefs.productType && prefs.productType!=='auto'){
-      var p = PRODUCT_OPTIONS.find(function(o){return o.value===prefs.productType;});
-      prodLbl.textContent = p ? p.label.split(' — ')[0] : '—';
+      var cls2 = (typeof classifyProfile==='function') ? classifyProfile(157,50) : null; // b/d nevadí, manuální volba je nezávislá na geometrii
+      prodLbl.textContent = cls2 ? cls2.label : '—';
     } else {
-      // Auto — vypiš skutečně rozpoznaný produkt podle aktuální geometrie desky
-      var b = (typeof getB==='function') ? getB() : null;
-      var d = (typeof getD==='function') ? getD() : null;
-      var cls = (typeof classifyProfile==='function') ? classifyProfile(b,d) : null;
-      prodLbl.textContent = cls ? cls.label : '—';
+      // Auto — pokud rozměry NEJSOU vyplněné, zobraz přímo "Auto" (appka
+      // jinak vždy dostane fallback hodnoty z getB/getD, takže zde
+      // kontrolujeme přímo obsah polí, ne výsledek getB()/getD()).
+      var bRaw = document.getElementById('clen') ? document.getElementById('clen').value : '';
+      var dRaw = document.getElementById('cwid') ? document.getElementById('cwid').value : '';
+      if(!bRaw && !dRaw){
+        prodLbl.textContent = 'Auto';
+      } else {
+        var b = (typeof getB==='function') ? getB() : null;
+        var d = (typeof getD==='function') ? getD() : null;
+        var cls = (typeof classifyProfile==='function') ? classifyProfile(b,d) : null;
+        prodLbl.textContent = cls ? cls.label : 'Auto';
+      }
     }
   }
 }
@@ -1353,7 +1362,7 @@ function newBoard(skipConfirm){
     knots:knots.slice(),savedAt:new Date().toISOString()});
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
-  ['p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
+  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
   resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
   var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
   var cbd=document.getElementById('cb-dren');if(cbd){cbd.textContent='—';cbd.classList.remove('checked');}
@@ -1453,7 +1462,7 @@ function renderDetailBody(bi){
   html+='<div class="fld"><label id="lbl-d-len">Délka ('+lengthUnitLabel()+')</label><input id="d-len" type="text" value="'+(bd.length!=null?displayLength(bd.length):'')+'" min="1" inputmode="decimal" placeholder="—"></div>';
   html+='<div class="fld"><label id="lbl-d-mass">Hmotnost ('+massUnitLabel()+')</label><input id="d-mass" type="text" value="'+(bd.mass!=null?displayMass(bd.mass):'')+'" min="0" inputmode="decimal" placeholder="—"></div>';
   html+='</div><div class="frow">';
-  html+='<div class="fld"><label>Vlhkost w (%)</label><input id="d-moist" type="text" value="'+(bd.moisture!=null?bd.moisture:'')+'" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>';
+  html+='<div class="fld"><label>Vlhkost (%)</label><input id="d-moist" type="text" value="'+(bd.moisture!=null?bd.moisture:'')+'" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>';
   html+='<div class="fld"><label>Vizuál</label><select id="d-vg"><option value="">—</option><option'+(bd.vg==='1'?' selected':'')+'>1</option><option'+(bd.vg==='2'?' selected':'')+'>2</option><option'+(bd.vg==='3'?' selected':'')+'>3</option><option'+(bd.vg==='4'?' selected':'')+'>4</option></select></div>';
   html+='<div class="cb-wrap" style="flex:.55;min-width:50px"><label>Vrut</label><button class="cb-box'+(bd.screw?' checked':'')+'" id="d-screw">'+(bd.screw?'✓':'—')+'</button></div>';
   html+='</div></div>';
