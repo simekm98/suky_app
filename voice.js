@@ -70,7 +70,12 @@ var WORD_FIELD_MAP = {
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
   'hniloba':'p-hniloba','hnilobu':'p-hniloba','zbarvení':'p-hniloba','zbarveni':'p-hniloba',
   'reakční dřevo':'p-reakcni','reakcni drevo':'p-reakcni','tlakové dřevo':'p-reakcni','tlakove drevo':'p-reakcni',
-  'oblina':'p-oblina','oblinu':'p-oblina'
+  'oblina':'p-oblina','oblinu':'p-oblina',
+  'odklon vláken':'p-odklon','odklon vlaken':'p-odklon','odklon':'p-odklon',
+  'šířka letokruhů':'p-letokruh','sirka letokruhu':'p-letokruh','letokruhy':'p-letokruh','letokruh':'p-letokruh',
+  'zakřivení':'p-zakriveni','zakriveni':'p-zakriveni',
+  'dřeň':'__dren__','dren':'__dren__',
+  'hmyz':'__hmyz__','poškození hmyzem':'__hmyz__','poskozeni hmyzem':'__hmyz__'
 };
 var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
@@ -80,7 +85,10 @@ var FIELD_LABELS = {
   'bs1':'B1','bs2':'B2','bl1':'B3','bl2':'B4',
   'cs1':'C1','cs2':'C2','cl1':'C3','cl2':'C4',
   'ds1':'D1','ds2':'D2','dl1':'D3','dl2':'D4',
-  'cid':'název','p-vg':'vizuál','__screw__':'vrut'
+  'cid':'název','p-vg':'vizuál','__screw__':'vrut',
+  'p-trhlina':'trhlina','p-hniloba':'hniloba','p-reakcni':'reakční dřevo','p-oblina':'oblina',
+  'p-odklon':'odklon vláken','p-letokruh':'šířka letokruhů','p-zakriveni':'zakřivení',
+  '__dren__':'dřeň','__hmyz__':'poškození hmyzem'
 };
 
 // ── Přímý formát "AS1", "as 1", "a s jedna" (fonetická normalizace) ──
@@ -1192,10 +1200,10 @@ function processCommand(transcript, gen){
   var field = parsed.field;
   var kind, value;
 
-  if(field === '__screw__'){
+  if(field === '__screw__' || field === '__dren__' || field === '__hmyz__'){
     kind = 'bool';
     value = parseBoolFromText(parsed.valueText);
-    if(value === null){ dlog('❌ vrut ano/ne nenalezeno','err'); beepErr(); showVoiceToast('Vrut: ano nebo ne'); if(sessionActive) continueOrRefresh(gen); return; }
+    if(value === null){ dlog('❌ ano/ne nenalezeno','err'); beepErr(); showVoiceToast('Řekni ano nebo ne'); if(sessionActive) continueOrRefresh(gen); return; }
   } else if(field === 'p-vg'){
     kind = 'vg';
     value = parseSpokenNumber(parsed.valueText);
@@ -1222,16 +1230,17 @@ function writeValue(field, value, kind){
   var label = (FIELD_LABELS_PLOCHA[field] || FIELD_LABELS[field] || field);
   var shown = kind==='bool' ? (value?'ano':'ne') : value;
 
-  if(field === '__screw__'){
-    var cb = document.getElementById('cb-screw');
+  if(field === '__screw__' || field === '__dren__' || field === '__hmyz__'){
+    var cbId = field==='__screw__' ? 'cb-screw' : (field==='__dren__' ? 'cb-dren' : 'cb-hmyz');
+    var cb = document.getElementById(cbId);
     if(cb){
       lastElement = cb;
       lastPrevValue = cb.classList.contains('checked');
       var want = !!value;
       if(want !== lastPrevValue) cb.click();
-      dlog('✅ vrut nastaven na '+want,'ok');
+      dlog('✅ '+cbId+' nastaven na '+want,'ok');
     } else {
-      dlog('❌ element cb-screw nenalezen v DOM','err');
+      dlog('❌ element '+cbId+' nenalezen v DOM','err');
       beepErr();
       return;
     }
