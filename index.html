@@ -46,8 +46,8 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F2
 .clbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--g5);margin-bottom:10px}
 
 /* inputs */
-.frow{display:flex;gap:8px;flex-wrap:wrap}
-.fld{display:flex;flex-direction:column;gap:4px;flex:1;min-width:65px}
+.frow{display:flex;gap:6px;flex-wrap:wrap}
+.fld{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
 .fld label{font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block}
 .fld input,.fld select{font-size:16px;padding:10px 11px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);width:100%;-webkit-appearance:none;touch-action:manipulation}
 .fld input:focus,.fld select:focus{outline:none;border-color:var(--brm);box-shadow:0 0 0 3px rgba(139,94,60,.18)}
@@ -265,8 +265,8 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal"></div>
       </div>
       <div class="frow" id="row-lm">
-        <div class="fld opt-field" data-opt="length"><label>Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="mass"><label>Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—"></div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-extra">
         <div class="fld opt-field" data-opt="moisture"><label>Vlhkost w (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>
@@ -286,24 +286,22 @@ canvas{display:block;width:100%;height:72px}
         </div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-csn">
-        <div class="fld opt-field" data-opt="trhlina"><label>Trhlina R</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="hniloba"><label>Zbarvení/hniloba V</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="trhlina"><label>Trhlina (%)</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—"></div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-csn2">
-        <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo V</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="oblina"><label>Oblina K</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="oblina"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="odklon"><label>Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="fld opt-field" data-opt="letokruh"><label>Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—"></div>
       </div>
       <div class="frow" style="margin-top:8px" id="row-csn3">
-        <div class="fld opt-field" data-opt="odklon"><label>Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="fld opt-field" data-opt="letokruh"><label>Šířka letokruhů (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—"></div>
-      </div>
-      <div class="frow" style="margin-top:8px" id="row-csn4">
-        <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení podélné (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—"></div>
-        <div class="cb-wrap opt-field" data-opt="dren" style="flex:.6;min-width:60px">
+        <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—"></div>
+        <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:65px">
           <label>Dřeň</label>
           <button class="cb-box" id="cb-dren">—</button>
         </div>
-        <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:.6;min-width:60px">
+        <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:65px">
           <label>Hmyz</label>
           <button class="cb-box" id="cb-hmyz">—</button>
         </div>
@@ -544,19 +542,19 @@ canvas{display:block;width:100%;height:72px}
     </div>
     <div class="setting-section">Znaky třídění dle ČSN 73 2824-1</div>
     <div class="setting-row">
-      <div class="setting-lbl">Trhlina R<small>Hloubka trhliny / rozměr strany</small></div>
+      <div class="setting-lbl">Trhlina (%)<small>Hloubka trhliny / rozměr strany</small></div>
       <button class="toggle" data-opt="trhlina"></button>
     </div>
     <div class="setting-row">
-      <div class="setting-lbl">Zbarvení / hniloba V<small>Podíl zbarvených pruhů</small></div>
+      <div class="setting-lbl">Hniloba (%)<small>Podíl zbarvených pruhů</small></div>
       <button class="toggle" data-opt="hniloba"></button>
     </div>
     <div class="setting-row">
-      <div class="setting-lbl">Reakční dřevo V<small>Tlakové dřevo — podíl</small></div>
+      <div class="setting-lbl">Reakční dřevo (%)<small>Tlakové dřevo — podíl</small></div>
       <button class="toggle" data-opt="reakcni"></button>
     </div>
     <div class="setting-row">
-      <div class="setting-lbl">Oblina K<small>Podíl chybějící hrany</small></div>
+      <div class="setting-lbl">Oblina (%)<small>Podíl chybějící hrany</small></div>
       <button class="toggle" data-opt="oblina"></button>
     </div>
     <div class="setting-row">
@@ -604,6 +602,21 @@ canvas{display:block;width:100%;height:72px}
     <div class="setting-row">
       <div class="setting-lbl">Ohybové (s)<small>Výchozí délka pro ohybový test</small></div>
       <input type="text" id="set-fft-dur-bend" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="5">
+    </div>
+    <div class="setting-section">Jednotky</div>
+    <div class="setting-row">
+      <div class="setting-lbl">Jednotka délky<small>Pro pole Délka desky</small></div>
+      <select id="set-length-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        <option value="mm">mm</option>
+        <option value="cm">cm</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Jednotka hmotnosti<small>Pro pole Hmotnost desky</small></div>
+      <select id="set-mass-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        <option value="g">g</option>
+        <option value="kg">kg</option>
+      </select>
     </div>
     <div class="setting-section">Drevo a produkt</div>
     <div class="setting-row">
@@ -678,6 +691,49 @@ var detailOpenedViaVoiceSearch=false; // true = po uložení/nové desce se vrá
 var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true,trhlina:false,hniloba:false,reakcni:false,oblina:false,odklon:false,letokruh:false,zakriveni:false,dren:false,hmyz:false};
 
 function gn(id){var raw=document.getElementById(id).value;var v=parseFloat(String(raw).replace(',','.'));return isNaN(v)?null:v;}
+
+// ── Jednotky délky/hmotnosti — uživatel volí mm/cm a g/kg v Nastavení,
+// interně appka VŽDY počítá v mm a g (konzistentní se všemi vzorci).
+function getUnitPrefs(){
+  var p = loadAppPrefs();
+  return {lengthUnit: p.lengthUnit || 'mm', massUnit: p.massUnit || 'g'};
+}
+function gnLength(id){
+  var v = gn(id);
+  if(v==null) return null;
+  var u = getUnitPrefs().lengthUnit;
+  return u==='cm' ? v*10 : v; // cm -> mm
+}
+function gnMass(id){
+  var v = gn(id);
+  if(v==null) return null;
+  var u = getUnitPrefs().massUnit;
+  return u==='kg' ? v*1000 : v; // kg -> g
+}
+// Zobrazí interní hodnotu (mm/g) v jednotce zvolené uživatelem — pro vyplnění inputu
+function displayLength(mm){
+  if(mm==null) return '';
+  var u = getUnitPrefs().lengthUnit;
+  return u==='cm' ? (mm/10) : mm;
+}
+function displayMass(g){
+  if(g==null) return '';
+  var u = getUnitPrefs().massUnit;
+  return u==='kg' ? (g/1000) : g;
+}
+function lengthUnitLabel(){ return getUnitPrefs().lengthUnit==='cm' ? 'cm' : 'mm'; }
+function massUnitLabel(){ return getUnitPrefs().massUnit==='kg' ? 'kg' : 'g'; }
+function updateLengthMassLabels(){
+  var ll=document.querySelector('label[for="p-length"]'); // fallback níže pokud bez for
+  var lEl=document.getElementById('lbl-p-length');
+  var mEl=document.getElementById('lbl-p-mass');
+  if(lEl) lEl.textContent='Délka ('+lengthUnitLabel()+')';
+  if(mEl) mEl.textContent='Hmotnost ('+massUnitLabel()+')';
+  var dlEl=document.getElementById('lbl-d-len');
+  var dmEl=document.getElementById('lbl-d-mass');
+  if(dlEl) dlEl.textContent='Délka ('+lengthUnitLabel()+')';
+  if(dmEl) dmEl.textContent='Hmotnost ('+massUnitLabel()+')';
+}
 function gs(id){var v=document.getElementById(id).value;return v||null;}
 function getB(){return parseFloat(String(document.getElementById('clen').value).replace(',','.'))||157;}
 function getD(){return parseFloat(String(document.getElementById('cwid').value).replace(',','.'))||50;}
@@ -692,7 +748,7 @@ function setVGDisplay(val){
 function getBoardExtra(){
   var dr=document.getElementById('cb-dren');
   var hm=document.getElementById('cb-hmyz');
-  return{length:opts.length?gn('p-length'):null,mass:opts.mass?gn('p-mass'):null,
+  return{length:opts.length?gnLength('p-length'):null,mass:opts.mass?gnMass('p-mass'):null,
     moisture:opts.moisture?gn('p-moist'):null,vg:opts.vg?boardVG:null,screw:opts.screw?boardScrew:false,
     trhlina:opts.trhlina?gn('p-trhlina'):null,hniloba:opts.hniloba?gn('p-hniloba'):null,
     reakcni:opts.reakcni?gn('p-reakcni'):null,oblina:opts.oblina?gn('p-oblina'):null,
@@ -917,6 +973,34 @@ function calcDensity(mass,length,b,d){
 // Lať: min. rozměr ≤ 60mm a poměr stran ≤ 2 (malý čtvercovitý profil)
 // Řezivo (prkno/deska): poměr stran > 2 — jeden rozměr výrazně menší (zatěžování na plocho)
 // Trám/hranol: min. rozměr > 60mm a poměr stran ≤ 2 (masivní, blízko čtvercový profil)
+// Čistě geometrická klasifikace BEZ ohledu na manuální volbu — pro porovnání
+function autoClassifyByGeometry(b,d){
+  if(!b||!d||b<=0||d<=0) return null;
+  var maxDim=Math.max(b,d), minDim=Math.min(b,d);
+  var ratio=maxDim/minDim;
+  if(minDim<=60 && ratio<=2.5) return {type:'lat', label:'Lať'};
+  if(ratio>2) return {type:'rezivo', label:'Řezivo'};
+  return {type:'tram', label:'Hranol'};
+}
+
+var lastMismatchWarningKey = null; // proti opakovanému zobrazení stejného varování
+function checkProductMismatch(b,d){
+  var prefs = loadAppPrefs();
+  if(!prefs.productType || prefs.productType==='auto') { lastMismatchWarningKey=null; return; }
+  var auto = autoClassifyByGeometry(b,d);
+  if(!auto) return;
+  var manualType = (prefs.productType==='rezivo-plocha'||prefs.productType==='rezivo-hrana') ? 'rezivo' : prefs.productType;
+  if(auto.type !== manualType){
+    var key = manualType+'|'+auto.type+'|'+b+'|'+d;
+    if(key === lastMismatchWarningKey) return; // stejné varování už bylo zobrazeno, nezahlcuj
+    lastMismatchWarningKey = key;
+    showToast('Upozornění: rozměry ('+b+'×'+d+' mm) odpovídají typu "'+auto.label+'", ne zvolenému produktu');
+  } else {
+    lastMismatchWarningKey = null;
+  }
+}
+function showToast(msg){ toast(msg); }
+
 function classifyProfile(b,d){
   if(!b||!d||b<=0||d<=0) return null;
 
@@ -968,6 +1052,8 @@ function doRedraw(){
   paintCv('cv1','wrap1',b,d,saved,cp,false);
   paintCv('cv2','wrap2',b,d,saved,cp,true);
   updateProfileType(b,d);
+  updateWoodProductLabels();
+  checkProductMismatch(b,d);
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
   var dv=calcDAB(allK,b);
@@ -979,10 +1065,10 @@ function doRedraw(){
   document.getElementById('v-cnt').textContent=String(knots.length+(cp?1:0));
   document.getElementById('v-grade').innerHTML=gr==='—'?'<span class="gp gna">—</span>':'<span class="gp '+gcls(gr)+'">'+gr+'</span>';
   // hustota
-  var den=calcDensity(gn('p-mass'),gn('p-length'),b,d);
+  var den=calcDensity(gnMass('p-mass'),gnLength('p-length'),b,d);
   document.getElementById('v-den').textContent=den!=null?String(den):'—';
   // MOED pro aktuální desku (sestavíme temp board)
-  var _tmpBoard={fft:window.wgPendingFft||null,length:gn('p-length'),mass:gn('p-mass'),b:b,d:d};
+  var _tmpBoard={fft:window.wgPendingFft||null,length:gnLength('p-length'),mass:gnMass('p-mass'),b:b,d:d};
   if(allBoards.length&&!_tmpBoard.fft) _tmpBoard=allBoards[allBoards.length-1];
   updateMOEDDisplay(_tmpBoard);
 }
@@ -1126,6 +1212,8 @@ function openSettings(){
     if(dnm && prefs.fftDefaultNModes) dnm.value=prefs.fftDefaultNModes;
     var ws=document.getElementById('set-wood-species'); if(ws && prefs.woodSpecies) ws.value=prefs.woodSpecies;
     var pt=document.getElementById('set-product-type'); if(pt && prefs.productType) pt.value=prefs.productType;
+    var lu=document.getElementById('set-length-unit'); if(lu) lu.value=prefs.lengthUnit||'mm';
+    var mu=document.getElementById('set-mass-unit'); if(mu) mu.value=prefs.massUnit||'g';
   }catch(e){}
 }
 function closeSettings(){document.getElementById('modal-settings').classList.remove('open');}
@@ -1161,8 +1249,16 @@ function updateWoodProductLabels(){
     woodLbl.textContent = (w && w.value) ? w.value : '—';
   }
   if(prodLbl){
-    var p = PRODUCT_OPTIONS.find(function(o){return o.value===prefs.productType;});
-    prodLbl.textContent = (p && p.value && p.value!=='auto') ? p.label.split(' — ')[0] : 'Auto';
+    if(prefs.productType && prefs.productType!=='auto'){
+      var p = PRODUCT_OPTIONS.find(function(o){return o.value===prefs.productType;});
+      prodLbl.textContent = p ? p.label.split(' — ')[0] : '—';
+    } else {
+      // Auto — vypiš skutečně rozpoznaný produkt podle aktuální geometrie desky
+      var b = (typeof getB==='function') ? getB() : null;
+      var d = (typeof getD==='function') ? getD() : null;
+      var cls = (typeof classifyProfile==='function') ? classifyProfile(b,d) : null;
+      prodLbl.textContent = cls ? cls.label : '—';
+    }
   }
 }
 
@@ -1354,8 +1450,8 @@ function renderDetailBody(bi){
   html+='<div class="fld"><label>Šířka (mm)</label><input id="d-b" type="text" value="'+bd.b+'" min="1" inputmode="decimal"></div>';
   html+='<div class="fld"><label>Výška (mm)</label><input id="d-d" type="text" value="'+bd.d+'" min="1" step="0.1" inputmode="decimal"></div>';
   html+='</div><div class="frow" style="margin-bottom:8px">';
-  html+='<div class="fld"><label>Délka (mm)</label><input id="d-len" type="text" value="'+(bd.length||'')+'" min="1" inputmode="decimal" placeholder="—"></div>';
-  html+='<div class="fld"><label>Hmotnost (g)</label><input id="d-mass" type="text" value="'+(bd.mass||'')+'" min="0" inputmode="decimal" placeholder="—"></div>';
+  html+='<div class="fld"><label id="lbl-d-len">Délka ('+lengthUnitLabel()+')</label><input id="d-len" type="text" value="'+(bd.length!=null?displayLength(bd.length):'')+'" min="1" inputmode="decimal" placeholder="—"></div>';
+  html+='<div class="fld"><label id="lbl-d-mass">Hmotnost ('+massUnitLabel()+')</label><input id="d-mass" type="text" value="'+(bd.mass!=null?displayMass(bd.mass):'')+'" min="0" inputmode="decimal" placeholder="—"></div>';
   html+='</div><div class="frow">';
   html+='<div class="fld"><label>Vlhkost w (%)</label><input id="d-moist" type="text" value="'+(bd.moisture!=null?bd.moisture:'')+'" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>';
   html+='<div class="fld"><label>Vizuál</label><select id="d-vg"><option value="">—</option><option'+(bd.vg==='1'?' selected':'')+'>1</option><option'+(bd.vg==='2'?' selected':'')+'>2</option><option'+(bd.vg==='3'?' selected':'')+'>3</option><option'+(bd.vg==='4'?' selected':'')+'>4</option></select></div>';
@@ -1476,7 +1572,7 @@ function saveDetailBoard(){
   bd.id=document.getElementById('d-id').value||bd.id;
   var nb=parseFloat(String(document.getElementById('d-b').value).replace(',','.'));if(!isNaN(nb))bd.b=nb;
   var nd=parseFloat(String(document.getElementById('d-d').value).replace(',','.'));if(!isNaN(nd))bd.d=nd;
-  bd.length=gn('d-len');bd.mass=gn('d-mass');bd.moisture=gn('d-moist');
+  bd.length=gnLength('d-len');bd.mass=gnMass('d-mass');bd.moisture=gn('d-moist');
   bd.vg=document.getElementById('d-vg').value||null;
   var ds=document.getElementById('d-screw');bd.screw=ds?ds.classList.contains('checked'):false;
   save();renderBlist();toast('Deska uložena ✓');
@@ -1811,6 +1907,31 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
     if(window.wgApplyFftDefaultType) window.wgApplyFftDefaultType(prefs.fftDefaultType, prefs.fftDefaultNModes);
   });
 });
+['set-length-unit','set-mass-unit'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('change',function(){
+    var prefs=loadAppPrefs();
+    var oldLengthUnit=prefs.lengthUnit||'mm', oldMassUnit=prefs.massUnit||'g';
+    var newLengthUnit=document.getElementById('set-length-unit').value;
+    var newMassUnit=document.getElementById('set-mass-unit').value;
+    // Přepočti AKTUÁLNĚ zobrazenou hodnotu v hlavním formuláři, aby se
+    // skutečný fyzický význam (mm/g) zachoval i po přepnutí jednotky.
+    var lenInput=document.getElementById('p-length');
+    if(lenInput && lenInput.value){
+      var curMm = oldLengthUnit==='cm' ? parseFloat(lenInput.value)*10 : parseFloat(lenInput.value);
+      if(!isNaN(curMm)) lenInput.value = newLengthUnit==='cm' ? (curMm/10) : curMm;
+    }
+    var massInput=document.getElementById('p-mass');
+    if(massInput && massInput.value){
+      var curG = oldMassUnit==='kg' ? parseFloat(massInput.value)*1000 : parseFloat(massInput.value);
+      if(!isNaN(curG)) massInput.value = newMassUnit==='kg' ? (curG/1000) : curG;
+    }
+    prefs.lengthUnit=newLengthUnit;
+    prefs.massUnit=newMassUnit;
+    saveAppPrefs(prefs);
+    updateLengthMassLabels();
+  });
+});
 document.getElementById('btn-detail-back').addEventListener('click',function(){detailOpenedViaVoiceSearch=false;showScreen('s-list');});
 document.getElementById('btn-detail-save').addEventListener('click',saveDetailBoard);
 
@@ -1853,7 +1974,7 @@ ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.addEventList
 ['cid','clen','cwid'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){save();schedDraw();});});
 ['p-mass','p-length','clen','cwid'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){
   if(window.updateMoedDisplay) setTimeout(window.updateMoedDisplay,100);
-  var den=calcDensity(gn('p-mass'),gn('p-length'),getB(),getD());
+  var den=calcDensity(gnMass('p-mass'),gnLength('p-length'),getB(),getD());
   document.getElementById('v-den').textContent=den!=null?String(den):'—';
 });});
 
@@ -1866,6 +1987,7 @@ load();
 document.querySelectorAll('.toggle').forEach(function(btn){btn.classList.toggle('on',!!opts[btn.getAttribute('data-opt')]);});
 applyOpts();renderKlist();
 updateWoodProductLabels();
+updateLengthMassLabels();
 setTimeout(schedDraw,200);
 
 
@@ -1918,7 +2040,7 @@ function updateMoedDisplay(){
   if(boards.length) board=boards[boards.length-1];
   // Nebo sestavit dočasný objekt z aktuálních polí
   var tmpBoard={
-    length:gn('p-length'),mass:gn('p-mass'),
+    length:gnLength('p-length'),mass:gnMass('p-mass'),
     b:getB(),d:getD(),
     fft:window.wgPendingFft||(board?board.fft:null)
   };
@@ -2394,8 +2516,11 @@ function estimateFrequency(type){
   var b=window.getB?window.getB():null;
   var d=window.getD?window.getD():null;
   var lengthEl=document.getElementById('p-length');
-  var Lmm=lengthEl?parseFloat(String(lengthEl.value).replace(',','.')):null;
-  if(!Lmm||isNaN(Lmm)||Lmm<=0) return null;
+  var Lraw=lengthEl?parseFloat(String(lengthEl.value).replace(',','.')):null;
+  if(!Lraw||isNaN(Lraw)||Lraw<=0) return null;
+  var lengthUnit='mm';
+  try{ var prefs=JSON.parse(localStorage.getItem('wg26_prefs')||'{}'); if(prefs.lengthUnit) lengthUnit=prefs.lengthUnit; }catch(e){}
+  var Lmm = lengthUnit==='cm' ? Lraw*10 : Lraw;
   var L=Lmm/1000; // m
 
   if(type==='longitudinal'){
