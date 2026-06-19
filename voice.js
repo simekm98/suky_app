@@ -1043,22 +1043,20 @@ function processCommand(transcript, gen){
   // Pokud typ nezazněl, jen otevře obrazovku a NADÁLE poslouchá na "podélné"/"ohybové"
   var fftCmd = findFftCommand(transcript);
   if(fftCmd){
-    if(fftCmd.type===null){
-      dlog('✓ FFT otevřeno, čekám na volbu typu','ok');
-      executeFftCommand(null);
-      showConfirmOverlay('FFT', 'řekni podélné / ohybové');
-      beepOk();
-      awaitingFftTypeChoice = true;
-      if(sessionActive) continueOrRefresh(gen);
-      return;
+    // Pokud typ nezazněl — použít výchozí typ z nastavení
+    var fftType = fftCmd.type;
+    if(fftType===null){
+      try{
+        var prefs=JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
+        fftType = prefs.fftDefaultType || 'longitudinal';
+      }catch(e){ fftType='longitudinal'; }
     }
-    dlog('✓ spouštím: '+fftCmd.label,'ok');
+    dlog('✓ spouštím FFT: '+fftType,'ok');
     awaitingFftTypeChoice = false;
-    executeFftCommand(fftCmd.type);
-    showConfirmOverlay(fftCmd.label, 'spoustim...');
+    executeFftCommand(fftType);
+    var typeLabel = fftType==='bending'?'FFT ohyb':(fftType==='combo'?'FFT kombinace':'FFT podél');
+    showConfirmOverlay(typeLabel, 'spoustim...');
     beepOk();
-    // Po spuštění testu KONČÍME hlasovou session pro pole — appka teď čeká na
-    // fyzické bouchnutí do desky, ne na další hlasový příkaz.
     stopVoiceSession();
     return;
   }
