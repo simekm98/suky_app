@@ -216,7 +216,7 @@ canvas{display:block;width:100%;height:72px}
 
 
 /* ── Hlasové ovládání ────────────────────────────────────── */
-.voice-fab{flex-shrink:0;width:52px;height:52px;border-radius:26px;background:var(--br);color:#fff;border:none;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);-webkit-appearance:none}
+.voice-fab{flex-shrink:0;width:52px;height:52px;border-radius:26px;background:var(--br);color:#fff;border:none;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);-webkit-appearance:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .voice-fab.voice-active{background:#C0392B;animation:voicePulse 1s infinite}
 .voice-fab.voice-listening{background:#27AE60;animation:voiceGreenBlink .6s infinite}
 @keyframes voiceGreenBlink{0%{box-shadow:0 0 0 0 rgba(39,174,96,.7)}70%{box-shadow:0 0 0 16px rgba(39,174,96,0)}100%{box-shadow:0 0 0 0 rgba(39,174,96,0)}}
@@ -274,7 +274,7 @@ canvas{display:block;width:100%;height:72px}
 
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
-      <div class="frow" style="margin-bottom:8px">
+      <div class="frow" style="margin-bottom:8px;align-items:center">
         <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;border:4px solid #1A1A18;border-radius:var(--rads)"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
@@ -334,26 +334,29 @@ canvas{display:block;width:100%;height:72px}
       </div>
     </div>
 
-    <!-- Metrics: KAR | DAB | Hustota | Třída | Suků -->
-    <!-- Řada 1: KAR, DAB, MOED_L, MOED_B -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+    <!-- Metrics -->
+    <!-- Řada 1: KAR, DAB, Třída -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
       <div class="met"><div class="ml">KAR</div><div class="mv kar" id="v-kar">—</div></div>
       <div class="met"><div class="ml">DAB</div><div class="mv dab" id="v-dab">—</div><div class="ms" id="v-dabs"></div></div>
-      <div class="met"><div class="ml">MOED<sub style="font-size:8px">L</sub></div><div class="mv" style="color:var(--br);font-size:14px" id="v-moedl">—</div><div class="ms">MPa</div></div>
-      <div class="met"><div class="ml">MOED<sub style="font-size:8px">B</sub></div><div class="mv" style="color:var(--bl);font-size:14px" id="v-moedb">—</div><div class="ms">MPa</div></div>
+      <div class="met"><div class="ml">Třída</div><div id="v-grade"><span class="gp gna">—</span></div></div>
     </div>
-    <!-- Řada 2: Hustota, Třída, Suků -->
+    <!-- Řada 2: Hustota, MOED_L, MOED_B -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px" class="mrow">
       <div class="met" id="met-den"><div class="ml">Hustota</div><div class="mv den" id="v-den">—</div><div class="ms">kg/m³</div></div>
-      <div class="met"><div class="ml">Třída</div><div id="v-grade"><span class="gp gna">—</span></div></div>
-      <div class="met"><div class="ml">Suky</div><div class="mv" id="v-cnt">0</div></div>
+      <div class="met"><div class="ml">MOED<sub style="font-size:8px">L</sub></div><div class="mv" style="color:var(--br);font-size:14px" id="v-moedl">—</div><div class="ms">MPa</div></div>
+      <div class="met"><div class="ml">MOED<sub style="font-size:8px">B</sub></div><div class="mv" style="color:var(--bl);font-size:14px" id="v-moedb">—</div><div class="ms">MPa</div></div>
     </div>
     <!-- MOED metriky - zobrazí se po FFT měření -->
     
 
     <!-- Canvas -->
-    <div class="crow">
+    <div class="crow" style="align-items:flex-start">
       <div class="cvc" id="wrap1"><div class="cvl">Suky</div><canvas id="cv1"></canvas></div>
+      <div class="cvc" style="flex:.35;min-width:0;background:#fff;border-radius:var(--rad);padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
+        <div class="cvl">Suků</div>
+        <div class="mv" id="v-cnt" style="font-size:22px;font-weight:800;color:var(--g9);margin-top:4px">0</div>
+      </div>
       <div class="cvc" id="wrap2"><div class="cvl">Sjednocení</div><canvas id="cv2"></canvas></div>
     </div>
 
@@ -423,7 +426,7 @@ canvas{display:block;width:100%;height:72px}
   <div class="bbar">
     <button class="bmain" id="btn-add">+ Přidat suk</button>
     <button class="bmain" id="btn-new" style="background:#fff;color:var(--br);border:1.5px solid var(--g3)">Nová deska</button>
-    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení.">🎤</button>
+    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
   </div>
 </div>
 
@@ -1252,7 +1255,7 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 function applyOpts(){
   // lpos: show/hide X3/X4 cells and Podélné header; adjust Příčné border
   ['a','b','c','d'].forEach(function(f){
-    var disp=opts.lpos?'':'none';
+    var disp=opts.lpos?'flex':'none';
     ['lp-'+f+'-l1','lp-'+f+'-l2'].forEach(function(id){
       var el=document.getElementById(id); if(el) el.style.display=disp;
     });
@@ -1473,16 +1476,25 @@ function renderDetailBody(bi){
   var csnRes=csnEvaluate(kar/100,dv,bd.knots.length,bd.b,bd.d,bd);
   var gr=csnRes.grade;
   var den=calcDensity(bd.mass,bd.length,bd.b,bd.d);
+  var moedRes=calcMOED(bd);
   var body=document.getElementById('detail-body');
   var html='';
   // stats
   html+='<div class="card"><div class="clbl">Výsledky</div>';
+  // Řada 1: KAR, DAB, Třída
   html+='<div class="detail-stat">';
   html+='<div class="ds"><div class="ds-lbl">KAR</div><div class="ds-val" style="color:var(--bl)">'+kar.toFixed(1)+'%</div></div>';
   html+='<div class="ds"><div class="ds-lbl">DAB</div><div class="ds-val" style="color:var(--am)">'+dv.toFixed(2)+'</div></div>';
   html+='<div class="ds"><div class="ds-lbl">Třída</div><div><span class="gp '+gcls(gr)+'" style="font-size:16px">'+gr+'</span></div></div>';
-  if(den!=null)html+='<div class="ds"><div class="ds-lbl">Hustota</div><div class="ds-val">'+den+' <span style="font-size:11px">kg/m³</span></div></div>';
-  html+='</div>'; // konec detail-stat (KAR/DAB/Třída/Hustota)
+  html+='</div>';
+  // Řada 2: Hustota + MOED (pokud dostupné)
+  if(den!=null || moedRes.moedL || moedRes.moedB){
+    html+='<div class="detail-stat" style="margin-top:6px">';
+    if(den!=null) html+='<div class="ds"><div class="ds-lbl">Hustota</div><div class="ds-val">'+den+' <span style="font-size:11px">kg/m³</span></div></div>';
+    if(moedRes.moedL) html+='<div class="ds"><div class="ds-lbl" style="color:var(--brm)">MOED<sub>L</sub></div><div class="ds-val" style="color:var(--br)">'+moedRes.moedL+'<span style="font-size:10px"> MPa</span></div></div>';
+    if(moedRes.moedB) html+='<div class="ds"><div class="ds-lbl" style="color:var(--blm)">MOED<sub>B</sub></div><div class="ds-val" style="color:var(--bl)">'+moedRes.moedB+'<span style="font-size:10px"> MPa</span></div></div>';
+    html+='</div>';
+  }
   if(csnRes.reasons && csnRes.reasons.length){
     html+='<div style="margin-top:8px;padding:8px 10px;background:#FFF4E5;border-radius:8px;font-size:12px;color:var(--g7)">';
     html+='<strong>Důvod nedosažení vyšší třídy (skupina '+(csnRes.group==='lat'?'lať':(csnRes.group==='rezivo'?'řezivo':'hranol'))+'):</strong><br>';
@@ -1495,13 +1507,7 @@ function renderDetailBody(bi){
     });
     html+='</div>';
   }
-  var moedRes=calcMOED(bd);
-  if(moedRes.moedL||moedRes.moedB){
-    html+='<div class="detail-stat" style="margin-top:8px">';
-    if(moedRes.moedL) html+='<div class="ds"><div class="ds-lbl" style="color:var(--brm)">MOED<sub>L</sub></div><div class="ds-val" style="color:var(--br)">'+moedRes.moedL+'<span style="font-size:10px"> MPa</span></div></div>';
-    if(moedRes.moedB) html+='<div class="ds"><div class="ds-lbl" style="color:var(--blm)">MOED<sub>B</sub></div><div class="ds-val" style="color:var(--bl)">'+moedRes.moedB+'<span style="font-size:10px"> MPa</span></div></div>';
-    html+='</div>';
-  }
+  // moedRes zpracován výše v detail-stat řada 2
   // tags
   html+='<div class="detail-extra">';
   html+='<span class="tag">b: '+bd.b+' mm</span><span class="tag">d: '+bd.d+' mm</span>';
@@ -1517,11 +1523,15 @@ function renderDetailBody(bi){
   html+='<button data-act="dopenfft" data-bi="'+bi+'" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">'+(bd.fft&&bd.fft.length?'Nahrát FFT znovu':'Nahrát FFT')+'</button>';
   html+='</div>';
   // canvas
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-    +'<div class="cvc" id="dwrap1" style="background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
+  html+='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start">'
+    +'<div class="cvc" id="dwrap1" style="flex:1;background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
     +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--g5);margin-bottom:4px">Suky</div>'
     +'<canvas id="dcv1" style="display:block;width:100%;height:72px"></canvas></div>'
-    +'<div class="cvc" id="dwrap2d" style="background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
+    +'<div style="flex:0 0 44px;background:#fff;border-radius:10px;padding:8px 4px;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:88px">'
+    +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--g5);margin-bottom:4px">Suků</div>'
+    +'<div style="font-size:20px;font-weight:800;color:var(--g9)">'+bd.knots.length+'</div>'
+    +'</div>'
+    +'<div class="cvc" id="dwrap2d" style="flex:1;background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
     +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--g5);margin-bottom:4px">Sjednocení KAR</div>'
     +'<canvas id="dcv2d" style="display:block;width:100%;height:72px"></canvas></div>'
     +'</div>';
