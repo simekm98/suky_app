@@ -155,6 +155,14 @@ canvas{display:block;width:100%;height:72px}
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-6px);background:var(--g9);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;z-index:999;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+.set-group{border:1.5px solid var(--g3);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.set-group-title{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;font-size:14px;font-weight:700;color:var(--g7);cursor:pointer;list-style:none;background:#fff}
+.set-group-title::-webkit-details-marker{display:none}
+.set-group[open] .set-group-title{border-bottom:1px solid var(--g3)}
+.set-group-title::after{content:"▶";font-size:11px;color:var(--g5);transition:transform .2s}
+.set-group[open] .set-group-title::after{transform:rotate(90deg)}
+.set-group .setting-row{padding:10px 14px;border-bottom:none}
+.set-group .setting-row:last-child{border-bottom:none}
 /* FFT mode badges */
 .fft-mode-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--brl);border-radius:10px;border:1.5px solid transparent;cursor:pointer}
 .fft-mode-row.active{border-color:var(--brm);background:#fff}
@@ -245,30 +253,33 @@ canvas{display:block;width:100%;height:72px}
     <!-- Board params -->
     <!-- Aktivní složka / dřevo / produkt — kompaktní proklikovací řádek -->
     <div id="active-folder-bar" style="display:flex;gap:6px;margin-bottom:10px">
-      <div data-act="openfolder" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer">
+      <div data-act="openfolder" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Složka</div>
-        <div id="active-folder-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        <div id="active-folder-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">—</div>
       </div>
-      <div data-act="opensplistwood" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer">
+      <div data-act="opensplistwood" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Dřevo</div>
-        <div id="active-wood-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        <div id="active-wood-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">—</div>
       </div>
-      <div data-act="opensplistproduct" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer">
+      <div data-act="opensplistproduct" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Produkt</div>
-        <div id="active-product-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        <div id="active-product-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">—</div>
       </div>
     </div>
 
     <div class="card">
+      <!-- Řádek 1: ID + Délka + Hmotnost -->
       <div class="frow" style="margin-bottom:8px">
         <div class="fld wide"><label>ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-      </div>
-      <div class="frow" id="row-lm">
         <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
+      <!-- Řádek 2: Šířka + Výška -->
+      <div class="frow" style="margin-bottom:8px" id="row-lm">
+        <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+      </div>
+      <!-- Řádek 3: Vlhkost + Vizuál -->
       <div class="frow" style="margin-top:8px" id="row-extra">
         <div class="fld opt-field" data-opt="moisture"><label>Vlhkost (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
@@ -281,30 +292,38 @@ canvas{display:block;width:100%;height:72px}
           </div>
           <input type="hidden" id="p-vg" value="">
         </div>
-        <div class="cb-wrap opt-field" data-opt="screw" style="flex:.55;min-width:50px">
-          <label>Vrut</label>
-          <button class="cb-box" id="cb-screw">—</button>
-        </div>
       </div>
+      <!-- Řádek 4: ČSN znaky 1 -->
       <div class="frow" style="margin-top:8px" id="row-csn">
         <div class="fld opt-field" data-opt="trhlina"><label>Trhlina (%)</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
+      <!-- Řádek 5: ČSN znaky 2 -->
       <div class="frow" style="margin-top:8px" id="row-csn2">
         <div class="fld opt-field" data-opt="oblina"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="odklon"><label>Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="odklon"><label style="white-space:nowrap">Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="letokruh"><label>Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
+      <!-- Řádek 6: Zakřivení + Kov/Dřeň/Hmyz se společným nadpisem -->
       <div class="frow" style="margin-top:8px" id="row-csn3">
         <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:65px">
-          <label>Dřeň</label>
-          <button class="cb-box" id="cb-dren">—</button>
-        </div>
-        <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:65px">
-          <label>Hmyz</label>
-          <button class="cb-box" id="cb-hmyz">—</button>
+        <div class="opt-field" data-opt="screw" style="display:flex;flex-direction:column;gap:4px;flex:1.8;min-width:130px;border:1.5px solid var(--g3);border-radius:10px;padding:6px 8px">
+          <div style="font-size:10px;font-weight:600;color:var(--g5);text-align:center;margin-bottom:2px">Ano / Ne</div>
+          <div style="display:flex;gap:6px;justify-content:center">
+            <div class="cb-wrap" style="flex:1;min-width:40px">
+              <label>Kov</label>
+              <button class="cb-box" id="cb-screw">—</button>
+            </div>
+            <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:40px">
+              <label>Dřeň</label>
+              <button class="cb-box" id="cb-dren">—</button>
+            </div>
+            <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:40px">
+              <label>Hmyz</label>
+              <button class="cb-box" id="cb-hmyz">—</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -515,131 +534,163 @@ canvas{display:block;width:100%;height:72px}
         </div>
       </div>
     </div>
-    <div class="setting-section">Rozměry suků</div>
-    <div class="setting-row">
-      <div class="setting-lbl">Délkové pozice L<small>AL1/AL2, BL1/BL2, CL1/CL2, DL1/DL2</small></div>
-      <button class="toggle on" data-opt="lpos"></button>
-    </div>
-    <div class="setting-section">Parametry desky</div>
-    <div class="setting-row">
-      <div class="setting-lbl">Délka<small>mm — nutná pro hustotu</small></div>
-      <button class="toggle on" data-opt="length"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Hmotnost<small>g — nutná pro hustotu</small></div>
-      <button class="toggle on" data-opt="mass"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Vlhkost (%)</div>
-      <button class="toggle on" data-opt="moisture"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Vizuál<small>Výběr 1–4</small></div>
-      <button class="toggle on" data-opt="vg"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Vrut<small>Zalomený vrut v desce</small></div>
-      <button class="toggle on" data-opt="screw"></button>
-    </div>
-    <div class="setting-section">Znaky třídění dle ČSN 73 2824-1</div>
-    <div class="setting-row">
-      <div class="setting-lbl">Trhlina (%)<small>Hloubka trhliny / rozměr strany</small></div>
-      <button class="toggle" data-opt="trhlina"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Hniloba (%)<small>Podíl zbarvených pruhů</small></div>
-      <button class="toggle" data-opt="hniloba"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Reakční dřevo (%)<small>Tlakové dřevo — podíl</small></div>
-      <button class="toggle" data-opt="reakcni"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Oblina (%)<small>Podíl chybějící hrany</small></div>
-      <button class="toggle" data-opt="oblina"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Odklon vláken<small>Odchylka vláken v %</small></div>
-      <button class="toggle" data-opt="odklon"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Šířka letokruhů<small>Průměrná šířka v mm</small></div>
-      <button class="toggle" data-opt="letokruh"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Zakřivení podélné<small>Vzepětí na 2000mm</small></div>
-      <button class="toggle" data-opt="zakriveni"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Dřeň<small>Přítomnost dřeně v řezivu</small></div>
-      <button class="toggle" data-opt="dren"></button>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Poškození hmyzem<small>Chodbičky &gt; 2mm</small></div>
-      <button class="toggle" data-opt="hmyz"></button>
-    </div>
-    <div class="setting-section">FFT — výchozí typ testu</div>
-    <div class="setting-row">
-      <div class="setting-lbl">Typ kmitání<small>Předvolený typ při otevření FFT</small></div>
-      <select id="set-fft-default-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        <option value="longitudinal" selected>Podelne</option>
-        <option value="bending">Ohybove</option>
-        <option value="combo">Kombinace</option>
-      </select>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Pocet modu<small>Kolik vlastnich frekvenci detekovat (max 3)</small></div>
-      <select id="set-fft-default-nmodes" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        <option value="1" selected>1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-      </select>
-    </div>
-    <div class="setting-section">FFT — výchozí délka nahrávání</div>
-    <div class="setting-row">
-      <div class="setting-lbl">Podélné (s)<small>Výchozí délka pro podélný test</small></div>
-      <input type="text" id="set-fft-dur-long" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="3">
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Ohybové (s)<small>Výchozí délka pro ohybový test</small></div>
-      <input type="text" id="set-fft-dur-bend" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="5">
-    </div>
-    <div class="setting-section">Jednotky</div>
-    <div class="setting-row">
-      <div class="setting-lbl">Jednotka délky<small>Pro pole Délka desky</small></div>
-      <select id="set-length-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        <option value="mm">mm</option>
-        <option value="cm">cm</option>
-      </select>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Jednotka hmotnosti<small>Pro pole Hmotnost desky</small></div>
-      <select id="set-mass-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        <option value="g">g</option>
-        <option value="kg">kg</option>
-      </select>
-    </div>
-    <div class="setting-section">Drevo a produkt</div>
-    <div class="setting-row">
-      <div class="setting-lbl">Druh dreva<small>Pouzije se jako vychozi pro nove desky</small></div>
-      <select id="set-wood-species" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        <option value="">—</option>
-        <option value="SM">SM — Smrk</option>
-        <option value="BK">BK — Buk</option>
-        <option value="BO">BO — Borovice</option>
-        <option value="MD">MD — Modrin</option>
-      </select>
-    </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Druh produktu<small>Pouzije se jako vychozi pro nove desky</small></div>
-      <select id="set-product-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        <option value="auto" selected>Automaticky (dle rozmeru)</option>
-        <option value="rezivo-plocha">Rezivo — zatezovano na plochu</option>
-        <option value="rezivo-hrana">Rezivo — zatezovano na hranu</option>
-        <option value="tram">Tram / hranol</option>
-        <option value="lat">Lat</option>
-      </select>
-    </div>
+    <!-- === COLLAPSIBLE SETTINGS SECTIONS === -->
+
+    <!-- ▶ FFT -->
+    <details class="set-group">
+      <summary class="set-group-title">FFT</summary>
+      <div class="setting-row">
+        <div class="setting-lbl">Typ kmitání<small>Předvolený typ při otevření FFT</small></div>
+        <select id="set-fft-default-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+          <option value="longitudinal" selected>Podélné</option>
+          <option value="bending">Ohybové</option>
+          <option value="combo">Kombinace</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Délka podélné (s)<small>Výchozí délka záznamu</small></div>
+        <input type="text" id="set-fft-dur-long" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="3">
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Délka ohybové (s)<small>Výchozí délka záznamu</small></div>
+        <input type="text" id="set-fft-dur-bend" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="5">
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Počet módů podélné<small>Kolik vlastních frekvencí detekovat</small></div>
+        <select id="set-fft-nmodes-long" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Počet módů ohyb<small>Kolik vlastních frekvencí detekovat</small></div>
+        <select id="set-fft-nmodes-bend" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+    </details>
+
+    <!-- ▶ Rozměry suků -->
+    <details class="set-group">
+      <summary class="set-group-title">Rozměry suků</summary>
+      <div class="setting-row">
+        <div class="setting-lbl">Délkové pozice L<small>AL1/AL2, BL1/BL2, CL1/CL2, DL1/DL2</small></div>
+        <button class="toggle on" data-opt="lpos"></button>
+      </div>
+    </details>
+
+    <!-- ▶ Parametry desky -->
+    <details class="set-group">
+      <summary class="set-group-title">Parametry desky</summary>
+      <div class="setting-row">
+        <div class="setting-lbl">Délka<small>mm — nutná pro hustotu</small></div>
+        <button class="toggle on" data-opt="length"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Hmotnost<small>g — nutná pro hustotu</small></div>
+        <button class="toggle on" data-opt="mass"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Vlhkost (%)</div>
+        <button class="toggle on" data-opt="moisture"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Vizuál<small>Výběr 1–4</small></div>
+        <button class="toggle on" data-opt="vg"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Kov<small>Zalomený vrut v desce</small></div>
+        <button class="toggle on" data-opt="screw"></button>
+      </div>
+    </details>
+
+    <!-- ▶ Znaky třídění ČSN 73 2824-1 -->
+    <details class="set-group">
+      <summary class="set-group-title">Znaky třídění ČSN 73 2824-1</summary>
+      <div class="setting-row">
+        <div class="setting-lbl">Trhlina (%)<small>Hloubka trhliny / rozměr strany</small></div>
+        <button class="toggle" data-opt="trhlina"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Hniloba (%)<small>Podíl zbarvených pruhů</small></div>
+        <button class="toggle" data-opt="hniloba"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Reakční dřevo (%)<small>Tlakové dřevo — podíl</small></div>
+        <button class="toggle" data-opt="reakcni"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Oblina (%)<small>Podíl chybějící hrany</small></div>
+        <button class="toggle" data-opt="oblina"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Odklon vláken<small>Odchylka vláken v %</small></div>
+        <button class="toggle" data-opt="odklon"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Šířka letokruhů<small>Průměrná šířka v mm</small></div>
+        <button class="toggle" data-opt="letokruh"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Zakřivení podélné<small>Vzepětí na 2000mm</small></div>
+        <button class="toggle" data-opt="zakriveni"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Dřeň<small>Přítomnost dřeně v řezivu</small></div>
+        <button class="toggle" data-opt="dren"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Poškození hmyzem<small>Chodbičky &gt; 2mm</small></div>
+        <button class="toggle" data-opt="hmyz"></button>
+      </div>
+    </details>
+
+    <!-- ▶ Jednotky -->
+    <details class="set-group">
+      <summary class="set-group-title">Jednotky</summary>
+      <div class="setting-row">
+        <div class="setting-lbl">Délka<small>Pro pole Délka desky</small></div>
+        <select id="set-length-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+          <option value="mm">mm</option>
+          <option value="cm">cm</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Hmotnost<small>Pro pole Hmotnost desky</small></div>
+        <select id="set-mass-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+        </select>
+      </div>
+    </details>
+
+    <!-- ▶ Dřevo a produkt -->
+    <details class="set-group">
+      <summary class="set-group-title">Dřevo a produkt</summary>
+      <div class="setting-row">
+        <div class="setting-lbl">Druh dřeva<small>Použije se jako výchozí pro nové desky</small></div>
+        <select id="set-wood-species" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+          <option value="">—</option>
+          <option value="SM">SM — Smrk</option>
+          <option value="BK">BK — Buk</option>
+          <option value="BO">BO — Borovice</option>
+          <option value="MD">MD — Modřín</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Druh produktu<small>Použije se jako výchozí pro nové desky</small></div>
+        <select id="set-product-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+          <option value="auto" selected>Automaticky (dle rozměrů)</option>
+          <option value="rezivo-plocha">Řezivo — na plochu</option>
+          <option value="rezivo-hrana">Řezivo — na hranu</option>
+          <option value="tram">Hranol</option>
+          <option value="lat">Lať</option>
+        </select>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -1206,11 +1257,13 @@ function openSettings(){
   var db=document.getElementById('set-fft-dur-bend');
   if(dl && window.wgGetFftDurations){ var d=window.wgGetFftDurations(); dl.value=d.long; db.value=d.bend; }
   var dt=document.getElementById('set-fft-default-type');
-  var dnm=document.getElementById('set-fft-default-nmodes');
+  var dnmL=document.getElementById('set-fft-nmodes-long');
+  var dnmB=document.getElementById('set-fft-nmodes-bend');
   try{
     var prefs=JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
     if(dt && prefs.fftDefaultType) dt.value=prefs.fftDefaultType;
-    if(dnm && prefs.fftDefaultNModes) dnm.value=prefs.fftDefaultNModes;
+    if(dnmL && prefs.fftNModesLong) dnmL.value=prefs.fftNModesLong;
+    if(dnmB && prefs.fftNModesBend) dnmB.value=prefs.fftNModesBend;
     var ws=document.getElementById('set-wood-species'); if(ws && prefs.woodSpecies) ws.value=prefs.woodSpecies;
     var pt=document.getElementById('set-product-type'); if(pt && prefs.productType) pt.value=prefs.productType;
     var lu=document.getElementById('set-length-unit'); if(lu) lu.value=prefs.lengthUnit||'mm';
@@ -1464,7 +1517,7 @@ function renderDetailBody(bi){
   html+='</div><div class="frow">';
   html+='<div class="fld"><label>Vlhkost (%)</label><input id="d-moist" type="text" value="'+(bd.moisture!=null?bd.moisture:'')+'" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—"></div>';
   html+='<div class="fld"><label>Vizuál</label><select id="d-vg"><option value="">—</option><option'+(bd.vg==='1'?' selected':'')+'>1</option><option'+(bd.vg==='2'?' selected':'')+'>2</option><option'+(bd.vg==='3'?' selected':'')+'>3</option><option'+(bd.vg==='4'?' selected':'')+'>4</option></select></div>';
-  html+='<div class="cb-wrap" style="flex:.55;min-width:50px"><label>Vrut</label><button class="cb-box'+(bd.screw?' checked':'')+'" id="d-screw">'+(bd.screw?'✓':'—')+'</button></div>';
+  html+='<div class="cb-wrap" style="flex:.55;min-width:50px"><label>Kov</label><button class="cb-box'+(bd.screw?' checked':'')+'" id="d-screw">'+(bd.screw?'✓':'—')+'</button></div>';
   html+='</div></div>';
   // suky
   html+='<div class="card"><div class="clbl">Suky ('+bd.knots.length+')</div>';
@@ -1904,16 +1957,21 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
     if(window.wgSetFftDurations) window.wgSetFftDurations(dl,db);
   });
 });
-['set-fft-default-type','set-fft-default-nmodes','set-wood-species','set-product-type'].forEach(function(id){
+['set-fft-default-type','set-fft-nmodes-long','set-fft-nmodes-bend','set-wood-species','set-product-type'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.addEventListener('change',function(){
     var prefs=loadAppPrefs();
     prefs.fftDefaultType=document.getElementById('set-fft-default-type').value;
-    prefs.fftDefaultNModes=document.getElementById('set-fft-default-nmodes').value;
+    var nlEl=document.getElementById('set-fft-nmodes-long');
+    var nbEl=document.getElementById('set-fft-nmodes-bend');
+    if(nlEl) prefs.fftNModesLong=nlEl.value;
+    if(nbEl) prefs.fftNModesBend=nbEl.value;
     prefs.woodSpecies=document.getElementById('set-wood-species').value;
     prefs.productType=document.getElementById('set-product-type').value;
     saveAppPrefs(prefs);
-    if(window.wgApplyFftDefaultType) window.wgApplyFftDefaultType(prefs.fftDefaultType, prefs.fftDefaultNModes);
+    var nml=parseInt(prefs.fftNModesLong)||1;
+    var nmb=parseInt(prefs.fftNModesBend)||1;
+    if(window.wgApplyFftDefaultType) window.wgApplyFftDefaultType(prefs.fftDefaultType, {long:nml,bend:nmb});
   });
 });
 ['set-length-unit','set-mass-unit'].forEach(function(id){
@@ -2510,10 +2568,14 @@ function applyDefaultFftPrefs(){
   try{
     var prefs = JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
     if(prefs.fftDefaultType) setFftType(prefs.fftDefaultType);
-    if(prefs.fftDefaultNModes){
-      var sel=document.getElementById('fft-nmodes');
-      if(sel) sel.value=prefs.fftDefaultNModes;
-    }
+    // Store separate nmodes per type globally for detectPeaksFor to use
+    window._fftNModesLong = parseInt(prefs.fftNModesLong)||1;
+    window._fftNModesBend = parseInt(prefs.fftNModesBend)||1;
+    // Keep fft-nmodes in sync with current type
+    var sel=document.getElementById('fft-nmodes');
+    var type=prefs.fftDefaultType||'longitudinal';
+    var nm = (type==='bending') ? window._fftNModesBend : window._fftNModesLong;
+    if(sel) sel.value=nm;
   }catch(e){}
 }
 
@@ -2940,7 +3002,10 @@ function detectPeaksFor(type){
   var fftData=fftDataByType[type];
   if(!fftData) return;
   var freqs=fftData.freqs, mags=fftData.mags, df=fftData.df;
-  var nModes=parseInt(document.getElementById('fft-nmodes').value)||1;
+  var nModes;
+  if(type==='bending' && window._fftNModesBend) nModes=window._fftNModesBend;
+  else if(type!=='bending' && window._fftNModesLong) nModes=window._fftNModesLong;
+  else nModes=parseInt(document.getElementById('fft-nmodes').value)||1;
   var fMin, fMax;
   if(type==='longitudinal'){ fMin=16; fMax=8000; } else { fMin=16; fMax=1000; }
   // Pokud appka má aktuálně otevřený tento typ, respektuj uživatelské pole
@@ -3548,8 +3613,17 @@ window.wgFFTSetTargetBoard=function(idx){ fftTargetBoardIdx=idx; };
 window.wgApplyFftDefaultType=function(type, nmodes){
   if(type) setFftType(type);
   if(nmodes){
+    if(typeof nmodes==='object'){
+      window._fftNModesLong=parseInt(nmodes.long)||1;
+      window._fftNModesBend=parseInt(nmodes.bend)||1;
+    } else {
+      window._fftNModesLong=parseInt(nmodes)||1;
+      window._fftNModesBend=parseInt(nmodes)||1;
+    }
     var sel=document.getElementById('fft-nmodes');
-    if(sel) sel.value=nmodes;
+    var curType=type||fftVibType||'longitudinal';
+    var nm=(curType==='bending')?window._fftNModesBend:window._fftNModesLong;
+    if(sel) sel.value=nm;
   }
 };
 
