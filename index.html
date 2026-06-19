@@ -70,11 +70,14 @@ input,select,textarea{touch-action:manipulation}
 .gs13{background:var(--grl);color:var(--gr)}.gs10{background:var(--bll);color:#0C447C}
 .gs7{background:var(--aml);color:#633806}.grej{background:var(--rl);color:var(--rd)}.gna{background:var(--g1);color:var(--g5)}.gok{background:#EAF3DE;color:#27500A}
 .vg-btn{flex:1;padding:9px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:15px;font-weight:700;cursor:pointer;-webkit-appearance:none;transition:all .15s}
-.vg-btn.selected{background:var(--br);border-color:var(--br);color:#fff}
-.vg-btn:active{opacity:.7}
-
-.vg-btn{flex:1;padding:8px 4px;font-size:14px;font-weight:700;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);cursor:pointer;-webkit-appearance:none;transition:all .15s}
-.vg-btn.selected{background:var(--br);border-color:var(--br);color:#fff}
+.vg-btn[data-vg="1"]{border-color:#4a9b4a;color:#2d6a2d}
+.vg-btn[data-vg="2"]{border-color:#8aab2e;color:#5a7015}
+.vg-btn[data-vg="3"]{border-color:#e08a00;color:#8a5200}
+.vg-btn[data-vg="4"]{border-color:#c0392b;color:#8b1a13}
+.vg-btn[data-vg="1"].selected{background:#4a9b4a;border-color:#4a9b4a;color:#fff}
+.vg-btn[data-vg="2"].selected{background:#8aab2e;border-color:#8aab2e;color:#fff}
+.vg-btn[data-vg="3"].selected{background:#e08a00;border-color:#e08a00;color:#fff}
+.vg-btn[data-vg="4"].selected{background:#c0392b;border-color:#c0392b;color:#fff}
 .vg-btn:active{opacity:.7}
 
 
@@ -104,6 +107,7 @@ canvas{display:block;width:100%;height:72px}
 .fc.editing .ic input{background:#fff}
 .lbl-pair{display:flex;gap:6px;margin-bottom:2px}
 .lbl-pair .lsub{flex:1;font-size:9px;color:var(--g5);text-align:center;font-weight:600;letter-spacing:.04em}
+.lp-hide{display:none}
 
 /* knot rows */
 .krow{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:.5px solid var(--g1)}
@@ -361,58 +365,54 @@ canvas{display:block;width:100%;height:72px}
     <div class="fgrid">
       <div class="fc" id="fc-a">
         <div class="ft">A — horní</div>
+        <div style="display:flex;gap:0;margin-bottom:4px">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-a">Podélné</div>
+        </div>
         <div class="ipair">
           <div class="ic"><span>A1</span><input id="as1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>A2</span><input id="as2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div id="lp-a">
-          <div class="lbl-pair"><div class="lsub">A3</div><div class="lsub">A4</div></div>
-          <div class="ipair">
-            <div class="ic"><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          </div>
+          <div class="ic lp-hide" id="lp-a-l1"><span>A3</span><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-a-l2"><span>A4</span><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-b">
         <div class="ft">B — levá</div>
+        <div style="display:flex;gap:0;margin-bottom:4px">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-b">Podélné</div>
+        </div>
         <div class="ipair">
           <div class="ic"><span>B1</span><input id="bs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>B2</span><input id="bs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div id="lp-b">
-          <div class="lbl-pair"><div class="lsub">B3</div><div class="lsub">B4</div></div>
-          <div class="ipair">
-            <div class="ic"><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          </div>
+          <div class="ic lp-hide" id="lp-b-l1"><span>B3</span><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-b-l2"><span>B4</span><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-c">
         <div class="ft">C — dolní</div>
+        <div style="display:flex;gap:0;margin-bottom:4px">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-c">Podélné</div>
+        </div>
         <div class="ipair">
           <div class="ic"><span>C1</span><input id="cs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>C2</span><input id="cs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div id="lp-c">
-          <div class="lbl-pair"><div class="lsub">C3</div><div class="lsub">C4</div></div>
-          <div class="ipair">
-            <div class="ic"><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          </div>
+          <div class="ic lp-hide" id="lp-c-l1"><span>C3</span><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-c-l2"><span>C4</span><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-d">
         <div class="ft">D — pravá</div>
+        <div style="display:flex;gap:0;margin-bottom:4px">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-d">Podélné</div>
+        </div>
         <div class="ipair">
           <div class="ic"><span>D1</span><input id="ds1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>D2</span><input id="ds2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div id="lp-d">
-          <div class="lbl-pair"><div class="lsub">D3</div><div class="lsub">D4</div></div>
-          <div class="ipair">
-            <div class="ic"><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-            <div class="ic"><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          </div>
+          <div class="ic lp-hide" id="lp-d-l1"><span>D3</span><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-d-l2"><span>D4</span><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
     </div>
@@ -1248,7 +1248,15 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 
 // ── settings UI ────────────────────────────────────────────
 function applyOpts(){
-  ['lp-a','lp-b','lp-c','lp-d'].forEach(function(id){document.getElementById(id).style.display=opts.lpos?'':'none';});
+  // lpos: show/hide X3/X4 cells and their group header
+  ['a','b','c','d'].forEach(function(f){
+    var disp=opts.lpos?'':'none';
+    ['lp-'+f+'-l1','lp-'+f+'-l2'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.style.display=disp;
+    });
+    var hdr=document.getElementById('lph-'+f);
+    if(hdr) hdr.style.visibility=opts.lpos?'':'hidden';
+  });
   document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
 }
 function openSettings(){
@@ -1541,40 +1549,44 @@ function renderDetailBody(bi){
       // A
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">A — horní</div>'
-      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="font-size:8px;font-weight:700;color:var(--g5);display:flex;margin-bottom:3px"><div style="flex:2;text-align:center;border-right:1px solid var(--g3);margin-right:3px;padding-right:3px">Příčné</div><div style="flex:2;text-align:center">Podélné</div></div>'
+      +'<div style="display:flex;gap:6px">'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as1" type="text" value="'+(k.as1!=null?k.as1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="as2" type="text" value="'+(k.as2!=null?k.as2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +(opts.lpos?'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">A3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al1" type="text" value="'+(k.al1!=null?k.al1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al2" type="text" value="'+(k.al2!=null?k.al2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>':'')
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al1" type="text" value="'+(k.al1!=null?k.al1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">A4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="al2" type="text" value="'+(k.al2!=null?k.al2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       // B
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">B — levá</div>'
-      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="font-size:8px;font-weight:700;color:var(--g5);display:flex;margin-bottom:3px"><div style="flex:2;text-align:center;border-right:1px solid var(--g3);margin-right:3px;padding-right:3px">Příčné</div><div style="flex:2;text-align:center">Podélné</div></div>'
+      +'<div style="display:flex;gap:6px">'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs1" type="text" value="'+(k.bs1!=null?k.bs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bs2" type="text" value="'+(k.bs2!=null?k.bs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +(opts.lpos?'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">B3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl1" type="text" value="'+(k.bl1!=null?k.bl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl2" type="text" value="'+(k.bl2!=null?k.bl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>':'')
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl1" type="text" value="'+(k.bl1!=null?k.bl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">B4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="bl2" type="text" value="'+(k.bl2!=null?k.bl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
       // C
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">C — dolní</div>'
-      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="font-size:8px;font-weight:700;color:var(--g5);display:flex;margin-bottom:3px"><div style="flex:2;text-align:center;border-right:1px solid var(--g3);margin-right:3px;padding-right:3px">Příčné</div><div style="flex:2;text-align:center">Podélné</div></div>'
+      +'<div style="display:flex;gap:6px">'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs1" type="text" value="'+(k.cs1!=null?k.cs1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cs2" type="text" value="'+(k.cs2!=null?k.cs2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +(opts.lpos?'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">C3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl1" type="text" value="'+(k.cl1!=null?k.cl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl2" type="text" value="'+(k.cl2!=null?k.cl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>':'')
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl1" type="text" value="'+(k.cl1!=null?k.cl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">C4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="cl2" type="text" value="'+(k.cl2!=null?k.cl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       // D
       +'<div style="background:#fff;border-radius:10px;padding:10px">'
       +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:6px">D — pravá</div>'
-      +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +'<div style="font-size:8px;font-weight:700;color:var(--g5);display:flex;margin-bottom:3px"><div style="flex:2;text-align:center;border-right:1px solid var(--g3);margin-right:3px;padding-right:3px">Příčné</div><div style="flex:2;text-align:center">Podélné</div></div>'
+      +'<div style="display:flex;gap:6px">'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D1</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds1" type="text" value="'+(k.ds1!=null?k.ds1:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
       +'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D2</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="ds2" type="text" value="'+(k.ds2!=null?k.ds2:'')+'" placeholder="—" step="0.1" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>'
+      +(opts.lpos?'<div style="flex:1"><div style="font-size:10px;color:var(--g5)">D3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl1" type="text" value="'+(k.dl1!=null?k.dl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl2" type="text" value="'+(k.dl2!=null?k.dl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div>':'')
       +'</div>'
-      +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D3</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl1" type="text" value="'+(k.dl1!=null?k.dl1:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D4</div><input class="knot-inp" data-bi="'+bi+'" data-ki="'+ki+'" data-field="dl2" type="text" value="'+(k.dl2!=null?k.dl2:'')+'" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
       +'</div>'
       +'</div>'
       +'<button style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="dsaveknot" data-bi="'+bi+'" data-ki="'+ki+'">Uložit suk '+( ki+1)+'</button>'
