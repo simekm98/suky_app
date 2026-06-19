@@ -268,18 +268,15 @@ canvas{display:block;width:100%;height:72px}
     </div>
 
     <div class="card">
-      <!-- Řádek 1: ID + Délka + Hmotnost -->
-      <div class="frow" style="margin-bottom:8px">
+      <!-- Řádek 1: ID + Délka + Šířka + Výška + Hmotnost -->
+      <div class="frow" style="margin-bottom:8px" id="row-lm">
         <div class="fld wide"><label>ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
         <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-      </div>
-      <!-- Řádek 2: Šířka + Výška -->
-      <div class="frow" style="margin-bottom:8px" id="row-lm">
         <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 3: Vlhkost + Vizuál -->
+      <!-- Řádek 2: Vlhkost + Vizuál -->
       <div class="frow" style="margin-top:8px" id="row-extra">
         <div class="fld opt-field" data-opt="moisture"><label>Vlhkost (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
@@ -293,20 +290,22 @@ canvas{display:block;width:100%;height:72px}
           <input type="hidden" id="p-vg" value="">
         </div>
       </div>
-      <!-- Řádek 4: ČSN znaky 1 -->
+      <!-- Řádek 3: %-znaky — ohraničená skupina -->
       <div class="frow" style="margin-top:8px" id="row-csn">
-        <div class="fld opt-field" data-opt="trhlina"><label>Trhlina (%)</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="opt-field" style="display:flex;flex-direction:column;gap:4px;flex:1;border:1.5px solid var(--g3);border-radius:10px;padding:6px 8px" data-opt="trhlina">
+          <div style="font-size:10px;font-weight:600;color:var(--g5);text-align:center;margin-bottom:2px">Podíl (%)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <div class="fld opt-field" data-opt="trhlina" style="flex:1;min-width:60px;margin:0"><label>Trhlina</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+            <div class="fld opt-field" data-opt="hniloba" style="flex:1;min-width:60px;margin:0"><label>Hniloba</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+            <div class="fld opt-field" data-opt="reakcni" style="flex:1;min-width:70px;margin:0"><label>Reakční dř.</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+            <div class="fld opt-field" data-opt="oblina" style="flex:1;min-width:55px;margin:0"><label>Oblina</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+            <div class="fld opt-field" data-opt="odklon" style="flex:1;min-width:70px;margin:0"><label>Odklon vl.</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+          </div>
+        </div>
       </div>
-      <!-- Řádek 5: ČSN znaky 2 -->
+      <!-- Řádek 4: Letokruhy + Zakřivení + Kov/Dřeň/Hmyz -->
       <div class="frow" style="margin-top:8px" id="row-csn2">
-        <div class="fld opt-field" data-opt="oblina"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="odklon"><label style="white-space:nowrap">Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="letokruh"><label>Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-      </div>
-      <!-- Řádek 6: Zakřivení + Kov/Dřeň/Hmyz se společným nadpisem -->
-      <div class="frow" style="margin-top:8px" id="row-csn3">
         <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="opt-field" data-opt="screw" style="display:flex;flex-direction:column;gap:4px;flex:1.8;min-width:130px;border:1.5px solid var(--g3);border-radius:10px;padding:6px 8px">
           <div style="font-size:10px;font-weight:600;color:var(--g5);text-align:center;margin-bottom:2px">Ano / Ne</div>
