@@ -70,10 +70,10 @@ input,select,textarea{touch-action:manipulation}
 .gs13{background:var(--grl);color:var(--gr)}.gs10{background:var(--bll);color:#0C447C}
 .gs7{background:var(--aml);color:#633806}.grej{background:var(--rl);color:var(--rd)}.gna{background:var(--g1);color:var(--g5)}.gok{background:#EAF3DE;color:#27500A}
 .vg-btn{flex:1;padding:9px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:15px;font-weight:700;cursor:pointer;-webkit-appearance:none;transition:all .15s}
-.vg-btn[data-vg="1"]{border-color:#4a9b4a;color:#2d6a2d}
-.vg-btn[data-vg="2"]{border-color:#8aab2e;color:#5a7015}
-.vg-btn[data-vg="3"]{border-color:#e08a00;color:#8a5200}
-.vg-btn[data-vg="4"]{border-color:#c0392b;color:#8b1a13}
+.vg-btn[data-vg="1"]{border-color:#4a9b4a;color:#2d6a2d;border-width:3px}
+.vg-btn[data-vg="2"]{border-color:#8aab2e;color:#5a7015;border-width:3px}
+.vg-btn[data-vg="3"]{border-color:#e08a00;color:#8a5200;border-width:3px}
+.vg-btn[data-vg="4"]{border-color:#c0392b;color:#8b1a13;border-width:3px}
 .vg-btn[data-vg="1"].selected{background:#4a9b4a;border-color:#4a9b4a;color:#fff}
 .vg-btn[data-vg="2"].selected{background:#8aab2e;border-color:#8aab2e;color:#fff}
 .vg-btn[data-vg="3"].selected{background:#e08a00;border-color:#e08a00;color:#fff}
@@ -303,11 +303,11 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 5: ČSN znaky 2 -->
+      <!-- Řádek 5: ČSN znaky 2 — Oblina + Odklon + Letokruhy v jednom řádku (menší pole) -->
       <div class="frow" style="margin-top:8px" id="row-csn2">
-        <div class="fld opt-field" data-opt="oblina"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="odklon"><label style="white-space:nowrap">Odklon vláken (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="letokruh"><label>Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="oblina" style="flex:.7;min-width:55px"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="odklon" style="flex:.9;min-width:65px"><label style="white-space:nowrap">Odklon vl. (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="letokruh" style="flex:.8;min-width:60px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 6: Zakřivení + Kov/Dřeň/Hmyz -->
       <div class="frow" style="margin-top:8px" id="row-csn3">
@@ -365,9 +365,9 @@ canvas{display:block;width:100%;height:72px}
     <div class="fgrid">
       <div class="fc" id="fc-a">
         <div class="ft">A — horní</div>
-        <div style="display:flex;gap:0;margin-bottom:4px">
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-a">Podélné</div>
+        <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-a">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-a">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-a">Podélné</div>
         </div>
         <div class="ipair">
           <div class="ic"><span>A1</span><input id="as1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
@@ -378,9 +378,9 @@ canvas{display:block;width:100%;height:72px}
       </div>
       <div class="fc" id="fc-b">
         <div class="ft">B — levá</div>
-        <div style="display:flex;gap:0;margin-bottom:4px">
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-b">Podélné</div>
+        <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-b">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-b">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-b">Podélné</div>
         </div>
         <div class="ipair">
           <div class="ic"><span>B1</span><input id="bs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
@@ -391,9 +391,9 @@ canvas{display:block;width:100%;height:72px}
       </div>
       <div class="fc" id="fc-c">
         <div class="ft">C — dolní</div>
-        <div style="display:flex;gap:0;margin-bottom:4px">
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-c">Podélné</div>
+        <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-c">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-c">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-c">Podélné</div>
         </div>
         <div class="ipair">
           <div class="ic"><span>C1</span><input id="cs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
@@ -404,9 +404,9 @@ canvas{display:block;width:100%;height:72px}
       </div>
       <div class="fc" id="fc-d">
         <div class="ft">D — pravá</div>
-        <div style="display:flex;gap:0;margin-bottom:4px">
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-right:1px solid var(--g3);padding-right:3px;margin-right:3px">Příčné</div>
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-d">Podélné</div>
+        <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-d">
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-d">Příčné</div>
+          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-d">Podélné</div>
         </div>
         <div class="ipair">
           <div class="ic"><span>D1</span><input id="ds1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
@@ -1248,14 +1248,24 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 
 // ── settings UI ────────────────────────────────────────────
 function applyOpts(){
-  // lpos: show/hide X3/X4 cells and their group header
+  // lpos: show/hide X3/X4 cells and Podélné header; adjust Příčné border
   ['a','b','c','d'].forEach(function(f){
     var disp=opts.lpos?'':'none';
     ['lp-'+f+'-l1','lp-'+f+'-l2'].forEach(function(id){
       var el=document.getElementById(id); if(el) el.style.display=disp;
     });
-    var hdr=document.getElementById('lph-'+f);
-    if(hdr) hdr.style.visibility=opts.lpos?'':'hidden';
+    var hdrPodel=document.getElementById('lph-'+f);
+    if(hdrPodel){ hdrPodel.style.display=disp; }
+    var hdrPricne=document.getElementById('lph-pricne-'+f);
+    if(hdrPricne){
+      if(opts.lpos){
+        hdrPricne.style.flex='2';
+        hdrPricne.style.borderRight='none';
+      } else {
+        hdrPricne.style.flex='1';
+        hdrPricne.style.borderRight='none';
+      }
+    }
   });
   document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
 }
@@ -2414,19 +2424,8 @@ document.addEventListener('click',function(e){
   </div>
   <div class="sbody" id="fft-body">
 
-    <!-- výběr typu kmitání před zahájením testu -->
-    <div class="card" id="fft-type-card">
-      <div class="clbl">Typ kmitání</div>
-      <div class="frow">
-        <button class="vg-btn selected" id="fft-type-L" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="longitudinal">Podélné</button>
-        <button class="vg-btn" id="fft-type-B" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="bending">Ohybové</button>
-        <button class="vg-btn" id="fft-type-C" style="flex:1;font-size:13px;padding:12px" data-act="setffttype" data-ftype="combo">Kombinace</button>
-      </div>
-      <input type="hidden" id="fft-type" value="longitudinal">
-      <div id="fft-estimate-box" style="margin-top:10px;padding:10px 12px;background:#F2F2F2;border-radius:10px;font-size:12px;color:var(--g7);display:none">
-        Odhad f₁: <strong id="fft-estimate-val">—</strong> Hz
-      </div>
-    </div>
+    <!-- typ kmitání — jen hidden input, výběr z nastavení -->
+    <input type="hidden" id="fft-type" value="longitudinal">
 
     <!-- stav nahrávání -->
     <div class="card" id="fft-rec-card">
@@ -3610,9 +3609,14 @@ window.wgFFTRestartRecording=function(){
   setTimeout(function(){ beginFftSequence(); }, 300);
 };
 window.wgFFTOpenTypeSelect=function(){
-  // Otevři FFT obrazovku bez automatického spuštění — uživatel zvolí typ hlasem
+  // Spustit dle výchozího typu z nastavení (hlasový povel "akustika" bez specifikace)
+  var prefs=loadAppPrefs();
+  var defType=prefs.fftDefaultType||'longitudinal';
   window.wgFFTOpen();
-  setStatus('Řekni "podélné", "ohybové" nebo "kombinace" pro spuštění testu');
+  setTimeout(function(){
+    setFftType(defType);
+    beginFftSequence();
+  }, 200);
 };
 window.wgGetFftDurations=function(){ return {long:fftDefaultDurLong, bend:fftDefaultDurBend}; };
 window.wgSetFftDurations=function(long,bend){
