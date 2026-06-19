@@ -351,12 +351,8 @@ canvas{display:block;width:100%;height:72px}
     
 
     <!-- Canvas -->
-    <div class="crow" style="align-items:flex-start">
-      <div class="cvc" id="wrap1"><div class="cvl">Suky</div><canvas id="cv1"></canvas></div>
-      <div class="cvc" style="flex:.35;min-width:0;background:#fff;border-radius:var(--rad);padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)">
-        <div class="cvl">Suků</div>
-        <div class="mv" id="v-cnt" style="font-size:22px;font-weight:800;color:var(--g9);margin-top:4px">0</div>
-      </div>
+    <div class="crow">
+      <div class="cvc" id="wrap1"><div class="cvl">Suky — <span id="v-cnt">0</span></div><canvas id="cv1"></canvas></div>
       <div class="cvc" id="wrap2"><div class="cvl">Sjednocení</div><canvas id="cv2"></canvas></div>
     </div>
 
@@ -377,8 +373,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>A1</span><input id="as1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>A2</span><input id="as2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-a-l1"><span>A3</span><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-a-l2"><span>A4</span><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-a-row" style="display:none">
+          <div class="ic" id="lp-a-l1"><span>A3</span><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-a-l2"><span>A4</span><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-b">
@@ -390,8 +388,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>B1</span><input id="bs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>B2</span><input id="bs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-b-l1"><span>B3</span><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-b-l2"><span>B4</span><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-b-row" style="display:none">
+          <div class="ic" id="lp-b-l1"><span>B3</span><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-b-l2"><span>B4</span><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-c">
@@ -403,8 +403,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>C1</span><input id="cs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>C2</span><input id="cs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-c-l1"><span>C3</span><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-c-l2"><span>C4</span><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-c-row" style="display:none">
+          <div class="ic" id="lp-c-l1"><span>C3</span><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-c-l2"><span>C4</span><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-d">
@@ -416,8 +418,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>D1</span><input id="ds1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>D2</span><input id="ds2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-d-l1"><span>D3</span><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-d-l2"><span>D4</span><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-d-row" style="display:none">
+          <div class="ic" id="lp-d-l1"><span>D3</span><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-d-l2"><span>D4</span><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
     </div>
@@ -1253,24 +1257,13 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 
 // ── settings UI ────────────────────────────────────────────
 function applyOpts(){
-  // lpos: show/hide X3/X4 cells and Podélné header; adjust Příčné border
+  // lpos: show/hide řádek s podélnými rozměry (X3/X4) a Podélné header
   ['a','b','c','d'].forEach(function(f){
     var disp=opts.lpos?'flex':'none';
-    ['lp-'+f+'-l1','lp-'+f+'-l2'].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.style.display=disp;
-    });
+    var rowEl=document.getElementById('lp-'+f+'-row');
+    if(rowEl) rowEl.style.display=disp;
     var hdrPodel=document.getElementById('lph-'+f);
-    if(hdrPodel){ hdrPodel.style.display=disp; }
-    var hdrPricne=document.getElementById('lph-pricne-'+f);
-    if(hdrPricne){
-      if(opts.lpos){
-        hdrPricne.style.flex='2';
-        hdrPricne.style.borderRight='none';
-      } else {
-        hdrPricne.style.flex='1';
-        hdrPricne.style.borderRight='none';
-      }
-    }
+    if(hdrPodel) hdrPodel.style.display=opts.lpos?'':'none';
   });
   document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
 }
