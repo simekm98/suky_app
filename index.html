@@ -50,7 +50,8 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F2
 .fld{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
 .fld label{font-size:12px;font-weight:600;color:var(--g5);text-align:center;display:block}
 .fld input,.fld select{font-size:16px;padding:10px 11px;border:1.5px solid var(--g3);border-radius:var(--rads);background:#fff;color:var(--g9);width:100%;-webkit-appearance:none;touch-action:manipulation;text-align:center}
-.fld input::placeholder{color:var(--g5);text-align:center}
+.fld input::placeholder{color:#C8C7C0;text-align:center}
+.ic input::placeholder{color:#C8C7C0}
 .fld input:focus,.fld select:focus{outline:none;border-color:var(--brm);box-shadow:0 0 0 3px rgba(139,94,60,.18)}
 input,select,textarea{touch-action:manipulation}
 .fld.wide{flex:1.5}.fld.narrow{flex:.7;min-width:55px}
@@ -70,10 +71,10 @@ input,select,textarea{touch-action:manipulation}
 .gs13{background:var(--grl);color:var(--gr)}.gs10{background:var(--bll);color:#0C447C}
 .gs7{background:var(--aml);color:#633806}.grej{background:var(--rl);color:var(--rd)}.gna{background:var(--g1);color:var(--g5)}.gok{background:#EAF3DE;color:#27500A}
 .vg-btn{flex:1;padding:9px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:15px;font-weight:700;cursor:pointer;-webkit-appearance:none;transition:all .15s}
-.vg-btn[data-vg="1"]{border-color:#4a9b4a;color:#2d6a2d;border-width:3px}
-.vg-btn[data-vg="2"]{border-color:#8aab2e;color:#5a7015;border-width:3px}
-.vg-btn[data-vg="3"]{border-color:#e08a00;color:#8a5200;border-width:3px}
-.vg-btn[data-vg="4"]{border-color:#c0392b;color:#8b1a13;border-width:3px}
+.vg-btn[data-vg="1"]{border-color:#4a9b4a;color:#2d6a2d;border-width:4px}
+.vg-btn[data-vg="2"]{border-color:#8aab2e;color:#5a7015;border-width:4px}
+.vg-btn[data-vg="3"]{border-color:#e08a00;color:#8a5200;border-width:4px}
+.vg-btn[data-vg="4"]{border-color:#c0392b;color:#8b1a13;border-width:4px}
 .vg-btn[data-vg="1"].selected{background:#4a9b4a;border-color:#4a9b4a;color:#fff}
 .vg-btn[data-vg="2"].selected{background:#8aab2e;border-color:#8aab2e;color:#fff}
 .vg-btn[data-vg="3"].selected{background:#e08a00;border-color:#e08a00;color:#fff}
@@ -274,7 +275,7 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px">
-        <div class="fld wide"><label>ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;border:4px solid #1A1A18;border-radius:var(--rads)"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
@@ -303,15 +304,16 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="reakcni"><label>Reakční dřevo (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 5: ČSN znaky 2 — Oblina + Odklon + Letokruhy v jednom řádku (menší pole) -->
+      <!-- Řádek 5: Oblina + Odklon + Letokruhy + Zakřivení v jednom řádku -->
       <div class="frow" style="margin-top:8px" id="row-csn2">
-        <div class="fld opt-field" data-opt="oblina" style="flex:.7;min-width:55px"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="odklon" style="flex:.9;min-width:65px"><label style="white-space:nowrap">Odklon vl. (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="letokruh" style="flex:.8;min-width:60px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="oblina" style="flex:.6;min-width:50px"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="odklon" style="flex:.7;min-width:55px"><label style="white-space:nowrap">Odklon (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label>Zakřivení</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 6: Zakřivení + Kov/Dřeň/Hmyz -->
+      <!-- Řádek 6: Kov/Dřeň/Hmyz -->
       <div class="frow" style="margin-top:8px" id="row-csn3">
-        <div class="fld opt-field" data-opt="zakriveni"><label>Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div style="flex:.1"></div>
         <div class="opt-field" data-opt="screw" style="display:flex;flex-direction:column;gap:4px;flex:1.8;min-width:130px;border:1.5px solid var(--g3);border-radius:10px;padding:6px 8px">
           <div style="font-size:10px;font-weight:600;color:var(--g5);text-align:center;margin-bottom:2px">Ano / Ne</div>
           <div style="display:flex;gap:6px;justify-content:center">
