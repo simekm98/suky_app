@@ -276,8 +276,9 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
-        <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
+        <div class="fld" style="flex:.8;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="moisture"><label>Vlhkost (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
@@ -285,10 +286,9 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 3: Vlhkost + Vizuál -->
+      <!-- Řádek 3: Vizuál -->
       <div class="frow" style="margin-top:8px" id="row-extra">
-        <div class="fld opt-field" data-opt="moisture"><label>Vlhkost (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="opt-field" data-opt="vg" style="flex:2;min-width:120px">
+        <div class="opt-field" data-opt="vg" style="flex:1;min-width:120px">
           <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;margin-bottom:5px;text-align:center">Vizuál</label>
           <div style="display:flex;gap:6px" id="vg-row">
             <button class="vg-btn" data-vg="1" data-act="setvg">1</button>
@@ -312,29 +312,7 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label>Zakřivení</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 6: Ano/Ne v jednom řádku -->
-      <div class="frow" style="margin-top:8px;align-items:stretch" id="row-csn3">
-        <div class="opt-field" data-opt="screw" style="display:flex;align-items:stretch;flex:1;border:1.5px solid var(--g3);border-radius:10px;overflow:hidden">
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:6px 8px;border-right:1px solid var(--g3);background:#F8F7F5;flex-shrink:0">
-            <label style="font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block">Ano / Ne</label>
-            <div style="height:36px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--g5)">—</div>
-          </div>
-          <div style="display:flex;flex:1">
-            <div class="cb-wrap" style="flex:1;min-width:40px;padding:6px 4px;border-right:1px solid var(--g3)">
-              <label>Kov</label>
-              <button class="cb-box" id="cb-screw">—</button>
-            </div>
-            <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:40px;padding:6px 4px;border-right:1px solid var(--g3)">
-              <label>Dřeň</label>
-              <button class="cb-box" id="cb-dren">—</button>
-            </div>
-            <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:40px;padding:6px 4px">
-              <label>Hmyz</label>
-              <button class="cb-box" id="cb-hmyz">—</button>
-            </div>
-          </div>
-        </div>
-      </div>
+
     </div>
 
     <!-- Metrics -->
@@ -368,7 +346,6 @@ canvas{display:block;width:100%;height:72px}
     <!-- Face inputs -->
     <div class="fgrid">
       <div class="fc" id="fc-a">
-        <div class="ft">A — horní</div>
         <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-a">
           <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-a">Příčné</div>
           <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-a">Podélné</div>
@@ -381,11 +358,6 @@ canvas{display:block;width:100%;height:72px}
         </div>
       </div>
       <div class="fc" id="fc-b">
-        <div class="ft">B — levá</div>
-        <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-b">
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-b">Příčné</div>
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-b">Podélné</div>
-        </div>
         <div class="ipair">
           <div class="ic"><span>B1</span><input id="bs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>B2</span><input id="bs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
@@ -394,11 +366,6 @@ canvas{display:block;width:100%;height:72px}
         </div>
       </div>
       <div class="fc" id="fc-c">
-        <div class="ft">C — dolní</div>
-        <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-c">
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-c">Příčné</div>
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-c">Podélné</div>
-        </div>
         <div class="ipair">
           <div class="ic"><span>C1</span><input id="cs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>C2</span><input id="cs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
@@ -407,11 +374,6 @@ canvas{display:block;width:100%;height:72px}
         </div>
       </div>
       <div class="fc" id="fc-d">
-        <div class="ft">D — pravá</div>
-        <div style="display:flex;gap:0;margin-bottom:4px" id="lph-row-d">
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em" id="lph-pricne-d">Příčné</div>
-          <div style="flex:2;text-align:center;font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.04em;border-left:1px solid var(--g3);padding-left:3px;margin-left:3px" id="lph-d">Podélné</div>
-        </div>
         <div class="ipair">
           <div class="ic"><span>D1</span><input id="ds1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>D2</span><input id="ds2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
@@ -420,6 +382,10 @@ canvas{display:block;width:100%;height:72px}
         </div>
       </div>
     </div>
+    <!-- Hidden lph refs pro lpos JS -->
+    <span id="lph-b" style="display:none"></span>
+    <span id="lph-c" style="display:none"></span>
+    <span id="lph-d" style="display:none"></span>
     <div style="height:6px"></div>
   </div>
   <div class="bbar">
