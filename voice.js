@@ -66,7 +66,7 @@ var WORD_FIELD_MAP = {
   'délka':'p-length','délku':'p-length','delka':'p-length','delku':'p-length',
   'hmotnost':'p-mass','hmotnosti':'p-mass','hmotnost je':'p-mass',
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
-  'id':'cid','ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
+  'ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
   'vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
