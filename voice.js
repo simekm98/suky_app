@@ -615,6 +615,14 @@ function findProductTypeCommand(text){
 }
 
 // ── "FFT podél" / "FFT ohyb" (i foneticky "efefté") — spustí test ────
+// Hlasová frekvence: "podél 877" nebo "ohyb 22" → uloží přímo
+function findManualFreqCommand(text){
+  var t=text.toLowerCase();
+  var mL=t.match(/pod[eé][ln][eé]?\s+(\d+)/);
+  var mB=t.match(/oh[uy]b\w*\s+(\d+)/);
+  if(mL||mB) return {freqL:mL?parseInt(mL[1]):null, freqB:mB?parseInt(mB[1]):null};
+  return null;
+}
 function findFftCommand(text){
   var t = text.toLowerCase();
   // Fonetické varianty pro "FFT": efefté, ef ef té, eféfté, samotné "ft" (často přeslechne první f)
@@ -1046,6 +1054,17 @@ function processCommand(transcript, gen){
 
   // "FFT podél" / "FFT ohyb" — otevře FFT screen, nastaví typ, spustí test
   // Pokud typ nezazněl, jen otevře obrazovku a NADÁLE poslouchá na "podélné"/"ohybové"
+  // Manuální frekvence: "podél 877", "ohyb 22"
+  var manualFreq = findManualFreqCommand(transcript);
+  if(manualFreq && (manualFreq.freqL || manualFreq.freqB)){
+    if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(manualFreq.freqL, manualFreq.freqB);
+    var lbl=(manualFreq.freqL?'podél '+manualFreq.freqL+' Hz ':'')+(manualFreq.freqB?'ohyb '+manualFreq.freqB+' Hz':'');
+    dlog('✓ manuální frekvence: '+lbl,'ok');
+    showConfirmOverlay(lbl.trim(), '✓ uloženo');
+    beepOk();
+    stopVoiceSession();
+    return;
+  }
   var fftCmd = findFftCommand(transcript);
   if(fftCmd){
     // Pokud typ nezazněl — použít výchozí typ z nastavení
@@ -1059,8 +1078,6 @@ function processCommand(transcript, gen){
     dlog('✓ spouštím FFT: '+fftType,'ok');
     awaitingFftTypeChoice = false;
     executeFftCommand(fftType);
-    var typeLabel = fftType==='bending'?'FFT ohyb':(fftType==='combo'?'FFT kombinace':'FFT podél');
-    showConfirmOverlay(typeLabel, 'spoustim...');
     beepOk();
     stopVoiceSession();
     return;
