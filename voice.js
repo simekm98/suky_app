@@ -681,6 +681,7 @@ function executeAction(action){
     if(action === 'addknot'){
       if(window.wgAddKnot) window.wgAddKnot();
       else { var btn = document.getElementById('btn-add'); if(btn) btn.click(); }
+      setTimeout(function(){ var fg=document.querySelector('.fgrid'); if(fg) fg.scrollIntoView({behavior:'smooth',block:'start'}); },200);
     } else if(action === 'newboard'){
       if(window.wgNewBoard) window.wgNewBoard(); // přeskočí blokující confirm() dialog
       else { var btn2 = document.getElementById('btn-new'); if(btn2) btn2.click(); }
@@ -1251,6 +1252,8 @@ function writeValue(field, value, kind){
       el.dispatchEvent(new Event('input', {bubbles:true}));
       el.dispatchEvent(new Event('change', {bubbles:true}));
       dlog('✅ input#'+field+'.value nyní = "'+el.value+'"','ok');
+      // Scroll na aktivní pole při hlasovém zadávání
+      if(window.wgScrollToField) window.wgScrollToField(field);
       if(field === 'p-vg'){
         var vgBtn = document.querySelector('[data-act="setvg"][data-vg="'+value+'"]');
         if(vgBtn) vgBtn.click();
