@@ -456,8 +456,8 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
   <div class="topbar">
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
-    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="font-size:13px;font-weight:700;padding:8px 14px">Vybrat</button>
-    <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="font-size:13px;font-weight:700;padding:8px 12px">+ Složka</button>
+    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="padding:8px 12px" title="Vybrat"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="14" height="14" rx="3"/><polyline points="5,9 7.5,12 13,6"/></svg></button>
+    <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="padding:8px 12px" title="Nová složka"><svg width="20" height="18" viewBox="0 0 20 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z"/><line x1="10" y1="8" x2="10" y2="14"/><line x1="7" y1="11" x2="13" y2="11"/></svg></button>
     <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
@@ -2914,8 +2914,11 @@ function startRecordingWithCountdown(type, dur){
   var remaining=3;
   setStatus('Připrav se — za '+remaining+'…');
   if(cdEl) cdEl.textContent=remaining;
-  fftBeepCountdown();
-  preCountdownTimer=setInterval(function(){
+  // Zajistit že AudioContext běží (iOS vyžaduje resume po user gesture)
+  var ctx=getAudioCtx();
+  var startCd=function(){
+    fftBeepCountdown();
+    preCountdownTimer=setInterval(function(){
     remaining--;
     if(remaining>0){
       if(cdEl) cdEl.textContent=remaining;
@@ -2929,6 +2932,9 @@ function startRecordingWithCountdown(type, dur){
       startRecording(type, dur);
     }
   },1000);
+  };
+  if(ctx.state==='suspended'){ ctx.resume().then(startCd).catch(startCd); }
+  else { startCd(); }
 }
 
 function startRecording(type, dur){
@@ -3218,7 +3224,7 @@ function runFFT(buffer, type){
   drawFFTFor(type);
   renderModesFor(type);
   showResultPanel(type);
-  setStatus('✅ '+timePeaks.length+' úderů ('+(type==='bending'?'ohyb':'podél')+') · df='+dfVal.toFixed(2)+' Hz — uložte nebo opakujte test');
+  setStatus('✅ '+timePeaks.length+' úderů ('+(type==='bending'?'ohyb':'podél')+') · df='+dfVal.toFixed(2)+' Hz');
   // Čekáme na manuální volbu frekvence (hlasem nebo tapem)
 
   // Pokud kombinovaný režim a právě skončila podélná fáze — automaticky pokračuj ohybem
