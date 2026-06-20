@@ -373,10 +373,10 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
         <!-- A nahoře -->
         <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-bottom:1px">A</div>
         <!-- B vlevo, canvas, D vpravo -->
-        <div style="display:flex;align-items:center;gap:2px">
-          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0">B</div>
-          <canvas id="cv1" style="flex:1;min-width:0"></canvas>
-          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0">D</div>
+        <div style="display:flex;align-items:center;gap:2px;min-height:72px">
+          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0;align-self:center">B</div>
+          <canvas id="cv1" style="flex:1;min-width:0;display:block"></canvas>
+          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0;align-self:center">D</div>
         </div>
         <!-- C dole -->
         <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-top:1px">C</div>
@@ -3999,7 +3999,20 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
         <input id="new-folder-name" placeholder="Název nové složky…" style="flex:1;padding:10px 12px;border:1.5px solid var(--g3);border-radius:10px;font-size:15px">
         <button data-act="createfolder" style="padding:10px 16px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">+ Vytvořit</button>
       </div>
-      <button onclick="(function(){var fid=window.getFolderActivId?window.getFolderActivId():null;if(!fid){alert('Nejprve vyberte složku ze seznamu.');return;}var fname=window.wgGetFolders?((window.wgGetFolders().find(function(f){return f.id===fid;})||{}).name||'složku'):'složku';if(!confirm('Smazat složku „'+fname+'"? Desky zůstanou.'))return;if(window.wgDeleteFolder)window.wgDeleteFolder(fid);if(window.closeFolderModal)window.closeFolderModal();})()" style="padding:10px;background:#fee;color:#c0392b;border:1.5px solid #f5c6c6;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">× Smazat aktivní složku</button>
+      <button onclick="(function(){
+        // Nejdřív zkusit aktivní složku, pak první ze seznamu
+        var fid=window.getFolderActivId?window.getFolderActivId():null;
+        if(!fid){
+          var folders=window.wgGetFolders?window.wgGetFolders():[];
+          if(folders.length) fid=folders[0].id;
+        }
+        if(!fid){alert('Žádná složka k smazání.');return;}
+        var fname=window.wgGetFolders?((window.wgGetFolders().find(function(f){return f.id===fid;})||{}).name||'složku'):'složku';
+        if(!confirm('Smazat složku "'+fname+'"? Desky zůstanou.'))return;
+        if(window.wgDeleteFolder)window.wgDeleteFolder(fid);
+        if(typeof updateFolderSelect==='function')setTimeout(updateFolderSelect,100);
+        if(window.closeFolderModal)window.closeFolderModal();
+      })()" style="padding:10px;background:#fee;color:#c0392b;border:1.5px solid #f5c6c6;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">× Smazat aktivní složku</button>
     </div>
   </div>
 </div>
