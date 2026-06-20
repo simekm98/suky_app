@@ -260,9 +260,12 @@ canvas{display:block;width:100%;height:72px}
     <!-- Board params -->
     <!-- Aktivní složka / dřevo / produkt — kompaktní proklikovací řádek -->
     <div id="active-folder-bar" style="display:flex;gap:6px;margin-bottom:10px">
-      <div data-act="openfolder" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
-        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Složka</div>
-        <div id="active-folder-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">Nevybrána</div>
+      <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center" id="folder-bar-wrap">
+        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Složka</div>
+        <select id="active-folder-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="window.wgSelectFolderById&&window.wgSelectFolderById(this.value);setTimeout(updateBlinkStates,80)">
+          <option value="">Nevybrána</option>
+        </select>
+        <div id="active-folder-label" style="display:none">Nevybrána</div>
       </div>
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Dřevo</div>
@@ -283,21 +286,21 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
-        <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
+        <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="numeric" pattern="[0-9]*" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="moisture" style="flex:.8;min-width:0"><label style="white-space:nowrap">Vlhk. (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
         <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld"><label data-unit="width">Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld"><label data-unit="height">Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 3: Vizuál + Oblina -->
-      <div class="frow" style="margin-top:8px;align-items:flex-end" id="row-extra">
-        <div class="opt-field" data-opt="vg" style="flex:1;min-width:0">
+      <div class="frow" style="margin-top:8px;align-items:flex-start" id="row-extra">
+        <div class="opt-field" data-opt="vg" style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center">
           <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;text-align:center;margin-bottom:5px">Vizuál</label>
-          <div style="display:flex;gap:5px;justify-content:center" id="vg-row">
+          <div style="display:flex;gap:5px" id="vg-row">
             <button class="vg-btn" data-vg="1" data-act="setvg">1</button>
             <button class="vg-btn" data-vg="2" data-act="setvg">2</button>
             <button class="vg-btn" data-vg="3" data-act="setvg">3</button>
@@ -305,7 +308,7 @@ canvas{display:block;width:100%;height:72px}
           </div>
           <input type="hidden" id="p-vg" value="">
         </div>
-        <div class="fld opt-field" data-opt="oblina" style="flex:.8;min-width:55px">
+        <div class="fld opt-field" data-opt="oblina" style="flex:.55;min-width:44px">
           <label>Oblina (%)</label>
           <input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off">
         </div>
@@ -359,7 +362,7 @@ canvas{display:block;width:100%;height:72px}
     <!-- Canvas -->
     <div class="crow">
       <div class="cvc" id="wrap1"><div class="cvl" style="text-align:center">Suky — <span id="v-cnt">0</span></div><canvas id="cv1"></canvas></div>
-      <div class="cvc" id="wrap2"><div class="cvl" style="text-align:center">KAR — sjednocení</div><canvas id="cv2"></canvas></div>
+      <div class="cvc" id="wrap2"><div class="cvl" style="text-align:center">Sjednocení</div><canvas id="cv2"></canvas></div>
     </div>
 
     <!-- Edit banner -->
@@ -749,15 +752,20 @@ function applyUnitPrefs(){
   updateLengthMassLabels();
 }
 function updateLengthMassLabels(){
-  var ll=document.querySelector('label[for="p-length"]'); // fallback níže pokud bez for
   var lEl=document.getElementById('lbl-p-length');
   var mEl=document.getElementById('lbl-p-mass');
-  if(lEl) lEl.textContent='Délka ('+lengthUnitLabel()+')';
-  if(mEl) mEl.textContent='Hmotnost ('+massUnitLabel()+')';
+  var u=getUnitPrefs();
+  if(lEl) lEl.textContent='Délka ('+u.lengthUnit+')';
+  if(mEl) mEl.textContent='Hmotnost ('+u.massUnit+')';
+  // Šířka a Výška
+  var sEl=document.querySelector('label[data-unit="width"]');
+  var vEl=document.querySelector('label[data-unit="height"]');
+  if(sEl) sEl.textContent='Šířka ('+u.widthUnit+')';
+  if(vEl) vEl.textContent='Výška ('+(u.heightUnit||'mm')+')';
   var dlEl=document.getElementById('lbl-d-len');
   var dmEl=document.getElementById('lbl-d-mass');
-  if(dlEl) dlEl.textContent='Délka ('+lengthUnitLabel()+')';
-  if(dmEl) dmEl.textContent='Hmotnost ('+massUnitLabel()+')';
+  if(dlEl) dlEl.textContent='Délka ('+u.lengthUnit+')';
+  if(dmEl) dmEl.textContent='Hmotnost ('+u.massUnit+')';
 }
 function gs(id){var v=document.getElementById(id).value;return v||null;}
 function getB(){return parseFloat(String(document.getElementById('clen').value).replace(',','.'))||157;}
@@ -1078,7 +1086,7 @@ function doRedraw(){
   paintCv('cv2','wrap2',b,d,saved,cp,true);
   updateProfileType(b,d);
   updateWoodProductLabels();
-  setTimeout(updateBlinkStates, 400);
+  setTimeout(updateBlinkStates, 400); setTimeout(updateFolderSelect, 500);
   checkProductMismatch(b,d);
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
@@ -1289,6 +1297,29 @@ var PRODUCT_OPTIONS = [
   {value:'lat', label:'Lať'}
 ];
 
+// Aktualizace selectu složky
+function updateFolderSelect(){
+  var sel=document.getElementById('active-folder-select');
+  if(!sel) return;
+  var currentVal=sel.value;
+  // Rebuild options
+  var folders=window.wgGetFolders?window.wgGetFolders():[];
+  sel.innerHTML='<option value="">Nevybrána</option>';
+  folders.forEach(function(f){
+    var opt=document.createElement('option');
+    opt.value=f.id; opt.textContent=f.name;
+    sel.appendChild(opt);
+  });
+  // Sync with active folder
+  var fid=window.getFolderActivId?window.getFolderActivId():null;
+  sel.value=fid||'';
+  // Blink
+  var wrap=document.getElementById('folder-bar-wrap');
+  if(wrap) wrap.classList.toggle('blink-empty',!fid);
+}
+window.wgSelectFolderById=function(fid){
+  if(window.wgSetActiveFolder) window.wgSetActiveFolder(fid);
+};
 function updateWoodProductLabels(){
   var prefs = loadAppPrefs();
   var woodLbl = document.getElementById('active-wood-label');
@@ -1507,7 +1538,7 @@ function renderDetailBody(bi){
     +'<div style="font-size:20px;font-weight:800;color:var(--g9)">'+bd.knots.length+'</div>'
     +'</div>'
     +'<div class="cvc" id="dwrap2d" style="flex:1;background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
-    +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--g5);margin-bottom:4px">KAR — sjednocení</div>'
+    +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--g5);margin-bottom:4px">Sjednocení</div>'
     +'<canvas id="dcv2d" style="display:block;width:100%;height:72px"></canvas></div>'
     +'</div>';
   // board params edit
