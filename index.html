@@ -369,27 +369,24 @@ canvas{display:block;width:100%;height:72px}
     <!-- Canvas -->
     <div class="crow">
       <div class="cvc" id="wrap1">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
-          <div class="cvl" style="flex:1;text-align:center">Suky — <span id="v-cnt">0</span></div>
+        <div class="cvl" style="text-align:center;margin-bottom:2px">Suky — <span id="v-cnt">0</span></div>
+        <!-- ABCD štítky kolem canvasu průřezu: A=nahoře, B=vlevo, C=dole, D=vpravo -->
+        <div style="display:flex;align-items:center;gap:2px">
+          <!-- B vlevo -->
+          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-rl;transform:rotate(180deg);flex-shrink:0">B</div>
+          <div style="flex:1;position:relative">
+            <!-- A nahoře -->
+            <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-bottom:1px">A</div>
+            <canvas id="cv1"></canvas>
+            <!-- C dole -->
+            <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-top:1px">C</div>
+          </div>
+          <!-- D vpravo -->
+          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-rl;flex-shrink:0">D</div>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:0 2px;margin-bottom:1px">
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">A</span>
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">B</span>
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">C</span>
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">D</span>
-        </div>
-        <canvas id="cv1"></canvas>
       </div>
       <div class="cvc" id="wrap2">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
-          <div class="cvl" style="flex:1;text-align:center">Sjednocení</div>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:0 2px;margin-bottom:1px">
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">A</span>
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">B</span>
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">C</span>
-          <span style="font-size:9px;font-weight:800;color:var(--g5)">D</span>
-        </div>
+        <div class="cvl" style="text-align:center;margin-bottom:2px">Sjednocení</div>
         <canvas id="cv2"></canvas>
       </div>
     </div>
@@ -742,17 +739,12 @@ function applyUnitPrefs(){
   var mu=document.getElementById('set-mass-unit');
   var wu=document.getElementById('set-width-unit');
   var hu=document.getElementById('set-height-unit');
-  if(lu) p.lengthUnit=lu.value;
-  if(mu) p.massUnit=mu.value;
-  if(wu) p.widthUnit=wu.value;
-  if(hu) p.heightUnit=hu.value;
+  if(lu && lu.value) p.lengthUnit=lu.value;
+  if(mu && mu.value) p.massUnit=mu.value;
+  if(wu && wu.value) p.widthUnit=wu.value;
+  if(hu && hu.value) p.heightUnit=hu.value;
   saveAppPrefs(p);
   updateLengthMassLabels();
-  // Přepsat label přímo pokud querySelector selže
-  var sLabel=document.querySelector('label[data-unit="width"]');
-  var hLabel=document.querySelector('label[data-unit="height"]');
-  if(sLabel) sLabel.textContent='Šířka ('+(p.widthUnit||'mm')+')';
-  if(hLabel) hLabel.textContent='Výška ('+(p.heightUnit||'mm')+')';
 }
 function updateLengthMassLabels(){
   var lEl=document.getElementById('lbl-p-length');
@@ -1286,8 +1278,6 @@ function openSettings(){
     var pt=document.getElementById('set-product-type'); if(pt && prefs.productType) pt.value=prefs.productType;
     var lu=document.getElementById('set-length-unit'); if(lu) lu.value=prefs.lengthUnit||'mm';
     var mu=document.getElementById('set-mass-unit'); if(mu) mu.value=prefs.massUnit||'g';
-    var wu2=document.getElementById('set-width-unit'); if(wu2) wu2.value=prefs.widthUnit||'mm';
-    var hu2=document.getElementById('set-height-unit'); if(hu2) hu2.value=prefs.heightUnit||'mm';
     var wu2=document.getElementById('set-width-unit'); if(wu2) wu2.value=prefs.widthUnit||'mm';
     var hu2=document.getElementById('set-height-unit'); if(hu2) hu2.value=prefs.heightUnit||'mm';
   }catch(e){}
@@ -2070,6 +2060,27 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
   document.addEventListener('touchend',function(){dragging=false;},{passive:true});
 })();
 
+// Width/height unit — přímý event listener
+['set-width-unit','set-height-unit','set-length-unit','set-mass-unit'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('change',function(){
+    var p=loadAppPrefs();
+    var wu=document.getElementById('set-width-unit');
+    var hu=document.getElementById('set-height-unit');
+    var lu=document.getElementById('set-length-unit');
+    var mu=document.getElementById('set-mass-unit');
+    if(wu && wu.value) p.widthUnit=wu.value;
+    if(hu && hu.value) p.heightUnit=hu.value;
+    if(lu && lu.value) p.lengthUnit=lu.value;
+    if(mu && mu.value) p.massUnit=mu.value;
+    saveAppPrefs(p);
+    updateLengthMassLabels();
+    var sLbl=document.querySelector('label[data-unit="width"]');
+    var hLbl=document.querySelector('label[data-unit="height"]');
+    if(sLbl) sLbl.textContent='Šířka ('+(p.widthUnit||'mm')+')';
+    if(hLbl) hLbl.textContent='Výška ('+(p.heightUnit||'mm')+')';
+  });
+});
 ['set-fft-dur-long','set-fft-dur-bend'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.addEventListener('change',function(){
@@ -3942,7 +3953,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
         <input id="new-folder-name" placeholder="Název nové složky…" style="flex:1;padding:10px 12px;border:1.5px solid var(--g3);border-radius:10px;font-size:15px">
         <button data-act="createfolder" style="padding:10px 16px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">+ Vytvořit</button>
       </div>
-      <button onclick="(function(){var sel=document.getElementById('active-folder-select');var fid=sel?sel.value:'';if(!fid){alert('Vyberte složku.');return;}var fname=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].textContent:'složku';if(!confirm('Smazat „'+fname+'"?'))return;if(window.wgDeleteFolder)window.wgDeleteFolder(fid);if(window.closeFolderModal)window.closeFolderModal();})()" style="padding:10px;background:#fee;color:#c0392b;border:1.5px solid #f5c6c6;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">× Smazat vybranou složku</button>
+      <button onclick="(function(){var fid=window.getFolderActivId?window.getFolderActivId():null;if(!fid){alert('Nejprve vyberte složku ze seznamu.');return;}var fname=window.wgGetFolders?((window.wgGetFolders().find(function(f){return f.id===fid;})||{}).name||'složku'):'složku';if(!confirm('Smazat složku „'+fname+'"? Desky zůstanou.'))return;if(window.wgDeleteFolder)window.wgDeleteFolder(fid);if(window.closeFolderModal)window.closeFolderModal();})()" style="padding:10px;background:#fee;color:#c0392b;border:1.5px solid #f5c6c6;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">× Smazat aktivní složku</button>
     </div>
   </div>
 </div>
