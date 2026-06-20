@@ -1,5 +1,5 @@
 // WoodGrader 26 — Service Worker
-const CACHE = 'wg26-v66';
+const CACHE = 'wg26-v67';
 
 // Cachujeme jen index.html — všechno ostatní je inline nebo CDN
 const ASSETS = ['./index.html', './manifest.json', './sync.js', './folders.js', './stats.js', './voice.js', './import.js', './icons/icon-192.svg', './icons/icon-512.svg'];
