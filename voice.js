@@ -8,6 +8,7 @@
 
 var recognition = null;
 var sessionActive = false;
+var manualInputActive = false; // uživatel právě píše ručně — ignorovat recognition výsledky
 var currentGen = 0;
 var voicePhase = 'idle';
 var lastField = null;   // pro možnost vrácení "zpět"
@@ -935,6 +936,8 @@ function continueOrRefresh(gen){
 }
 
 function processCommand(transcript, gen){
+  // Ignorovat pokud uživatel právě manuálně píše
+  if(manualInputActive){ dlog('⏸ ignoruji (manuální vstup)','info'); if(sessionActive) continueOrRefresh(gen); return; }
   dlog('🎤 slyšel: "'+transcript+'"');
 
   // "domů" / "hlavní stránka" — VŽDY zastaví vše a vrátí na hlavní stránku,
@@ -1481,5 +1484,8 @@ if(document.readyState==='loading'){
 } else {
   initVoice();
 }
+
+  window.wgVoicePause = function(){ manualInputActive = true; };
+  window.wgVoiceResume = function(){ manualInputActive = false; };
 
 })();
