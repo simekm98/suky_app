@@ -262,14 +262,14 @@ canvas{display:block;width:100%;height:72px}
     <div id="active-folder-bar" style="display:flex;gap:6px;margin-bottom:10px">
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center" id="folder-bar-wrap">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Složka</div>
-        <select id="active-folder-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="window.wgSelectFolderById&&window.wgSelectFolderById(this.value);setTimeout(updateBlinkStates,80)">
+        <select id="active-folder-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="window.wgSelectFolderById&&window.wgSelectFolderById(this.value);setTimeout(updateBlinkStates,80)">
           <option value="">Nevybrána</option>
         </select>
         <div id="active-folder-label" style="display:none">Nevybrána</div>
       </div>
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Dřevo</div>
-        <select id="active-wood-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="(function(v){var p=loadAppPrefs();p.woodSpecies=v;saveAppPrefs(p);updateWoodProductLabels();})(this.value)">
+        <select id="active-wood-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="(function(v){var p=loadAppPrefs();p.woodSpecies=v;saveAppPrefs(p);updateWoodProductLabels();})(this.value)">
           <option value="">—</option>
           <option value="SM">Smrk</option>
           <option value="BK">Buk</option>
@@ -286,7 +286,7 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
-        <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="numeric" pattern="[0-9]*" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
+        <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="moisture" style="flex:.8;min-width:0"><label style="white-space:nowrap">Vlhk. (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
@@ -1422,11 +1422,15 @@ function addKnot(){
   var k=curK();if(!kPts(k,getB(),getD())){toast('Zadej alespoň 3 hodnoty');return;}
   knots.push(k);
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
+  syncIcHasValue();
+  var vcnt=document.getElementById('v-cnt');if(vcnt)vcnt.textContent=String(knots.length);
   save();schedDraw();renderKlist();toast('Suk '+knots.length+' přidán ✓');
 }
 function delKnot(ki){
   if(editState&&editState.ki===ki)cancelEdit();
-  knots.splice(ki,1);save();schedDraw();renderKlist();toast('Suk smazán');
+  knots.splice(ki,1);
+  var vcntD=document.getElementById('v-cnt');if(vcntD)vcntD.textContent=String(knots.length);
+  save();schedDraw();renderKlist();toast('Suk smazán');
 }
 function newBoard(skipConfirm){
   // Deska může být uložena i bez suků
@@ -1994,14 +1998,15 @@ function updateBlinkStates(){
     if(!cidEl.value.trim()) cidEl.classList.add('blink-empty');
     else cidEl.classList.remove('blink-empty');
   }
-  var folderEl=document.getElementById('active-folder-label');
-  if(folderEl){
-    // Použít activeFolderId přímo z folders.js (ne prefs)
-    var fid = (typeof window.getFolderActivId==='function') ? window.getFolderActivId() : null;
-    var hasFolder = fid && fid!=='';
-    if(!hasFolder){ folderEl.parentElement.classList.add('blink-empty'); folderEl.textContent='Nevybrána'; }
-    else folderEl.parentElement.classList.remove('blink-empty');
-  }
+  // Složka — bliká POUZE pokud není vybrána
+  var fid=(typeof window.getFolderActivId==='function')?window.getFolderActivId():null;
+  var hasFolder=fid && fid!=='';
+  // Blikání na wrap divu (ne na labelu)
+  var wrap=document.getElementById('folder-bar-wrap');
+  if(wrap) wrap.classList.toggle('blink-empty', !hasFolder);
+  // Sync select hodnoty
+  var sel=document.getElementById('active-folder-select');
+  if(sel && sel.value!==fid) sel.value=fid||'';
 }
 document.getElementById('btn-add').addEventListener('click',function(){editState?saveEdit():addKnot();});
 document.getElementById('btn-new').addEventListener('click',newBoard);
@@ -2852,7 +2857,7 @@ function stopWaveformVis(){if(waveAnimId){cancelAnimationFrame(waveAnimId);waveA
 function startWaveformVis(stream){
   var ctx=getAudioCtx();
   var src=ctx.createMediaStreamSource(stream);
-  waveAnalyser=ctx.createAnalyser();waveAnalyser.fftSize=4096; // delší řada = 3 ťuknutí
+  waveAnalyser=ctx.createAnalyser();waveAnalyser.fftSize=16384; // 16k = ~370ms @ 44100Hz
   src.connect(waveAnalyser);drawWaveform();
 }
 
@@ -2868,16 +2873,17 @@ function drawWaveform(){
   var buf=new Uint8Array(waveAnalyser.fftSize); // fftSize = plná délka časové řady
   waveAnalyser.getByteTimeDomainData(buf);
   ctx.clearRect(0,0,W,H);
-  // Najít skutečný rozsah signálu pro auto-scale
+  // Zobrazit celý buffer (delší časové okno) s auto-scale zesílením
   var mn=128,mx=128;
   for(var j=0;j<buf.length;j++){if(buf[j]<mn)mn=buf[j];if(buf[j]>mx)mx=buf[j];}
-  var range=Math.max(mx-mn,4); // min 4 aby nebyla nulová linie jen čára
-  var gain=Math.min((H/2-4)/range*2, 8); // max 8x zesílení
-  ctx.strokeStyle='#5C3A1E';ctx.lineWidth=2;ctx.beginPath();
-  var step=W/buf.length;
-  for(var i=0;i<buf.length;i++){
+  var range=Math.max(mx-mn,2);
+  var gain=Math.min((H/2-4)/range*1.8, 12); // agresivnější zesílení
+  ctx.strokeStyle='#5C3A1E';ctx.lineWidth=1.5;ctx.beginPath();
+  // Redukce vzorků pro plynulé zobrazení (každý n-tý vzorek)
+  var stride=Math.max(1,Math.floor(buf.length/512));
+  for(var i=0;i<buf.length;i+=stride){
     var y=((buf[i]-128)*gain)+(H/2);
-    if(i===0) ctx.moveTo(i*step,y); else ctx.lineTo(i*step,y);
+    if(i===0) ctx.moveTo(i/buf.length*W,y); else ctx.lineTo(i/buf.length*W,y);
   }
   ctx.stroke();
   waveAnimId=requestAnimationFrame(drawWaveform);
