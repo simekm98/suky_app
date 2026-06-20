@@ -682,10 +682,9 @@ function executeAction(action){
       if(window.wgAddKnot) window.wgAddKnot();
       else { var btn = document.getElementById('btn-add'); if(btn) btn.click(); }
       setTimeout(function(){
-        // Sjet úplně dolů na bbar (tlačítka přidat suk)
-        var bbar=document.querySelector('.bbar');
-        if(bbar) bbar.scrollIntoView({behavior:'smooth',block:'end'});
-        else { var fg=document.querySelector('.fgrid'); if(fg) fg.scrollIntoView({behavior:'smooth',block:'start'}); }
+        // Scroll na fgrid (buňky A1-A4) - block start = fgrid nahoře viewportu
+        var fg=document.querySelector('.fgrid');
+        if(fg) fg.scrollIntoView({behavior:'smooth',block:'start'});
       },300);
     } else if(action === 'newboard'){
       if(window.wgNewBoard) window.wgNewBoard(); // přeskočí blokující confirm() dialog
