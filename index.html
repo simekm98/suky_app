@@ -1491,6 +1491,8 @@ function newBoard(skipConfirm){
   var cbh=document.getElementById('cb-hmyz');if(cbh){cbh.textContent='—';cbh.classList.remove('checked');}
   if(editState)cancelEdit();
   save();schedDraw();renderKlist();renderBlist();toast('Deska uložena ✓');
+  // Resetovat manuální vstup aby hlasové ovládání fungovalo hned
+  if(window.wgVoiceResume) window.wgVoiceResume();
 }
 function delBoard(bi){allBoards.splice(bi,1);save();renderBlist();toast('Deska smazána');}
 
@@ -1868,6 +1870,18 @@ function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.c
 })();
 
 // ── events ────────────────────────────────────────────────────
+// ── Smazání desky — odchytit touch přímo aby neprobubbloval ─────────────────
+document.addEventListener('touchend',function(e){
+  var btn=e.target.closest('.bdel');
+  if(!btn) return;
+  e.preventDefault();e.stopPropagation();
+  var bi2=parseInt(btn.getAttribute('data-bi'));
+  if(isNaN(bi2)) return;
+  var bd=allBoards[bi2];
+  if(!bd) return;
+  if(!confirm('Smazat desku '+bd.id+'?')) return;
+  delBoard(bi2);
+},{passive:false});
 document.addEventListener('click',function(e){
   var btn=e.target.closest('[data-act]');if(!btn)return;
   var act=btn.getAttribute('data-act');
@@ -1915,7 +1929,7 @@ document.addEventListener('click',function(e){
   }
   if(act==='edit')enterEdit(ki);
   else if(act==='del')delKnot(ki);
-  else if(act==='delb'){e.stopPropagation();delBoard(bi);}
+  else if(act==='delb'){e.stopPropagation();e.preventDefault();var bd2=allBoards[bi];if(!bd2)return;if(!confirm('Smazat desku '+bd2.id+'?'))return;delBoard(bi);}
   else if(act==='openboard')openBoardDetail(bi);
   else if(act==='dedit'){
     // Toggle inline editor v detailu
