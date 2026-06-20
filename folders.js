@@ -51,6 +51,14 @@ function updateActiveFolderBar(){
 }
 window.updateActiveFolderBar = updateActiveFolderBar;
 window.getFolderActivId = function(){ return activeFolderId; };
+window.wgGetFolders = function(){ return allFolders; };
+window.wgSetActiveFolder = function(fid){
+  if(!fid){ activeFolderId=null; saveActiveFolder(); updateActiveLabel(); return; }
+  var f=allFolders.find(function(x){return x.id===fid;});
+  if(f){ activeFolderId=f.id; saveActiveFolder(); updateActiveLabel(); }
+  if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,80);
+  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,100);
+};
 window.getFolderNameSafe = getFolderName;
 window.getCurrentFilterFolderId = function(){ return filterFolderId; };
 window.wgGetAllFoldersList = function(){ return allFolders; };
@@ -64,6 +72,7 @@ window.wgCreateAndActivateFolder = function(name){
   if(!f) return null;
   activeFolderId = f.id;
   if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,10);
+  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,80);
   saveFolders();
   if(typeof updateActiveFolderBar === 'function') updateActiveFolderBar();
   if(typeof renderFolderChips === 'function') renderFolderChips();
