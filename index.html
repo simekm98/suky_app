@@ -83,10 +83,10 @@ input,select,textarea{touch-action:manipulation}
 
 
 /* canvas */
-.crow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.crow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;align-items:stretch}
 .cvc{background:#fff;border-radius:var(--rads);padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)}
 .cvl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:4px}
-canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px}
+canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;box-sizing:border-box}
 
 /* edit banner */
 .ebanner{display:none;background:var(--bll);border:1.5px solid #B5D4F4;border-radius:var(--rads);padding:10px 14px;margin-bottom:10px;font-size:13px;color:#0C447C;align-items:center;gap:8px}
@@ -374,9 +374,9 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px}
         <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-bottom:1px">A</div>
         <!-- B vlevo, canvas, D vpravo -->
         <div style="display:flex;align-items:center;gap:2px">
-          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-lr;flex-shrink:0;line-height:1">B</div>
+          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0;transform:rotate(-90deg);width:10px;height:10px;display:flex;align-items:center;justify-content:center">B</div>
           <canvas id="cv1" style="flex:1;min-width:0"></canvas>
-          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-rl;flex-shrink:0;line-height:1">D</div>
+          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0;transform:rotate(90deg);width:10px;height:10px;display:flex;align-items:center;justify-content:center">D</div>
         </div>
         <!-- C dole -->
         <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-top:1px">C</div>
@@ -454,8 +454,8 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px}
   <div class="topbar">
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
-    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="font-size:12px;font-weight:700;padding-left:16px;padding-right:16px">Vybrat</button>
-    <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="font-size:12px;font-weight:700">+ Složka</button>
+    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="font-size:13px;font-weight:700;padding:8px 20px">Vybrat</button>
+    <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="font-size:13px;font-weight:700;padding:8px 16px">+ Složka</button>
     <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
@@ -3194,11 +3194,8 @@ function runFFT(buffer, type){
   drawFFTFor(type);
   renderModesFor(type);
   showResultPanel(type);
-  setStatus('✅ '+timePeaks.length+' úderů ('+(type==='bending'?'ohyb':'podél')+') · df='+dfVal.toFixed(2)+' Hz');
-  // Auto-uložit frekvenci ihned — bez čekání na potvrzení
-  setTimeout(function(){
-    if(typeof saveFftToBoard==='function') saveFftToBoard();
-  }, 600);
+  setStatus('✅ '+timePeaks.length+' úderů ('+(type==='bending'?'ohyb':'podél')+') · df='+dfVal.toFixed(2)+' Hz — uložte nebo opakujte test');
+  // Čekáme na manuální volbu frekvence (hlasem nebo tapem)
 
   // Pokud kombinovaný režim a právě skončila podélná fáze — automaticky pokračuj ohybem
   if(comboMode && comboStage==='longitudinal'){
