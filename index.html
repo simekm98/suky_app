@@ -277,9 +277,16 @@ canvas{display:block;width:100%;height:72px}
           <option value="MD">Modřín</option>
         </select>
       </div>
-      <div data-act="opensplistproduct" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
-        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Produkt</div>
-        <div id="active-product-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">—</div>
+      <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Produkt</div>
+        <select id="active-product-select" style="border:none;background:transparent;font-size:12px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="(function(v){var p=loadAppPrefs();p.productType=v;saveAppPrefs(p);updateWoodProductLabels();if(window.wgSchedDraw)window.wgSchedDraw();})(this.value)">
+          <option value="auto">Auto</option>
+          <option value="rezivo-plocha">Plocha</option>
+          <option value="rezivo-hrana">Hrana</option>
+          <option value="tram">Hranol</option>
+          <option value="lat">Lať</option>
+        </select>
+        <div id="active-product-label" style="display:none">—</div>
       </div>
     </div>
 
@@ -1349,6 +1356,7 @@ function updateWoodProductLabels(){
       }
     }
   }
+  var ps3=document.getElementById('active-product-select'); if(ps3) ps3.value=prefs.productType||'auto';
 }
 
 function openPicker(title, options, currentValue, onSelect){
@@ -2495,6 +2503,77 @@ document.addEventListener('click',function(e){
     </div>
 
     <div style="height:8px"></div>
+
+    <!-- ═══ TABULKY ČSN 73 2824-1 ═══ -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="clbl">Mezní hodnoty ČSN 73 2824-1 — Hranol (Tab. 2)</div>
+      <div style="overflow-x:auto;font-size:11px">
+        <table style="width:100%;border-collapse:collapse;min-width:340px">
+          <thead><tr style="background:#5C3A1E;color:#fff">
+            <th style="padding:5px 6px;text-align:left;font-weight:700">Znak třídění</th>
+            <th style="padding:5px 4px;text-align:center">S13</th>
+            <th style="padding:5px 4px;text-align:center">S10</th>
+            <th style="padding:5px 4px;text-align:center">S7</th>
+          </tr></thead>
+          <tbody>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Suky (KAR, poměr A)</td><td style="text-align:center">1/5</td><td style="text-align:center">1/3</td><td style="text-align:center">1/2</td></tr>
+            <tr><td style="padding:4px 6px">Odklon vláken (%)</td><td style="text-align:center">7</td><td style="text-align:center">12</td><td style="text-align:center">bez omez.</td></tr>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Dřeň</td><td style="text-align:center">ne</td><td style="text-align:center">ano</td><td style="text-align:center">ano</td></tr>
+            <tr><td style="padding:4px 6px">Letokruhy (mm)</td><td style="text-align:center">≤ 4</td><td style="text-align:center">≤ 6</td><td style="text-align:center">bez omez.</td></tr>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Trhliny (podíl)</td><td style="text-align:center">1/5</td><td style="text-align:center">1/2</td><td style="text-align:center">3/4</td></tr>
+            <tr><td style="padding:4px 6px">Oblina (podíl)</td><td style="text-align:center">1/5</td><td style="text-align:center">1/3</td><td style="text-align:center">1/2</td></tr>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Zakřivení (mm/2m)</td><td style="text-align:center">8</td><td style="text-align:center">12</td><td style="text-align:center">bez omez.</td></tr>
+            <tr><td style="padding:4px 6px">Reakční dřevo (%)</td><td style="text-align:center">1/5</td><td style="text-align:center">1/3</td><td style="text-align:center">1/2</td></tr>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Hniloba / zbarvení</td><td style="text-align:center">ne</td><td style="text-align:center">1/5</td><td style="text-align:center">1/3</td></tr>
+            <tr><td style="padding:4px 6px">Hmyz (chodbičky &gt;2mm)</td><td style="text-align:center">ne</td><td style="text-align:center">ne</td><td style="text-align:center">ne</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="clbl">Mezní hodnoty — Prkno/Fošna (Tab. 3) a Lať (Tab. 4)</div>
+      <div style="overflow-x:auto;font-size:11px">
+        <table style="width:100%;border-collapse:collapse;min-width:340px">
+          <thead><tr style="background:#5C3A1E;color:#fff">
+            <th style="padding:5px 6px;text-align:left">Znak</th>
+            <th style="padding:5px 4px;text-align:center" colspan="3">Prkno/Fošna</th>
+            <th style="padding:5px 4px;text-align:center" colspan="3">Lať</th>
+          </tr>
+          <tr style="background:#7a5238;color:#fff">
+            <th></th>
+            <th style="padding:3px 4px;text-align:center">S13</th><th style="padding:3px 4px;text-align:center">S10</th><th style="padding:3px 4px;text-align:center">S7</th>
+            <th style="padding:3px 4px;text-align:center">S13</th><th style="padding:3px 4px;text-align:center">S10</th><th style="padding:3px 4px;text-align:center">S7</th>
+          </tr></thead>
+          <tbody>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Suky (KAR)</td><td style="text-align:center">1/5</td><td style="text-align:center">2/5</td><td style="text-align:center">3/5</td><td style="text-align:center">1/4</td><td style="text-align:center">1/3</td><td style="text-align:center">1/2</td></tr>
+            <tr><td style="padding:4px 6px">Odklon vl. (%)</td><td style="text-align:center">7</td><td style="text-align:center">12</td><td style="text-align:center">—</td><td style="text-align:center">7</td><td style="text-align:center">12</td><td style="text-align:center">—</td></tr>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Letokruhy (mm)</td><td style="text-align:center">≤ 4</td><td style="text-align:center">≤ 6</td><td style="text-align:center">—</td><td style="text-align:center">≤ 4</td><td style="text-align:center">≤ 6</td><td style="text-align:center">—</td></tr>
+            <tr><td style="padding:4px 6px">Trhliny</td><td style="text-align:center">1/4</td><td style="text-align:center">1/2</td><td style="text-align:center">3/4</td><td style="text-align:center">1/4</td><td style="text-align:center">1/2</td><td style="text-align:center">3/4</td></tr>
+            <tr style="background:#FBF7F4"><td style="padding:4px 6px">Oblina</td><td style="text-align:center">1/6</td><td style="text-align:center">1/4</td><td style="text-align:center">1/3</td><td style="text-align:center">1/6</td><td style="text-align:center">1/4</td><td style="text-align:center">1/3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="clbl">Jak měřit jednotlivé parametry</div>
+      <div style="font-size:12px;color:#444;line-height:1.7">
+        <p><strong>Suky (KAR / DAB):</strong> Změřte příčné rozměry suku na každé ploše (A1–A4). KAR = sjednocená plocha suků děleno průřez desky × 100 %. Měřte největší šířku suku kolmo na delší rozměr desky.</p>
+        <p><strong>Odklon vláken:</strong> Změřte odchylku vlákna od podélné osy desky na 500 mm délce. Výsledek v %: (boční posun / 500) × 100.</p>
+        <p><strong>Dřeň:</strong> Vizuální kontrola příčného řezu — tmavý středový bod. Zápis: ano / ne.</p>
+        <p><strong>Letokruhy:</strong> Na čelním řezu změřte průměrnou šířku letokruhu v oblasti suků nebo na ploše desky (mm).</p>
+        <p><strong>Trhliny:</strong> Délka trhliny vydělená délkou desky. Udává se jako podíl (např. 0.25 = 1/4 délky).</p>
+        <p><strong>Oblina:</strong> Šířka obliny na hraně vydělená šířkou strany. Posuzuje se nejširší místo.</p>
+        <p><strong>Zakřivení podélné:</strong> Přiložte pravítko 2 m na plochu desky. Změřte maximální odchylku v mm.</p>
+        <p><strong>Reakční dřevo:</strong> Podíl plochy s výrazně tmavším nebo širším letokruhím (u jehličnanů tlakové dřevo). Odhadujte vizuálně v %.</p>
+        <p><strong>Hniloba / zbarvení:</strong> Podíl plochy průřezu postiženého zbarvením nebo hnilobou. Zápis v %.</p>
+        <p><strong>Hmyz:</strong> Přítomnost chodbičiek průměru &gt;2 mm. Zápis: ano / ne.</p>
+        <p><strong>Vlhkost:</strong> Vlhkoměrem (elektrický nebo gravimetrický). Norma vyžaduje ≤ 20 % pro použití v suchém prostředí.</p>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
   </div>
 </div>
 
@@ -2857,7 +2936,7 @@ function stopWaveformVis(){if(waveAnimId){cancelAnimationFrame(waveAnimId);waveA
 function startWaveformVis(stream){
   var ctx=getAudioCtx();
   var src=ctx.createMediaStreamSource(stream);
-  waveAnalyser=ctx.createAnalyser();waveAnalyser.fftSize=16384; // 16k = ~370ms @ 44100Hz
+  waveAnalyser=ctx.createAnalyser();waveAnalyser.fftSize=32768; // 32k = ~740ms @ 44100Hz
   src.connect(waveAnalyser);drawWaveform();
 }
 
