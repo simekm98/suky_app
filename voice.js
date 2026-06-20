@@ -8,6 +8,7 @@
 
 var recognition = null;
 var sessionActive = false;
+var currentGen = 0;
 var voicePhase = 'idle';
 var lastField = null;   // pro možnost vrácení "zpět"
 var lastValue = null;
@@ -201,6 +202,13 @@ function findPlochaRozmer(text){
   return plochaLetter + rozmerKey; // např. "as1", "al2"
 }
 
+// ── Povel smazat název/ID: "smaž název", "vymaž název", "smaž ID" ──────────
+function findClearNameCommand(text){
+  var t=text.toLowerCase();
+  var isClear=t.indexOf('smaz')>=0||t.indexOf('smaž')>=0||t.indexOf('vymaz')>=0||t.indexOf('vymaž')>=0;
+  if(!isClear) return false;
+  return t.indexOf('název')>=0||t.indexOf('jméno')>=0||t.indexOf('id')>=0;
+}
 // ── Povel smazat plochu: "smazat plochu A", "smaž plochu Dé", "vymazat B" ──
 var FACE_LETTER_MAP = {
   'a':'a','á':'a','ah':'a',
@@ -723,13 +731,18 @@ function executeAction(action){
       if(window.wgAddKnot) window.wgAddKnot();
       else { var btn = document.getElementById('btn-add'); if(btn) btn.click(); }
       setTimeout(function(){
-        // Scroll na fgrid (buňky A1-A4) - block start = fgrid nahoře viewportu
         var fg=document.querySelector('.fgrid');
         if(fg) fg.scrollIntoView({behavior:'smooth',block:'start'});
       },300);
+      // Nepřerušovat session — pokračovat v nahrávání
+      if(sessionActive) continueOrRefresh(cycleGeneration);
+      return;
     } else if(action === 'newboard'){
-      if(window.wgNewBoard) window.wgNewBoard(); // přeskočí blokující confirm() dialog
+      if(window.wgNewBoard) window.wgNewBoard();
       else { var btn2 = document.getElementById('btn-new'); if(btn2) btn2.click(); }
+      // Nepřerušovat session
+      if(sessionActive) continueOrRefresh(cycleGeneration);
+      return;
     }
   } catch(err){
     dlog('💥 executeAction('+action+') selhal: '+err.message,'err');
@@ -1087,6 +1100,16 @@ function processCommand(transcript, gen){
 
   // "FFT podél" / "FFT ohyb" — otevře FFT screen, nastaví typ, spustí test
   // Pokud typ nezazněl, jen otevře obrazovku a NADÁLE poslouchá na "podélné"/"ohybové"
+  // Smazat název/ID
+  if(findClearNameCommand(transcript)){
+    var cidEl=document.getElementById('cid');
+    if(cidEl){ cidEl.value=''; cidEl.dispatchEvent(new Event('input',{bubbles:true})); }
+    dlog('✓ název smazán','ok');
+    showConfirmOverlay('Název smazán','✓');
+    beepOk();
+    if(sessionActive) continueOrRefresh(cycleGeneration);
+    return;
+  }
   // Smazat plochu: "smazat plochu A"
   var clearFace = findClearFaceCommand(transcript);
   if(clearFace){
