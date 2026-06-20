@@ -262,9 +262,13 @@ canvas{display:block;width:100%;height:72px}
     <div id="active-folder-bar" style="display:flex;gap:6px;margin-bottom:10px">
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center" id="folder-bar-wrap">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Složka</div>
-        <select id="active-folder-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="window.wgSelectFolderById&&window.wgSelectFolderById(this.value);setTimeout(updateBlinkStates,80)">
-          <option value="">Nevybrána</option>
-        </select>
+        <div style="display:flex;align-items:center;gap:3px;width:100%">
+          <select id="active-folder-select" style="flex:1;min-width:0;border:none;background:transparent;font-size:12px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;outline:none" onchange="window.wgSelectFolderById&&window.wgSelectFolderById(this.value);setTimeout(updateBlinkStates,80)">
+            <option value="">Nevybrána</option>
+          </select>
+          <button onclick="showFolderCreate()" style="flex-shrink:0;width:20px;height:20px;border-radius:5px;background:var(--br);color:#fff;border:none;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">+</button>
+          <button onclick="showFolderDelete()" style="flex-shrink:0;width:20px;height:20px;border-radius:5px;background:#e74c3c;color:#fff;border:none;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+        </div>
         <div id="active-folder-label" style="display:none">Nevybrána</div>
       </div>
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
@@ -281,8 +285,8 @@ canvas{display:block;width:100%;height:72px}
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Produkt</div>
         <select id="active-product-select" style="border:none;background:transparent;font-size:12px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="(function(v){var p=loadAppPrefs();p.productType=v;saveAppPrefs(p);updateWoodProductLabels();if(window.wgSchedDraw)window.wgSchedDraw();})(this.value)">
           <option value="auto">Auto</option>
-          <option value="rezivo-plocha">Plocha</option>
-          <option value="rezivo-hrana">Hrana</option>
+          <option value="rezivo-plocha">Řezivo P</option>
+          <option value="rezivo-hrana">Řezivo H</option>
           <option value="tram">Hranol</option>
           <option value="lat">Lať</option>
         </select>
@@ -368,8 +372,30 @@ canvas{display:block;width:100%;height:72px}
 
     <!-- Canvas -->
     <div class="crow">
-      <div class="cvc" id="wrap1"><div class="cvl" style="text-align:center">Suky — <span id="v-cnt">0</span></div><canvas id="cv1"></canvas></div>
-      <div class="cvc" id="wrap2"><div class="cvl" style="text-align:center">Sjednocení</div><canvas id="cv2"></canvas></div>
+      <div class="cvc" id="wrap1">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <div class="cvl" style="flex:1;text-align:center">Suky — <span id="v-cnt">0</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:0 2px;margin-bottom:1px">
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">A</span>
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">B</span>
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">C</span>
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">D</span>
+        </div>
+        <canvas id="cv1"></canvas>
+      </div>
+      <div class="cvc" id="wrap2">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <div class="cvl" style="flex:1;text-align:center">Sjednocení</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:0 2px;margin-bottom:1px">
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">A</span>
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">B</span>
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">C</span>
+          <span style="font-size:9px;font-weight:800;color:var(--g5)">D</span>
+        </div>
+        <canvas id="cv2"></canvas>
+      </div>
     </div>
 
     <!-- Edit banner -->
@@ -426,7 +452,7 @@ canvas{display:block;width:100%;height:72px}
   <div class="bbar">
     <button class="bmain" id="btn-add">Přidat suk</button>
     <button class="bmain" id="btn-new" style="background:#fff;color:var(--br);border:1.5px solid var(--g3)">Nová deska</button>
-    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" style="pointer-events:none"><ellipse cx="13" cy="9" rx="4.5" ry="6" fill="currentColor"/><path d="M6 12c0 3.866 3.134 7 7 7s7-3.134 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><rect x="11.5" y="19" width="3" height="4" rx="1" fill="currentColor"/><ellipse cx="13" cy="23.5" rx="4" ry="1.5" fill="currentColor"/></svg></button>
+    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="26" height="28" viewBox="0 0 26 28" fill="none" style="pointer-events:none"><rect x="8" y="1" width="10" height="15" rx="5" fill="currentColor"/><path d="M10 3.5 Q9 6 9.5 9" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M5 13 Q5 20 13 20 Q21 20 21 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="13" y1="20" x2="13" y2="24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="8" y="24" width="10" height="2.5" rx="1.25" fill="currentColor"/></svg></button>
   </div>
 </div>
 
@@ -775,8 +801,10 @@ function updateLengthMassLabels(){
   if(dmEl) dmEl.textContent='Hmotnost ('+u.massUnit+')';
 }
 function gs(id){var v=document.getElementById(id).value;return v||null;}
-function getB(){return parseFloat(String(document.getElementById('clen').value).replace(',','.'))||157;}
-function getD(){return parseFloat(String(document.getElementById('cwid').value).replace(',','.'))||50;}
+function getWidthMM(v){var u=getUnitPrefs().widthUnit; return u==='cm'?v*10:v;}
+function getB(){var v=parseFloat(String(document.getElementById('clen').value).replace(',','.'))||157; return getWidthMM(v);}
+function getHeightMM(v){var u=getUnitPrefs().heightUnit||'mm'; return u==='cm'?v*10:v;}
+function getD(){var v=parseFloat(String(document.getElementById('cwid').value).replace(',','.'))||50; return getHeightMM(v);}
 function getId(){return document.getElementById('cid').value||'?';}
 
 function setVGDisplay(val){
@@ -1257,7 +1285,11 @@ function applyOpts(){
     var hdrPodel=document.getElementById('lph-'+f);
     if(hdrPodel) hdrPodel.style.display=opts.lpos?'':'none';
   });
-  document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'flex':'none';});
+  document.querySelectorAll('.opt-field').forEach(function(el){
+    var key=el.getAttribute('data-opt');
+    if(key==='vg') el.style.display=opts[key]?'flex':'none';
+    else if(key) el.style.display=opts[key]?'':'none';
+  });
 }
 function openSettings(){
   document.getElementById('modal-settings').classList.add('open');
@@ -1305,6 +1337,20 @@ var PRODUCT_OPTIONS = [
 ];
 
 // Aktualizace selectu složky
+function showFolderCreate(){
+  var name=prompt('Název nové složky:','');
+  if(!name||!name.trim()) return;
+  if(window.wgCreateFolder) window.wgCreateFolder(name.trim());
+  else if(window.openFolderModal) window.openFolderModal();
+}
+function showFolderDelete(){
+  var sel=document.getElementById('active-folder-select');
+  var fid=sel?sel.value:'';
+  if(!fid){alert('Vyberte složku ke smazání.');return;}
+  var fname=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].textContent:'složku';
+  if(!confirm('Smazat složku „'+fname+'"? Desky zůstanou.')) return;
+  if(window.wgDeleteFolder) window.wgDeleteFolder(fid);
+}
 function updateFolderSelect(){
   var sel=document.getElementById('active-folder-select');
   if(!sel) return;
