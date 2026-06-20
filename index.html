@@ -276,9 +276,9 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
-        <div class="fld" style="flex:.8;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
+        <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="moisture"><label>Vlhkost (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="moisture" style="flex:.55;min-width:0"><label style="white-space:nowrap">Vlh.%</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
@@ -311,6 +311,21 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld opt-field" data-opt="odklon" style="flex:.7;min-width:55px"><label style="white-space:nowrap">Odklon (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label>Zakřivení</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+      </div>
+      <!-- Řádek 6: Kov / Dřeň / Hmyz -->
+      <div class="frow" style="margin-top:8px" id="row-csn3">
+        <div class="cb-wrap opt-field" data-opt="screw" style="flex:1;min-width:50px">
+          <label>Kov</label>
+          <button class="cb-box" id="cb-screw">—</button>
+        </div>
+        <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:50px">
+          <label>Dřeň</label>
+          <button class="cb-box" id="cb-dren">—</button>
+        </div>
+        <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:50px">
+          <label>Hmyz</label>
+          <button class="cb-box" id="cb-hmyz">—</button>
+        </div>
       </div>
 
     </div>
@@ -1053,7 +1068,7 @@ function doRedraw(){
   paintCv('cv2','wrap2',b,d,saved,cp,true);
   updateProfileType(b,d);
   updateWoodProductLabels();
-  setTimeout(updateBlinkStates, 50);
+  setTimeout(updateBlinkStates, 400);
   checkProductMismatch(b,d);
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
@@ -1197,7 +1212,7 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 
 // ── settings UI ────────────────────────────────────────────
 function toggleAllCsn(){
-  var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz'];
+  var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz','screw'];
   var anyOn=keys.some(function(k){return opts[k];});
   keys.forEach(function(k){opts[k]=!anyOn;});
   saveOpts();applyOpts();
@@ -1217,7 +1232,7 @@ function applyOpts(){
     var hdrPodel=document.getElementById('lph-'+f);
     if(hdrPodel) hdrPodel.style.display=opts.lpos?'':'none';
   });
-  document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
+  document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'flex':'none';});
 }
 function openSettings(){
   document.getElementById('modal-settings').classList.add('open');
@@ -2078,7 +2093,7 @@ applyOpts();renderKlist();
 // Sync CSN toggle button state
 (function(){
   var btn=document.getElementById('toggle-csn-all');
-  if(btn){ var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz']; btn.classList.toggle('on',keys.some(function(k){return opts[k];})); }
+  if(btn){ var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz','screw']; btn.classList.toggle('on',keys.some(function(k){return opts[k];})); }
 })();
 updateWoodProductLabels();
 updateLengthMassLabels();
