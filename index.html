@@ -285,8 +285,8 @@ canvas{display:block;width:100%;height:72px}
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
         <div class="fld opt-field" data-opt="length"><label id="lbl-p-length" style="display:flex;align-items:center;gap:3px;white-space:nowrap">Délka <select id="set-length-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld"><label style="display:flex;align-items:center;gap:3px;white-space:nowrap">Šířka <select id="set-width-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="mm">mm</option><option value="cm">cm</option></select></label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld"><label style="display:flex;align-items:center;gap:3px;white-space:nowrap">Výška <select id="set-height-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="mm">mm</option><option value="cm">cm</option></select></label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 3: Vlhkost + Vizuál -->
       <div class="frow" style="margin-top:8px" id="row-extra">
@@ -312,14 +312,14 @@ canvas{display:block;width:100%;height:72px}
       <div class="frow" style="margin-top:8px" id="row-csn2">
         <div class="fld opt-field" data-opt="oblina" style="flex:.6;min-width:50px"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="odklon" style="flex:.7;min-width:55px"><label style="white-space:nowrap">Odklon (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label style="white-space:nowrap;font-size:10px">Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label style="white-space:nowrap;font-size:10px">Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label style="white-space:nowrap">Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label style="white-space:nowrap">Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 6: Ano/Ne — popisek vlevo, pole vedle sebe -->
       <div class="frow" style="margin-top:8px;align-items:center" id="row-csn3">
         <div class="opt-field" data-opt="screw" style="display:flex;align-items:center;gap:8px;flex:1;border:1.5px solid var(--g3);border-radius:10px;padding:7px 10px">
-          <div style="font-size:10px;font-weight:600;color:var(--g5);white-space:nowrap;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:2px">Ano<br>/ Ne</div>
-          <div style="display:flex;gap:6px;flex:1;align-items:flex-end">
+          <div style="font-size:10px;font-weight:600;color:var(--g5);white-space:nowrap">Ano / Ne</div>
+          <div style="display:flex;gap:6px;flex:1">
             <div class="cb-wrap" style="flex:1;min-width:40px">
               <label>Kov</label>
               <button class="cb-box" id="cb-screw">—</button>
@@ -376,8 +376,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>A1</span><input id="as1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>A2</span><input id="as2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-a-l1" style="display:none"><span>A3</span><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-a-l2" style="display:none"><span>A4</span><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-a-row" style="display:none">
+          <div class="ic" id="lp-a-l1"><span>A3</span><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-a-l2"><span>A4</span><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-b">
@@ -389,8 +391,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>B1</span><input id="bs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>B2</span><input id="bs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-b-l1" style="display:none"><span>B3</span><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-b-l2" style="display:none"><span>B4</span><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-b-row" style="display:none">
+          <div class="ic" id="lp-b-l1"><span>B3</span><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-b-l2"><span>B4</span><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-c">
@@ -402,8 +406,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>C1</span><input id="cs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>C2</span><input id="cs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-c-l1" style="display:none"><span>C3</span><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-c-l2" style="display:none"><span>C4</span><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-c-row" style="display:none">
+          <div class="ic" id="lp-c-l1"><span>C3</span><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-c-l2"><span>C4</span><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-d">
@@ -415,8 +421,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>D1</span><input id="ds1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>D2</span><input id="ds2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-d-l1" style="display:none"><span>D3</span><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic lp-hide" id="lp-d-l2" style="display:none"><span>D4</span><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+        </div>
+        <div class="ipair lp-hide" id="lp-d-row" style="display:none">
+          <div class="ic" id="lp-d-l1"><span>D3</span><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic" id="lp-d-l2"><span>D4</span><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
     </div>
@@ -500,6 +508,48 @@ canvas{display:block;width:100%;height:72px}
       <button class="modal-close" id="modal-close">✕</button>
     </div>
 
+    <!-- Cloud sync sekce -->
+    <div class="setting-section" style="margin-top:4px">☁ Cloud synchronizace</div>
+    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1)">
+      <div style="display:flex;align-items:center;margin-bottom:12px">
+        <div style="flex:1">
+          <div style="font-size:15px;color:var(--g9)">Supabase sync</div>
+          <div style="font-size:12px;color:var(--g5)">Real-time záloha + více zařízení</div>
+        </div>
+        <button class="toggle" data-opt="cloud" id="cloud-toggle" data-act="togglecloud"></button>
+      </div>
+      <div id="cloud-panel" style="display:none">
+        <div style="margin-bottom:8px">
+          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Supabase Project URL</div>
+          <input id="cfg-supa-url" type="url" placeholder="https://xxx.supabase.co" style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Anon Key</div>
+          <input id="cfg-supa-key" type="text" placeholder="eyJ..." style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        </div>
+        <button data-act="applysync" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Připojit k cloudu</button>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:9px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:13px;font-weight:600;cursor:pointer">⬆ Odeslat</button>
+          <button onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" style="flex:1;padding:9px;border:1.5px solid var(--blm);border-radius:8px;background:var(--bll);color:var(--bl);font-size:13px;font-weight:600;cursor:pointer">⬇ Načíst</button>
+        </div>
+        <div style="margin-top:10px;padding:10px;background:#F2F2F2;border-radius:8px;font-size:12px;color:var(--g5);line-height:1.6">
+          <strong style="color:var(--br)">Nastavení Supabase (jednou):</strong><br>
+          1. supabase.com → nový projekt<br>
+          2. SQL Editor → spusť SQL ze zálohy<br>
+          3. Project Settings → API → zkopíruj URL a anon key
+        </div>
+    </div>
+    <!-- Záloha dat — na konci -->
+    <div class="setting-section" style="margin-top:4px">Záloha dat</div>
+    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1);display:flex;gap:8px">
+      <button onclick="exportBackup()" style="flex:1;padding:10px;border:1.5px solid var(--brm);border-radius:10px;background:var(--brl);color:var(--br);font-size:13px;font-weight:700;cursor:pointer">⬇ Záloha JSON</button>
+      <label style="flex:1;padding:10px;border:1.5px solid var(--g3);border-radius:10px;background:#fff;color:var(--g7);font-size:13px;font-weight:700;cursor:pointer;text-align:center">
+        ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
+      </label>
+    </div>
+    <div style="height:1px">
+      </div>
+    </div>
     <!-- === COLLAPSIBLE SETTINGS SECTIONS === -->
 
     <!-- ▶ FFT -->
@@ -552,15 +602,7 @@ canvas{display:block;width:100%;height:72px}
     <details class="set-group">
       <summary class="set-group-title">Parametry desky</summary>
       <div class="setting-row">
-        <div class="setting-lbl">Šířka</div>
-        <button class="toggle on" data-opt="width" style="pointer-events:none;opacity:.5"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Výška</div>
-        <button class="toggle on" data-opt="height" style="pointer-events:none;opacity:.5"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Délka<small>nutná pro hustotu</small></div>
+        <div class="setting-lbl">Délka<small>mm — nutná pro hustotu</small></div>
         <button class="toggle on" data-opt="length"></button>
       </div>
       <div class="setting-row">
@@ -648,48 +690,6 @@ canvas{display:block;width:100%;height:72px}
         </select>
       </div>
     </details>
-    <!-- Záloha dat — na konci -->
-    <div class="setting-section" style="margin-top:4px">Záloha dat</div>
-    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1);display:flex;gap:8px">
-      <button onclick="exportBackup()" style="flex:1;padding:10px;border:1.5px solid var(--brm);border-radius:10px;background:var(--brl);color:var(--br);font-size:13px;font-weight:700;cursor:pointer">⬇ Záloha JSON</button>
-      <label style="flex:1;padding:10px;border:1.5px solid var(--g3);border-radius:10px;background:#fff;color:var(--g7);font-size:13px;font-weight:700;cursor:pointer;text-align:center">
-        ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
-      </label>
-    </div>
-    <div style="height:1px">
-      </div>
-    </div>
-    <!-- Cloud sync sekce -->
-    <div class="setting-section" style="margin-top:4px">☁ Cloud synchronizace</div>
-    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1)">
-      <div style="display:flex;align-items:center;margin-bottom:12px">
-        <div style="flex:1">
-          <div style="font-size:15px;color:var(--g9)">Supabase sync</div>
-          <div style="font-size:12px;color:var(--g5)">Real-time záloha + více zařízení</div>
-        </div>
-        <button class="toggle" data-opt="cloud" id="cloud-toggle" data-act="togglecloud"></button>
-      </div>
-      <div id="cloud-panel" style="display:none">
-        <div style="margin-bottom:8px">
-          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Supabase Project URL</div>
-          <input id="cfg-supa-url" type="url" placeholder="https://xxx.supabase.co" style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        </div>
-        <div style="margin-bottom:12px">
-          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Anon Key</div>
-          <input id="cfg-supa-key" type="text" placeholder="eyJ..." style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        </div>
-        <button data-act="applysync" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Připojit k cloudu</button>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:9px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:13px;font-weight:600;cursor:pointer">⬆ Odeslat</button>
-          <button onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" style="flex:1;padding:9px;border:1.5px solid var(--blm);border-radius:8px;background:var(--bll);color:var(--bl);font-size:13px;font-weight:600;cursor:pointer">⬇ Načíst</button>
-        </div>
-        <div style="margin-top:10px;padding:10px;background:#F2F2F2;border-radius:8px;font-size:12px;color:var(--g5);line-height:1.6">
-          <strong style="color:var(--br)">Nastavení Supabase (jednou):</strong><br>
-          1. supabase.com → nový projekt<br>
-          2. SQL Editor → spusť SQL ze zálohy<br>
-          3. Project Settings → API → zkopíruj URL a anon key
-        </div>
-    </div>
   </div>
 </div>
 
@@ -1248,15 +1248,16 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 
 // ── settings UI ────────────────────────────────────────────
 function applyOpts(){
-  // lpos: show/hide podélné buňky (X3/X4) v rámci jednoho ipair řádku
+  // lpos: show/hide řádek s podélnými rozměry, fgrid na 1 sloupec
   ['a','b','c','d'].forEach(function(f){
     var disp=opts.lpos?'flex':'none';
-    ['lp-'+f+'-l1','lp-'+f+'-l2'].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.style.display=disp;
-    });
+    var rowEl=document.getElementById('lp-'+f+'-row');
+    if(rowEl) rowEl.style.display=disp;
     var hdrPodel=document.getElementById('lph-'+f);
     if(hdrPodel) hdrPodel.style.display=opts.lpos?'':'none';
   });
+  var fg=document.querySelector('.fgrid');
+  if(fg){ if(opts.lpos) fg.classList.add('lpos-on'); else fg.classList.remove('lpos-on'); }
   document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
 }
 function openSettings(){
