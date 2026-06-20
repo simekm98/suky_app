@@ -262,13 +262,9 @@ canvas{display:block;width:100%;height:72px}
     <div id="active-folder-bar" style="display:flex;gap:6px;margin-bottom:10px">
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center" id="folder-bar-wrap">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Složka</div>
-        <div style="display:flex;align-items:center;gap:3px;width:100%">
-          <select id="active-folder-select" style="flex:1;min-width:0;border:none;background:transparent;font-size:12px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;outline:none" onchange="window.wgSelectFolderById&&window.wgSelectFolderById(this.value);setTimeout(updateBlinkStates,80)">
-            <option value="">Nevybrána</option>
-          </select>
-          <button onclick="showFolderCreate()" style="flex-shrink:0;width:20px;height:20px;border-radius:5px;background:var(--br);color:#fff;border:none;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">+</button>
-          <button onclick="showFolderDelete()" style="flex-shrink:0;width:20px;height:20px;border-radius:5px;background:#e74c3c;color:#fff;border:none;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">×</button>
-        </div>
+        <select id="active-folder-select" style="border:none;background:transparent;font-size:12px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="window.wgSelectFolderById&&window.wgSelectFolderById(this.value);setTimeout(updateBlinkStates,80)">
+          <option value="">Nevybrána</option>
+        </select>
         <div id="active-folder-label" style="display:none">Nevybrána</div>
       </div>
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
@@ -528,13 +524,10 @@ canvas{display:block;width:100%;height:72px}
     </div>
 
     <!-- Cloud sync sekce -->
-    <div class="setting-section" style="margin-top:4px">☁ Cloud synchronizace</div>
-    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1)">
-      <div style="display:flex;align-items:center;margin-bottom:12px">
-        <div style="flex:1">
-          <div style="font-size:15px;color:var(--g9)">Supabase sync</div>
-          <div style="font-size:12px;color:var(--g5)">Real-time záloha + více zařízení</div>
-        </div>
+    <div class="setting-section" style="margin-top:4px;font-size:11px;padding:6px 16px">☁ Cloud & Záloha</div>
+    <div style="padding:8px 16px;border-bottom:.5px solid var(--g1)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="flex:1;font-size:12px;color:var(--g7)">Supabase sync</div>
         <button class="toggle" data-opt="cloud" id="cloud-toggle" data-act="togglecloud"></button>
       </div>
       <div id="cloud-panel" style="display:none">
@@ -559,12 +552,12 @@ canvas{display:block;width:100%;height:72px}
         </div>
     </div>
     <!-- Záloha dat — na konci -->
-    <div class="setting-section" style="margin-top:4px">Záloha dat</div>
-    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1);display:flex;gap:8px">
-      <button onclick="exportBackup()" style="flex:1;padding:10px;border:1.5px solid var(--brm);border-radius:10px;background:var(--brl);color:var(--br);font-size:13px;font-weight:700;cursor:pointer">⬇ Záloha JSON</button>
-      <label style="flex:1;padding:10px;border:1.5px solid var(--g3);border-radius:10px;background:#fff;color:var(--g7);font-size:13px;font-weight:700;cursor:pointer;text-align:center">
+    <div style="padding:6px 16px 10px;border-bottom:.5px solid var(--g1);display:flex;gap:6px;align-items:center">
+      <button onclick="exportBackup()" style="flex:1;padding:7px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:11px;font-weight:700;cursor:pointer">⬇ Záloha</button>
+      <label style="flex:1;padding:7px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:11px;font-weight:700;cursor:pointer;text-align:center">
         ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
       </label>
+      <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:7px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:11px;font-weight:700;cursor:pointer">☁ Cloud</button>
     </div>
     <div style="height:1px">
       </div>
@@ -783,6 +776,11 @@ function applyUnitPrefs(){
   if(hu) p.heightUnit=hu.value;
   saveAppPrefs(p);
   updateLengthMassLabels();
+  // Přepsat label přímo pokud querySelector selže
+  var sLabel=document.querySelector('label[data-unit="width"]');
+  var hLabel=document.querySelector('label[data-unit="height"]');
+  if(sLabel) sLabel.textContent='Šířka ('+(p.widthUnit||'mm')+')';
+  if(hLabel) hLabel.textContent='Výška ('+(p.heightUnit||'mm')+')';
 }
 function updateLengthMassLabels(){
   var lEl=document.getElementById('lbl-p-length');
@@ -1287,8 +1285,16 @@ function applyOpts(){
   });
   document.querySelectorAll('.opt-field').forEach(function(el){
     var key=el.getAttribute('data-opt');
-    if(key==='vg') el.style.display=opts[key]?'flex':'none';
-    else if(key) el.style.display=opts[key]?'':'none';
+    if(!key) return;
+    if(!opts[key]){ el.style.display='none'; return; }
+    // Obnovit správný display podle typu elementu
+    el.style.display='';
+    var tag=el.tagName;
+    var cls=el.className||'';
+    if(cls.indexOf('frow')>=0 || el.id==='row-csn' || el.id==='row-csn2' || el.id==='row-csn3' || el.id==='row-lm' || el.id==='row-extra') el.style.display='flex';
+    else if(cls.indexOf('cb-wrap')>=0) el.style.display='flex';
+    else if(cls.indexOf('fld')>=0) el.style.display='flex';
+    else if(key==='vg') el.style.display='flex';
   });
 }
 function openSettings(){
@@ -3954,9 +3960,12 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
     <div id="folder-list-modal" style="max-height:50dvh;overflow-y:auto">
       <!-- dynamicky -->
     </div>
-    <div style="padding:14px 20px;border-top:.5px solid var(--g1);display:flex;gap:8px">
-      <input id="new-folder-name" placeholder="Název nové složky…" style="flex:1;padding:10px 12px;border:1.5px solid var(--g3);border-radius:10px;font-size:15px">
-      <button data-act="createfolder" style="padding:10px 16px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">+ Vytvořit</button>
+    <div style="padding:14px 20px;border-top:.5px solid var(--g1);display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:8px">
+        <input id="new-folder-name" placeholder="Název nové složky…" style="flex:1;padding:10px 12px;border:1.5px solid var(--g3);border-radius:10px;font-size:15px">
+        <button data-act="createfolder" style="padding:10px 16px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">+ Vytvořit</button>
+      </div>
+      <button onclick="(function(){var sel=document.getElementById('active-folder-select');var fid=sel?sel.value:'';if(!fid){alert('Vyberte složku.');return;}var fname=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].textContent:'složku';if(!confirm('Smazat „'+fname+'"?'))return;if(window.wgDeleteFolder)window.wgDeleteFolder(fid);if(window.closeFolderModal)window.closeFolderModal();})()" style="padding:10px;background:#fee;color:#c0392b;border:1.5px solid #f5c6c6;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">× Smazat vybranou složku</button>
     </div>
   </div>
 </div>
