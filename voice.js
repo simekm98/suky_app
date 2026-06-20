@@ -1182,7 +1182,7 @@ function processCommand(transcript, gen){
     executeAction(actionCmd.action);
     showConfirmOverlay(actionCmd.label, '✓ provedeno');
     beepOk();
-    if(sessionActive) continueOrRefresh(gen);
+    stopVoiceSession();
     return;
   }
 
@@ -1315,7 +1315,7 @@ function updateVoiceUI(state, msg){
     var shouldActive = (state==='requesting');
     btn.classList.toggle('voice-listening', shouldListen);
     btn.classList.toggle('voice-active', shouldActive);
-    btn.textContent = sessionActive ? '⏹' : '🎤';
+    // Neměnit innerHTML/textContent — ikona je SVG v HTML
   }
   if(indicator){
     if(state==='idle'){ indicator.style.display='none'; }
