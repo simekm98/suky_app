@@ -728,13 +728,10 @@ function executeAction(action){
         if(fg) fg.scrollIntoView({behavior:'smooth',block:'start'});
       },300);
       // Nepřerušovat session — pokračovat v nahrávání
-      if(sessionActive) continueOrRefresh(cycleGeneration);
       return;
     } else if(action === 'newboard'){
       if(window.wgNewBoard) window.wgNewBoard();
       else { var btn2 = document.getElementById('btn-new'); if(btn2) btn2.click(); }
-      // Nepřerušovat session
-      if(sessionActive) continueOrRefresh(cycleGeneration);
       return;
     }
   } catch(err){
@@ -1255,7 +1252,8 @@ function processCommand(transcript, gen){
     executeAction(actionCmd.action);
     showConfirmOverlay(actionCmd.label, '✓ provedeno');
     beepOk();
-    // Mikrofon se nevypíná — session pokračuje (executeAction to řeší)
+    // Mikrofon pokračuje
+    if(sessionActive) continueOrRefresh(gen);
     return;
   }
 
