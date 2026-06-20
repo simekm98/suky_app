@@ -681,7 +681,12 @@ function executeAction(action){
     if(action === 'addknot'){
       if(window.wgAddKnot) window.wgAddKnot();
       else { var btn = document.getElementById('btn-add'); if(btn) btn.click(); }
-      setTimeout(function(){ var fg=document.querySelector('.fgrid'); if(fg){ fg.scrollIntoView({behavior:'smooth',block:'nearest'}); } else { window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); } },300);
+      setTimeout(function(){
+        // Sjet úplně dolů na bbar (tlačítka přidat suk)
+        var bbar=document.querySelector('.bbar');
+        if(bbar) bbar.scrollIntoView({behavior:'smooth',block:'end'});
+        else { var fg=document.querySelector('.fgrid'); if(fg) fg.scrollIntoView({behavior:'smooth',block:'start'}); }
+      },300);
     } else if(action === 'newboard'){
       if(window.wgNewBoard) window.wgNewBoard(); // přeskočí blokující confirm() dialog
       else { var btn2 = document.getElementById('btn-new'); if(btn2) btn2.click(); }
