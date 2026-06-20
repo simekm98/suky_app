@@ -496,6 +496,9 @@ document.addEventListener('click',function(e){
       renderBlistMain();
       closeFolderModal();
       showToast('Složka "'+f.name+'" vytvořena ✓');
+      // Okamžitě aktualizovat select na hlavní straně
+      if(typeof updateFolderSelect==='function') updateFolderSelect();
+      if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,50);
     }
   }
   else if(act==='closefolder')  { closeFolderModal(); }
