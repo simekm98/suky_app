@@ -374,19 +374,21 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
         <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-bottom:1px">A</div>
         <!-- B vlevo, canvas, D vpravo -->
         <div style="display:flex;align-items:center;gap:2px">
-          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0;transform:rotate(90deg);display:inline-block">B</div>
+          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0">B</div>
           <canvas id="cv1" style="flex:1;min-width:0"></canvas>
-          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0;transform:rotate(-90deg);display:inline-block">D</div>
+          <div style="font-size:9px;font-weight:800;color:var(--g5);flex-shrink:0">D</div>
         </div>
         <!-- C dole -->
         <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-top:1px">C</div>
       </div>
       <div class="cvc" id="wrap2" style="display:flex;flex-direction:column">
         <div class="cvl" style="text-align:center;margin-bottom:4px">Sjednocení</div>
-        <!-- spacer pro A -->
         <div style="font-size:9px;margin-bottom:1px;visibility:hidden">A</div>
-        <canvas id="cv2" style="flex:1"></canvas>
-        <!-- spacer pro C -->
+        <div style="display:flex;align-items:center;gap:2px">
+          <div style="font-size:9px;visibility:hidden;flex-shrink:0">B</div>
+          <canvas id="cv2" style="flex:1;min-width:0"></canvas>
+          <div style="font-size:9px;visibility:hidden;flex-shrink:0">D</div>
+        </div>
         <div style="font-size:9px;margin-top:1px;visibility:hidden">C</div>
       </div>
     </div>
@@ -454,8 +456,8 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
   <div class="topbar">
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
-    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="padding:8px 14px" title="Vybrat"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="14" height="14" rx="3"/><polyline points="5,9 7.5,12 13,6"/></svg></button>
-    <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="padding:8px 14px" title="Nová složka"><svg width="20" height="18" viewBox="0 0 20 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z"/><line x1="10" y1="8" x2="10" y2="14"/><line x1="7" y1="11" x2="13" y2="11"/></svg></button>
+    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="font-size:13px;font-weight:700;padding:8px 20px">Vybrat</button>
+    <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="font-size:13px;font-weight:700;padding:8px 16px">+ Složka</button>
     <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
