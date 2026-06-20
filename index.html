@@ -2214,10 +2214,18 @@ updateLengthMassLabels();
 setTimeout(schedDraw,200);
 
 
-// ── Select all text on input focus ──────────────────────
+// ── Select all text on input focus + pozastavit voice recognition ──────────
 document.addEventListener('focusin', function(e) {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
     setTimeout(function() { e.target.select(); }, 10);
+    // Pozastavit voice recognition při manuálním zadávání
+    if(window.wgVoicePause) window.wgVoicePause();
+  }
+});
+document.addEventListener('focusout', function(e) {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+    // Obnovit voice recognition po opuštění pole (s krátkým zpožděním)
+    setTimeout(function(){ if(window.wgVoiceResume) window.wgVoiceResume(); }, 300);
   }
 });
 
