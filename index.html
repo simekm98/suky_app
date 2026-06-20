@@ -164,7 +164,7 @@ canvas{display:block;width:100%;height:72px}
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-6px);background:var(--g9);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;z-index:999;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.set-group{border:1.5px solid var(--g3);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.set-group{border:1.5px solid var(--g3);border-radius:10px;margin:0 16px 8px;overflow:hidden}
 .set-group-title{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;font-size:14px;font-weight:700;color:var(--g7);cursor:pointer;list-style:none;background:#fff}
 .set-group-title::-webkit-details-marker{display:none}
 .set-group[open] .set-group-title{border-bottom:1px solid var(--g3)}
@@ -433,7 +433,7 @@ canvas{display:block;width:100%;height:72px}
   <div class="bbar">
     <button class="bmain" id="btn-add">Přidat suk</button>
     <button class="bmain" id="btn-new" style="background:#fff;color:var(--br);border:1.5px solid var(--g3)">Nová deska</button>
-    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="26" height="28" viewBox="0 0 26 28" fill="none" style="pointer-events:none"><!-- Kapsula mikrofonu --><rect x="8" y="1" width="10" height="15" rx="5" fill="currentColor"/><!-- Highlight oblouk vlevo nahoře --><path d="M10 3.5 Q9 6 9.5 9" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" fill="none"/><!-- Oblouk dole --><path d="M5 13 Q5 20 13 20 Q21 20 21 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><!-- Tyčka --><line x1="13" y1="20" x2="13" y2="24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><!-- Základna --><rect x="8" y="24" width="10" height="2.5" rx="1.25" fill="currentColor"/></svg></button>
+    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" style="pointer-events:none"><ellipse cx="13" cy="9" rx="4.5" ry="6" fill="currentColor"/><path d="M6 12c0 3.866 3.134 7 7 7s7-3.134 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><rect x="11.5" y="19" width="3" height="4" rx="1" fill="currentColor"/><ellipse cx="13" cy="23.5" rx="4" ry="1.5" fill="currentColor"/></svg></button>
   </div>
 </div>
 
@@ -507,6 +507,50 @@ canvas{display:block;width:100%;height:72px}
       <span>Aktivní pole</span>
       <button class="modal-close" id="modal-close">✕</button>
     </div>
+
+    <!-- Cloud sync sekce -->
+    <div class="setting-section" style="margin-top:4px">☁ Cloud synchronizace</div>
+    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1)">
+      <div style="display:flex;align-items:center;margin-bottom:12px">
+        <div style="flex:1">
+          <div style="font-size:15px;color:var(--g9)">Supabase sync</div>
+          <div style="font-size:12px;color:var(--g5)">Real-time záloha + více zařízení</div>
+        </div>
+        <button class="toggle" data-opt="cloud" id="cloud-toggle" data-act="togglecloud"></button>
+      </div>
+      <div id="cloud-panel" style="display:none">
+        <div style="margin-bottom:8px">
+          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Supabase Project URL</div>
+          <input id="cfg-supa-url" type="url" placeholder="https://xxx.supabase.co" style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Anon Key</div>
+          <input id="cfg-supa-key" type="text" placeholder="eyJ..." style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+        </div>
+        <button data-act="applysync" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Připojit k cloudu</button>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:9px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:13px;font-weight:600;cursor:pointer">⬆ Odeslat</button>
+          <button onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" style="flex:1;padding:9px;border:1.5px solid var(--blm);border-radius:8px;background:var(--bll);color:var(--bl);font-size:13px;font-weight:600;cursor:pointer">⬇ Načíst</button>
+        </div>
+        <div style="margin-top:10px;padding:10px;background:#F2F2F2;border-radius:8px;font-size:12px;color:var(--g5);line-height:1.6">
+          <strong style="color:var(--br)">Nastavení Supabase (jednou):</strong><br>
+          1. supabase.com → nový projekt<br>
+          2. SQL Editor → spusť SQL ze zálohy<br>
+          3. Project Settings → API → zkopíruj URL a anon key
+        </div>
+    </div>
+    <!-- Záloha dat — na konci -->
+    <div class="setting-section" style="margin-top:4px">Záloha dat</div>
+    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1);display:flex;gap:8px">
+      <button onclick="exportBackup()" style="flex:1;padding:10px;border:1.5px solid var(--brm);border-radius:10px;background:var(--brl);color:var(--br);font-size:13px;font-weight:700;cursor:pointer">⬇ Záloha JSON</button>
+      <label style="flex:1;padding:10px;border:1.5px solid var(--g3);border-radius:10px;background:#fff;color:var(--g7);font-size:13px;font-weight:700;cursor:pointer;text-align:center">
+        ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
+      </label>
+    </div>
+    <div style="height:1px">
+      </div>
+    </div>
+    <!-- === COLLAPSIBLE SETTINGS SECTIONS === -->
 
     <!-- ▶ FFT -->
     <details class="set-group">
@@ -646,51 +690,6 @@ canvas{display:block;width:100%;height:72px}
         </select>
       </div>
     </details>
-    <!-- Záloha dat — na konci -->
-    <div class="setting-section" style="margin-top:4px">Záloha dat</div>
-    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1);display:flex;gap:8px">
-      <button onclick="exportBackup()" style="flex:1;padding:10px;border:1.5px solid var(--brm);border-radius:10px;background:var(--brl);color:var(--br);font-size:13px;font-weight:700;cursor:pointer">⬇ Záloha JSON</button>
-      <label style="flex:1;padding:10px;border:1.5px solid var(--g3);border-radius:10px;background:#fff;color:var(--g7);font-size:13px;font-weight:700;cursor:pointer;text-align:center">
-        ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
-      </label>
-    </div>
-    <div style="height:1px">
-      </div>
-    </div>
-    <!-- === COLLAPSIBLE SETTINGS SECTIONS === -->
-
-        <!-- Cloud sync sekce -->
-    <div class="setting-section" style="margin-top:4px">☁ Cloud synchronizace</div>
-    <div style="padding:14px 20px;border-bottom:.5px solid var(--g1)">
-      <div style="display:flex;align-items:center;margin-bottom:12px">
-        <div style="flex:1">
-          <div style="font-size:15px;color:var(--g9)">Supabase sync</div>
-          <div style="font-size:12px;color:var(--g5)">Real-time záloha + více zařízení</div>
-        </div>
-        <button class="toggle" data-opt="cloud" id="cloud-toggle" data-act="togglecloud"></button>
-      </div>
-      <div id="cloud-panel" style="display:none">
-        <div style="margin-bottom:8px">
-          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Supabase Project URL</div>
-          <input id="cfg-supa-url" type="url" placeholder="https://xxx.supabase.co" style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        </div>
-        <div style="margin-bottom:12px">
-          <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Anon Key</div>
-          <input id="cfg-supa-key" type="text" placeholder="eyJ..." style="width:100%;font-size:14px;padding:9px 11px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-        </div>
-        <button data-act="applysync" style="width:100%;padding:11px;background:var(--br);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Připojit k cloudu</button>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:9px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:13px;font-weight:600;cursor:pointer">⬆ Odeslat</button>
-          <button onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" style="flex:1;padding:9px;border:1.5px solid var(--blm);border-radius:8px;background:var(--bll);color:var(--bl);font-size:13px;font-weight:600;cursor:pointer">⬇ Načíst</button>
-        </div>
-        <div style="margin-top:10px;padding:10px;background:#F2F2F2;border-radius:8px;font-size:12px;color:var(--g5);line-height:1.6">
-          <strong style="color:var(--br)">Nastavení Supabase (jednou):</strong><br>
-          1. supabase.com → nový projekt<br>
-          2. SQL Editor → spusť SQL ze zálohy<br>
-          3. Project Settings → API → zkopíruj URL a anon key
-        </div>
-    </div>
-
   </div>
 </div>
 
