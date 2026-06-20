@@ -52,6 +52,27 @@ function updateActiveFolderBar(){
 window.updateActiveFolderBar = updateActiveFolderBar;
 window.getFolderActivId = function(){ return activeFolderId; };
 window.wgGetFolders = function(){ return allFolders; };
+window.wgCreateFolder = function(name){
+  var newF={id:'f'+Date.now(), name:name};
+  allFolders.push(newF);
+  saveFolders();
+  activeFolderId=newF.id;
+  saveActiveFolder();
+  updateActiveLabel();
+  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,50);
+  if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,80);
+};
+window.wgDeleteFolder = function(fid){
+  allFolders=allFolders.filter(function(f){return f.id!==fid;});
+  saveFolders();
+  if(activeFolderId===fid){
+    activeFolderId=allFolders.length?allFolders[0].id:null;
+    saveActiveFolder();
+    updateActiveLabel();
+  }
+  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,50);
+  if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,80);
+};
 window.wgSetActiveFolder = function(fid){
   if(!fid){ activeFolderId=null; saveActiveFolder(); updateActiveLabel(); return; }
   var f=allFolders.find(function(x){return x.id===fid;});
