@@ -216,16 +216,21 @@ var FACE_FIELDS = {
 };
 function findClearFaceCommand(text){
   var t = text.toLowerCase();
-  if(!(t.indexOf('smaz')>=0||t.indexOf('vymaž')>=0||t.indexOf('vymaz')>=0||t.indexOf('smazat')>=0||t.indexOf('smaž')>=0)) return null;
-  for(var key in FACE_LETTER_MAP){
-    // hledáme "plochu A" nebo jen "A" v kontextu mazání
-    if(t.indexOf('plochu '+key)>=0 || t.indexOf('plochu'+key)>=0 || (t.indexOf(' '+key)>=0 && t.indexOf('ploch')>=0)){
-      return FACE_LETTER_MAP[key];
-    }
-  }
-  // fallback: hledáme písmeno kdekoliv v textu
-  for(var key2 in FACE_LETTER_MAP){
-    if(t.indexOf(key2)>=0 && key2.length>0) return FACE_LETTER_MAP[key2];
+  var isClear = t.indexOf('smaz')>=0 || t.indexOf('smaž')>=0 || t.indexOf('vymaz')>=0 || t.indexOf('vymaž')>=0;
+  if(!isClear) return null;
+  // Hledáme slova "plochu X" nebo "plocha X" nebo samostatné "áčko","bé","cé","dé"
+  var patterns = [
+    [/plochu?\s+a[h]?/,'a'], [/plochu?\s+[áa]$/,'a'],
+    [/plochu?\s+b[eéí]?/,'b'],
+    [/plochu?\s+c[eé]?/,'c'],
+    [/plochu?\s+d[eé]?/,'d'],
+    [/áčko/,'a'], [/béčko/,'b'], [/céčko/,'c'], [/déčko/,'d'],
+    [/á/,'a'], [/bé/,'b'], [/cé/,'c'], [/dé/,'d'],
+    [/ a$/,'a'], [/ b$/,'b'], [/ c$/,'c'], [/ d$/,'d'],
+    [/ a/,'a'], [/ b/,'b'], [/ c/,'c'], [/ d/,'d'],
+  ];
+  for(var i=0;i<patterns.length;i++){
+    if(patterns[i][0].test(t)) return patterns[i][1];
   }
   return null;
 }
