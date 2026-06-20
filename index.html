@@ -264,9 +264,15 @@ canvas{display:block;width:100%;height:72px}
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Složka</div>
         <div id="active-folder-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">Nevybrána</div>
       </div>
-      <div data-act="opensplistwood" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
-        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Dřevo</div>
-        <div id="active-wood-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">—</div>
+      <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Dřevo</div>
+        <select id="active-wood-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="(function(v){var p=loadAppPrefs();p.woodSpecies=v;saveAppPrefs(p);updateWoodProductLabels();})(this.value)">
+          <option value="">—</option>
+          <option value="SM">Smrk</option>
+          <option value="BK">Buk</option>
+          <option value="BO">Borovice</option>
+          <option value="MD">Modřín</option>
+        </select>
       </div>
       <div data-act="opensplistproduct" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Produkt</div>
@@ -279,7 +285,7 @@ canvas{display:block;width:100%;height:72px}
       <div class="frow" style="margin-bottom:8px;align-items:center">
         <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="moisture" style="flex:1;min-width:0"><label style="white-space:nowrap;font-size:10px">Vlhkost (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="moisture" style="flex:.8;min-width:0"><label style="white-space:nowrap">Vlhk. (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
@@ -287,11 +293,11 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 3: Vizuál -->
-      <div class="frow" style="margin-top:8px" id="row-extra">
-        <div class="opt-field" data-opt="vg" style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px">
-          <label style="font-size:13px;font-weight:700;color:var(--g5);white-space:nowrap;flex-shrink:0">Vizuál</label>
-          <div style="display:flex;gap:5px" id="vg-row">
+      <!-- Řádek 3: Vizuál + Oblina -->
+      <div class="frow" style="margin-top:8px;align-items:flex-end" id="row-extra">
+        <div class="opt-field" data-opt="vg" style="flex:1;min-width:0">
+          <label style="font-size:11px;font-weight:600;color:var(--g5);display:block;text-align:center;margin-bottom:5px">Vizuál</label>
+          <div style="display:flex;gap:5px;justify-content:center" id="vg-row">
             <button class="vg-btn" data-vg="1" data-act="setvg">1</button>
             <button class="vg-btn" data-vg="2" data-act="setvg">2</button>
             <button class="vg-btn" data-vg="3" data-act="setvg">3</button>
@@ -299,13 +305,16 @@ canvas{display:block;width:100%;height:72px}
           </div>
           <input type="hidden" id="p-vg" value="">
         </div>
+        <div class="fld opt-field" data-opt="oblina" style="flex:.8;min-width:55px">
+          <label>Oblina (%)</label>
+          <input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off">
+        </div>
       </div>
       <!-- Řádek 4: ČSN znaky 1 -->
       <div class="frow" style="margin-top:8px" id="row-csn">
         <div class="fld opt-field" data-opt="trhlina"><label>Trhlina (%)</label><input id="p-trhlina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="hniloba"><label>Hniloba (%)</label><input id="p-hniloba" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="reakcni"><label>Reakční dř. (%)</label><input id="p-reakcni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="oblina"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 5: Odklon + Letokruhy + Zakřivení -->
       <div class="frow" style="margin-top:8px" id="row-csn2">
@@ -624,10 +633,10 @@ canvas{display:block;width:100%;height:72px}
         <div class="setting-lbl">Druh dřeva<small>Použije se jako výchozí pro nové desky</small></div>
         <select id="set-wood-species" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="">—</option>
-          <option value="SM">SM — Smrk</option>
-          <option value="BK">BK — Buk</option>
-          <option value="BO">BO — Borovice</option>
-          <option value="MD">MD — Modřín</option>
+          <option value="SM">Smrk</option>
+          <option value="BK">Buk</option>
+          <option value="BO">Borovice</option>
+          <option value="MD">Modřín</option>
         </select>
       </div>
       <div class="setting-row">
@@ -1079,7 +1088,7 @@ function doRedraw(){
   document.getElementById('v-kar').textContent=kar.toFixed(1)+'%';
   document.getElementById('v-dab').textContent=dv.toFixed(2);
   document.getElementById('v-dabs').textContent=(dv*2*b).toFixed(1)+'/(2×'+b+')';
-  document.getElementById('v-cnt').textContent=String(knots.length+(cp?1:0));
+  var vcnt=document.getElementById('v-cnt'); if(vcnt) vcnt.textContent=String(knots.length+(cp?1:0));
   document.getElementById('v-grade').innerHTML=gr==='—'?'<span class="gp gna">—</span>':'<span class="gp '+gcls(gr)+'">'+gr+'</span>';
   // hustota
   var den=calcDensity(gnMass('p-mass'),gnLength('p-length'),b,d);
@@ -1267,10 +1276,10 @@ function saveAppPrefs(prefs){
 
 var WOOD_OPTIONS = [
   {value:'', label:'—'},
-  {value:'SM', label:'SM — Smrk'},
-  {value:'BK', label:'BK — Buk'},
-  {value:'BO', label:'BO — Borovice'},
-  {value:'MD', label:'MD — Modřín'}
+  {value:'SM', label:'Smrk'},
+  {value:'BK', label:'Buk'},
+  {value:'BO', label:'Borovice'},
+  {value:'MD', label:'Modřín'}
 ];
 var PRODUCT_OPTIONS = [
   {value:'auto', label:'Automaticky (dle rozměrů)'},
@@ -1286,7 +1295,8 @@ function updateWoodProductLabels(){
   var prodLbl = document.getElementById('active-product-label');
   if(woodLbl){
     var w = WOOD_OPTIONS.find(function(o){return o.value===prefs.woodSpecies;});
-    woodLbl.textContent = (w && w.value) ? w.value : '—';
+    woodLbl.textContent = (w && w.value) ? w.label : '—';
+    var ws2=document.getElementById('active-wood-select'); if(ws2) ws2.value=prefs.woodSpecies||'';
   }
   if(prodLbl){
     if(prefs.productType && prefs.productType!=='auto'){
