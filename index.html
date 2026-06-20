@@ -279,8 +279,8 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
-        <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads)" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
-        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass" style="display:flex;align-items:center;gap:3px;white-space:nowrap">Hmotnost <select id="set-mass-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="g">g</option><option value="kg">kg</option></select></label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
+        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass" style="display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap">Hmotnost <select id="set-mass-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="g">g</option><option value="kg">kg</option></select></label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
@@ -592,32 +592,14 @@ canvas{display:block;width:100%;height:72px}
       </div>
     </details>
 
-    <!-- ▶ Parametry desky -->
-    <details class="set-group">
-      <summary class="set-group-title">Parametry desky</summary>
 
-      <div class="setting-row">
-        <div class="setting-lbl">Hmotnost<small>nutná pro hustotu</small></div>
-        <button class="toggle on" data-opt="mass"></button>
-      </div>
-
-
-
-    </details>
 
     <!-- ▶ Znaky třídění ČSN 73 2824-1 -->
-    <details class="set-group">
-      <summary class="set-group-title">Znaky třídění ČSN 73 2824-1</summary>
-
-
-
-
-
-
-
-
-
-    </details>
+        <!-- Znaky ČSN — jen zapnout/vypnout celý blok -->
+    <div class="set-group" style="display:flex;align-items:center;padding:0">
+      <div class="set-group-title" style="flex:1;cursor:default">Znaky třídění ČSN 73 2824-1</div>
+      <button class="toggle on" id="toggle-csn-all" style="margin-right:14px" onclick="(function(){var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz'];var anyOn=keys.some(function(k){return opts[k];});keys.forEach(function(k){opts[k]=!anyOn;});saveOpts();applyOpts();document.getElementById('toggle-csn-all').classList.toggle('on',!anyOn);})()"></button>
+    </div>
 
 
 
@@ -694,7 +676,8 @@ function resetVG(){
 
 var detailBi=-1; // index desky v detail screenu
 var detailOpenedViaVoiceSearch=false; // true = po uložení/nové desce se vrátí na prázdnou hlavní stránku
-var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true,trhlina:false,hniloba:false,reakcni:false,oblina:false,odklon:false,letokruh:false,zakriveni:false,dren:false,hmyz:false};
+var opts={lpos:true,length:true,mass:true,moisture:true,vg:true,screw:true,trhlina:true,hniloba:true,reakcni:true,oblina:true,odklon:true,letokruh:true,zakriveni:true,dren:true,hmyz:true};
+try{ var _saved=JSON.parse(localStorage.getItem('wg26_opts')||'null'); if(_saved) Object.assign(opts,_saved); }catch(e){}
 
 function gn(id){var raw=document.getElementById(id).value;var v=parseFloat(String(raw).replace(',','.'));return isNaN(v)?null:v;}
 
@@ -1202,6 +1185,9 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 }
 
 // ── settings UI ────────────────────────────────────────────
+function saveOpts(){
+  try{ localStorage.setItem('wg26_opts', JSON.stringify(opts)); }catch(e){}
+}
 function applyOpts(){
   // lpos: show/hide podélné ic buňky (X3/X4) a Podélné header
   ['a','b','c','d'].forEach(function(f){
@@ -1930,12 +1916,12 @@ function updateBlinkStates(){
     else cidEl.classList.remove('blink-empty');
   }
   var folderEl=document.getElementById('active-folder-label');
-  var prefs=loadAppPrefs();
   if(folderEl){
-    var hasFolder=prefs.activeFolder && prefs.activeFolder!=='';
-    if(!hasFolder) folderEl.parentElement.classList.add('blink-empty');
+    // Použít activeFolderId přímo z folders.js (ne prefs)
+    var fid = (typeof window.getFolderActivId==='function') ? window.getFolderActivId() : null;
+    var hasFolder = fid && fid!=='';
+    if(!hasFolder){ folderEl.parentElement.classList.add('blink-empty'); folderEl.textContent='Nevybrána'; }
     else folderEl.parentElement.classList.remove('blink-empty');
-    if(!hasFolder) folderEl.textContent='Nevybrána';
   }
 }
 document.getElementById('btn-add').addEventListener('click',function(){editState?saveEdit():addKnot();});
@@ -2047,7 +2033,7 @@ document.getElementById('cb-hmyz').addEventListener('click',function(){
 document.querySelectorAll('.toggle').forEach(function(btn){
   btn.addEventListener('click',function(){
     var key=this.getAttribute('data-opt');opts[key]=!opts[key];
-    this.classList.toggle('on',opts[key]);applyOpts();save();
+    this.classList.toggle('on',opts[key]);saveOpts();applyOpts();save();
   });
 });
 
@@ -2067,6 +2053,11 @@ if(window.ResizeObserver){
 load();
 document.querySelectorAll('.toggle').forEach(function(btn){btn.classList.toggle('on',!!opts[btn.getAttribute('data-opt')]);});
 applyOpts();renderKlist();
+// Sync CSN toggle button state
+(function(){
+  var btn=document.getElementById('toggle-csn-all');
+  if(btn){ var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz']; btn.classList.toggle('on',keys.some(function(k){return opts[k];})); }
+})();
 updateWoodProductLabels();
 updateLengthMassLabels();
 setTimeout(schedDraw,200);
