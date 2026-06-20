@@ -63,6 +63,7 @@ window.wgCreateAndActivateFolder = function(name){
   var f = createFolder(name);
   if(!f) return null;
   activeFolderId = f.id;
+  if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,10);
   saveFolders();
   if(typeof updateActiveFolderBar === 'function') updateActiveFolderBar();
   if(typeof renderFolderChips === 'function') renderFolderChips();
