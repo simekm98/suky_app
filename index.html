@@ -523,38 +523,11 @@ canvas{display:block;width:100%;height:72px}
       <button class="modal-close" id="modal-close">✕</button>
     </div>
 
-    <!-- Záloha & Cloud — jeden řádek bez popisků -->
-    <div style="padding:8px 16px 10px;display:flex;gap:6px;align-items:center">
-      <button onclick="exportBackup()" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">⬇ Záloha</button>
-      <label style="flex:1;padding:8px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
-        ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
-      </label>
-      <button id="cloud-toggle" data-act="togglecloud" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">☁ Cloud</button>
-    </div>
-    <!-- cloud panel skrytý — zobrazí se po kliknutí na Cloud -->
-    <div id="cloud-panel" style="display:none;padding:0 16px 12px">
-      <div style="margin-bottom:8px">
-        <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Supabase URL</div>
-        <input id="cfg-supa-url" type="url" placeholder="https://xxx.supabase.co" style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-      </div>
-      <div style="margin-bottom:10px">
-        <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Anon Key</div>
-        <input id="cfg-supa-key" type="text" placeholder="eyJ..." style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-      </div>
-      <button data-act="applysync" style="width:100%;padding:10px;background:var(--br);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Připojit</button>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:8px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:600;cursor:pointer">⬆ Odeslat</button>
-        <button onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" style="flex:1;padding:8px;border:1.5px solid var(--blm);border-radius:8px;background:var(--bll);color:var(--bl);font-size:12px;font-weight:600;cursor:pointer">⬇ Načíst</button>
-      </div>
-    </div>
-    </div>
-    <!-- === COLLAPSIBLE SETTINGS SECTIONS === -->
-
     <!-- ▶ FFT -->
     <details class="set-group">
       <summary class="set-group-title">FFT</summary>
       <div class="setting-row">
-        <div class="setting-lbl">Typ kmitání<small>Předvolený typ při otevření FFT</small></div>
+        <div class="setting-lbl">Typ kmitání</div>
         <select id="set-fft-default-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="longitudinal" selected>Podélné</option>
           <option value="bending">Ohybové</option>
@@ -562,15 +535,15 @@ canvas{display:block;width:100%;height:72px}
         </select>
       </div>
       <div class="setting-row">
-        <div class="setting-lbl">Délka podélné (s)<small>Výchozí délka záznamu</small></div>
+        <div class="setting-lbl">Délka podélné (s)</div>
         <input type="text" id="set-fft-dur-long" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="3">
       </div>
       <div class="setting-row">
-        <div class="setting-lbl">Délka ohybové (s)<small>Výchozí délka záznamu</small></div>
+        <div class="setting-lbl">Délka ohybové (s)</div>
         <input type="text" id="set-fft-dur-bend" inputmode="decimal" style="width:60px;text-align:center;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px" value="5">
       </div>
       <div class="setting-row">
-        <div class="setting-lbl">Počet módů podélné<small>Kolik vlastních frekvencí detekovat</small></div>
+        <div class="setting-lbl">Počet módů podélné</div>
         <select id="set-fft-nmodes-long" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="1" selected>1</option>
           <option value="2">2</option>
@@ -578,7 +551,7 @@ canvas{display:block;width:100%;height:72px}
         </select>
       </div>
       <div class="setting-row">
-        <div class="setting-lbl">Počet módů ohyb<small>Kolik vlastních frekvencí detekovat</small></div>
+        <div class="setting-lbl">Počet módů ohyb</div>
         <select id="set-fft-nmodes-bend" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="1" selected>1</option>
           <option value="2">2</option>
@@ -591,21 +564,10 @@ canvas{display:block;width:100%;height:72px}
     <details class="set-group">
       <summary class="set-group-title">Rozměry suků</summary>
       <div class="setting-row">
-        <div class="setting-lbl">Délkové pozice (A3/A4, B3/B4...)</div>
+        <div class="setting-lbl">Délkové pozice (A3/A4...)</div>
         <button class="toggle on" data-opt="lpos"></button>
       </div>
     </details>
-
-
-
-    <!-- ▶ Znaky třídění ČSN 73 2824-1 -->
-        <!-- Znaky ČSN — jen zapnout/vypnout celý blok -->
-    <div class="set-group" style="display:flex;align-items:center;padding:0">
-      <div class="set-group-title" style="flex:1;cursor:default">Znaky třídění ČSN 73 2824-1</div>
-      <button class="toggle on" id="toggle-csn-all" style="margin-right:14px" onclick="toggleAllCsn()"></button>
-    </div>
-
-
 
     <!-- ▶ Jednotky -->
     <details class="set-group">
@@ -645,7 +607,7 @@ canvas{display:block;width:100%;height:72px}
     <details class="set-group">
       <summary class="set-group-title">Dřevo a produkt</summary>
       <div class="setting-row">
-        <div class="setting-lbl">Druh dřeva<small>Použije se jako výchozí pro nové desky</small></div>
+        <div class="setting-lbl">Druh dřeva</div>
         <select id="set-wood-species" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="">—</option>
           <option value="SM">Smrk</option>
@@ -655,19 +617,43 @@ canvas{display:block;width:100%;height:72px}
         </select>
       </div>
       <div class="setting-row">
-        <div class="setting-lbl">Druh produktu<small>Použije se jako výchozí pro nové desky</small></div>
+        <div class="setting-lbl">Druh produktu</div>
         <select id="set-product-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-          <option value="auto" selected>Automaticky (dle rozměrů)</option>
-          <option value="rezivo-plocha">Řezivo — na plochu</option>
-          <option value="rezivo-hrana">Řezivo — na hranu</option>
+          <option value="auto" selected>Automaticky</option>
+          <option value="rezivo-plocha">Řezivo P</option>
+          <option value="rezivo-hrana">Řezivo H</option>
           <option value="tram">Hranol</option>
           <option value="lat">Lať</option>
         </select>
       </div>
     </details>
+
+    <!-- Záloha & Cloud -->
+    <div style="padding:10px 16px 12px;display:flex;gap:6px;align-items:center">
+      <button onclick="exportBackup()" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">⬇ Záloha</button>
+      <label style="flex:1;padding:8px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
+        ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
+      </label>
+      <button id="cloud-toggle" data-act="togglecloud" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">☁ Cloud</button>
+    </div>
+    <div id="cloud-panel" style="display:none;padding:0 16px 12px">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Supabase URL</div>
+        <input id="cfg-supa-url" type="url" placeholder="https://xxx.supabase.co" style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:4px">Anon Key</div>
+        <input id="cfg-supa-key" type="text" placeholder="eyJ..." style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
+      </div>
+      <button data-act="applysync" style="width:100%;padding:10px;background:var(--br);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Připojit</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="window.wgPushToCloud&&window.wgPushToCloud()" style="flex:1;padding:8px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:600;cursor:pointer">⬆ Odeslat</button>
+        <button onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" style="flex:1;padding:8px;border:1.5px solid var(--blm);border-radius:8px;background:var(--bll);color:var(--bl);font-size:12px;font-weight:600;cursor:pointer">⬇ Načíst</button>
+      </div>
+    </div>
+
   </div>
 </div>
-
 
 <!-- Hlasové ovládání -->
 <div id="voice-status"></div>
@@ -1302,6 +1288,8 @@ function openSettings(){
     var mu=document.getElementById('set-mass-unit'); if(mu) mu.value=prefs.massUnit||'g';
     var wu2=document.getElementById('set-width-unit'); if(wu2) wu2.value=prefs.widthUnit||'mm';
     var hu2=document.getElementById('set-height-unit'); if(hu2) hu2.value=prefs.heightUnit||'mm';
+    var wu2=document.getElementById('set-width-unit'); if(wu2) wu2.value=prefs.widthUnit||'mm';
+    var hu2=document.getElementById('set-height-unit'); if(hu2) hu2.value=prefs.heightUnit||'mm';
   }catch(e){}
 }
 function closeSettings(){document.getElementById('modal-settings').classList.remove('open');}
@@ -1332,16 +1320,8 @@ var PRODUCT_OPTIONS = [
 function showFolderCreate(){
   var name=prompt('Název nové složky:','');
   if(!name||!name.trim()) return;
-  if(window.wgCreateFolder){
-    window.wgCreateFolder(name.trim());
-    // Okamžitě aktualizovat select (bez čekání na setTimeout)
-    setTimeout(function(){
-      updateFolderSelect();
-      var sel=document.getElementById('active-folder-select');
-      if(sel && window.getFolderActivId) sel.value=window.getFolderActivId()||'';
-      setTimeout(updateBlinkStates,50);
-    },20);
-  } else if(window.openFolderModal) window.openFolderModal();
+  if(window.wgCreateFolder) window.wgCreateFolder(name.trim());
+  else if(window.openFolderModal) window.openFolderModal();
 }
 function showFolderDelete(){
   var sel=document.getElementById('active-folder-select');
@@ -1353,20 +1333,23 @@ function showFolderDelete(){
 }
 function updateFolderSelect(){
   var sel=document.getElementById('active-folder-select');
-  if(!sel) return;
-  var currentVal=sel.value;
-  // Rebuild options
+  var lbl=document.getElementById('active-folder-label');
   var folders=window.wgGetFolders?window.wgGetFolders():[];
-  sel.innerHTML='<option value="">Nevybrána</option>';
-  folders.forEach(function(f){
-    var opt=document.createElement('option');
-    opt.value=f.id; opt.textContent=f.name;
-    sel.appendChild(opt);
-  });
-  // Sync with active folder
   var fid=window.getFolderActivId?window.getFolderActivId():null;
-  sel.value=fid||'';
-  // Blink
+  if(sel){
+    sel.innerHTML='<option value="">Nevybrána</option>';
+    folders.forEach(function(f){
+      var opt=document.createElement('option');
+      opt.value=f.id; opt.textContent=f.name;
+      sel.appendChild(opt);
+    });
+    sel.value=fid||'';
+  }
+  if(lbl){
+    var found=folders.find(function(f){return f.id===fid;});
+    lbl.textContent=found?found.name:'Nevybrána';
+    lbl.style.color=found?'var(--br)':'var(--g5)';
+  }
   var wrap=document.getElementById('folder-bar-wrap');
   if(wrap) wrap.classList.toggle('blink-empty',!fid);
 }
@@ -2434,17 +2417,10 @@ window.wgNewBoard = function(){
 }; // hlasové volání — vždy skipConfirm
 
 // ── Scroll na pole při hlasovém zadávání ────────────────────────────────────
-var TOP_VOICE_FIELDS=['cid','p-mass','p-moist','p-length','clen','cwid'];
 window.wgScrollToField = function(fieldId){
   var el = document.getElementById(fieldId);
   if(!el) return;
-  if(TOP_VOICE_FIELDS.indexOf(fieldId)>=0){
-    var card=el.closest('.card');
-    if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
-    else el.scrollIntoView({behavior:'smooth',block:'center'});
-  } else {
-    el.scrollIntoView({behavior:'smooth', block:'center'});
-  }
+  el.scrollIntoView({behavior:'smooth', block:'center'});
 };
 window.wgAddKnot = function(){ addKnot(); };
 
