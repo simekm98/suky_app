@@ -65,7 +65,7 @@ var WORD_FIELD_MAP = {
   'délka':'p-length','délku':'p-length','delka':'p-length','delku':'p-length',
   'hmotnost':'p-mass','hmotnosti':'p-mass','hmotnost je':'p-mass',
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
-  'název':'cid','nazev':'cid','id':'cid','ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid',
+  'id':'cid','ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
   'vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
@@ -202,13 +202,6 @@ function findPlochaRozmer(text){
   return plochaLetter + rozmerKey; // např. "as1", "al2"
 }
 
-// ── Povel smazat název/ID: "smaž název", "vymaž název", "smaž ID" ──────────
-function findClearNameCommand(text){
-  var t=text.toLowerCase();
-  var isClear=t.indexOf('smaz')>=0||t.indexOf('smaž')>=0||t.indexOf('vymaz')>=0||t.indexOf('vymaž')>=0;
-  if(!isClear) return false;
-  return t.indexOf('název')>=0||t.indexOf('jméno')>=0||t.indexOf('id')>=0;
-}
 // ── Povel smazat plochu: "smazat plochu A", "smaž plochu Dé", "vymazat B" ──
 var FACE_LETTER_MAP = {
   'a':'a','á':'a','ah':'a',
@@ -1100,16 +1093,6 @@ function processCommand(transcript, gen){
 
   // "FFT podél" / "FFT ohyb" — otevře FFT screen, nastaví typ, spustí test
   // Pokud typ nezazněl, jen otevře obrazovku a NADÁLE poslouchá na "podélné"/"ohybové"
-  // Smazat název/ID
-  if(findClearNameCommand(transcript)){
-    var cidEl=document.getElementById('cid');
-    if(cidEl){ cidEl.value=''; cidEl.dispatchEvent(new Event('input',{bubbles:true})); }
-    dlog('✓ název smazán','ok');
-    showConfirmOverlay('Název smazán','✓');
-    beepOk();
-    if(sessionActive) continueOrRefresh(cycleGeneration);
-    return;
-  }
   // Smazat plochu: "smazat plochu A"
   var clearFace = findClearFaceCommand(transcript);
   if(clearFace){
@@ -1272,7 +1255,7 @@ function processCommand(transcript, gen){
     executeAction(actionCmd.action);
     showConfirmOverlay(actionCmd.label, '✓ provedeno');
     beepOk();
-    stopVoiceSession();
+    // Mikrofon se nevypíná — session pokračuje (executeAction to řeší)
     return;
   }
 
