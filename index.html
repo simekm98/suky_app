@@ -1343,6 +1343,8 @@ function updateFolderSelect(){
       sel.appendChild(opt);
     });
     sel.value=fid||'';
+    // Force visual update na iOS
+    if(sel.value !== (fid||'')){sel.value=fid||'';}
   }
   if(lbl){
     var found=folders.find(function(f){return f.id===fid;});
