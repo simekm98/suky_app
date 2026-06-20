@@ -86,7 +86,7 @@ input,select,textarea{touch-action:manipulation}
 .crow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .cvc{background:#fff;border-radius:var(--rads);padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)}
 .cvl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:4px}
-canvas{display:block;width:100%;height:72px}
+canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px}
 
 /* edit banner */
 .ebanner{display:none;background:var(--bll);border:1.5px solid #B5D4F4;border-radius:var(--rads);padding:10px 14px;margin-bottom:10px;font-size:13px;color:#0C447C;align-items:center;gap:8px}
@@ -369,21 +369,17 @@ canvas{display:block;width:100%;height:72px}
     <!-- Canvas -->
     <div class="crow">
       <div class="cvc" id="wrap1">
-        <div class="cvl" style="text-align:center;margin-bottom:2px">Suky — <span id="v-cnt">0</span></div>
-        <!-- ABCD štítky kolem canvasu průřezu: A=nahoře, B=vlevo, C=dole, D=vpravo -->
+        <div class="cvl" style="text-align:center;margin-bottom:4px">Suky — <span id="v-cnt">0</span></div>
+        <!-- A nahoře -->
+        <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-bottom:1px">A</div>
+        <!-- B vlevo, canvas, D vpravo -->
         <div style="display:flex;align-items:center;gap:2px">
-          <!-- B vlevo -->
-          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-rl;transform:rotate(180deg);flex-shrink:0">B</div>
-          <div style="flex:1;position:relative">
-            <!-- A nahoře -->
-            <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-bottom:1px">A</div>
-            <canvas id="cv1"></canvas>
-            <!-- C dole -->
-            <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-top:1px">C</div>
-          </div>
-          <!-- D vpravo -->
-          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-rl;flex-shrink:0">D</div>
+          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-rl;transform:rotate(180deg);flex-shrink:0;line-height:1">B</div>
+          <canvas id="cv1" style="flex:1;min-width:0"></canvas>
+          <div style="font-size:9px;font-weight:800;color:var(--g5);writing-mode:vertical-rl;flex-shrink:0;line-height:1">D</div>
         </div>
+        <!-- C dole -->
+        <div style="text-align:center;font-size:9px;font-weight:800;color:var(--g5);margin-top:1px">C</div>
       </div>
       <div class="cvc" id="wrap2">
         <div class="cvl" style="text-align:center;margin-bottom:2px">Sjednocení</div>
@@ -454,7 +450,8 @@ canvas{display:block;width:100%;height:72px}
   <div class="topbar">
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
-    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="font-size:12px;font-weight:700">Vybrat</button>
+    <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="font-size:12px;font-weight:700;padding-left:16px;padding-right:16px">Vybrat</button>
+    <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="font-size:12px;font-weight:700">+ Složka</button>
     <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
@@ -1107,7 +1104,7 @@ function doRedraw(){
 function paintCv(cvId,wrapId,b,d,saved,cp,isUnion){
   var cv=document.getElementById(cvId),wrap=document.getElementById(wrapId);
   if(!cv||!wrap)return;
-  var rect=wrap.getBoundingClientRect(),W=rect.width-16;
+  var W=cv.offsetWidth||cv.parentElement.offsetWidth||(wrap.getBoundingClientRect().width-24);
   if(W<10){setTimeout(schedDraw,100);return;}
   var dpr=window.devicePixelRatio||1;
   var cw=Math.round(W*dpr),ch=Math.round(CV_H*dpr);
@@ -2623,7 +2620,7 @@ document.addEventListener('click',function(e){
   <div class="topbar">
     <button class="tbtn" id="btn-fft-back">‹</button>
     <h1>FFT analýza</h1>
-    <button class="tbtn light" id="btn-fft-save" style="font-size:13px;font-weight:700">Uložit</button>
+    <!-- auto-saved -->
   </div>
   <div class="sbody" id="fft-body">
 
@@ -3194,6 +3191,10 @@ function runFFT(buffer, type){
   renderModesFor(type);
   showResultPanel(type);
   setStatus('✅ '+timePeaks.length+' úderů ('+(type==='bending'?'ohyb':'podél')+') · df='+dfVal.toFixed(2)+' Hz');
+  // Auto-uložit frekvenci ihned — bez čekání na potvrzení
+  setTimeout(function(){
+    if(typeof saveFftToBoard==='function') saveFftToBoard();
+  }, 600);
 
   // Pokud kombinovaný režim a právě skončila podélná fáze — automaticky pokračuj ohybem
   if(comboMode && comboStage==='longitudinal'){
@@ -3806,12 +3807,26 @@ function initFFT(){
 window.wgFFTInit=initFFT;
 window.setFftType=setFftType;
 window.wgFFTSave=saveFftToBoard;
+window.wgFFTSetManualFreq=function(freqL, freqB){
+  // Zapsat manuální frekvenci do detectedModesByType a uložit
+  if(freqL){
+    detectedModesByType['longitudinal']=[{hz:freqL,amp:1,bw:0,damping:0,userEdited:true,label:'Mód 1 (ručně)'}];
+    selectedModeIdxByType['longitudinal']=0;
+  }
+  if(freqB){
+    detectedModesByType['bending']=[{hz:freqB,amp:1,bw:0,damping:0,userEdited:true,label:'Mód 1 (ručně)'}];
+    selectedModeIdxByType['bending']=0;
+  }
+  saveFftToBoard();
+};
 window.setFftType=setFftType;
 window.beginFftSequence=beginFftSequence;
 // ── Export pro hlasové ovládání FFT testů ──
 window.wgFFTOpen=function(){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
-  document.getElementById('s-fft').classList.add('active');
+  var fftScr=document.getElementById('s-fft');
+  fftScr.classList.add('active');
+  setTimeout(function(){ fftScr.scrollTop=0; window.scrollTo(0,0); },50);
   updateEstimateBox();
 };
 window.wgFFTStartRecording=function(dur){ beginFftSequence(); };
