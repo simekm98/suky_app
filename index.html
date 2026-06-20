@@ -277,11 +277,11 @@ canvas{display:block;width:100%;height:72px}
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
         <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
-        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass" style="display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap">Hmotnost <select id="set-mass-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="g">g</option><option value="kg">kg</option></select></label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
-        <div class="fld opt-field" data-opt="length"><label id="lbl-p-length" style="display:flex;align-items:center;gap:3px;white-space:nowrap">Délka <select id="set-length-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
@@ -312,21 +312,26 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label>Zakřivení</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 6: Ano/Ne v jednom řádku s cb-box -->
-      <div class="frow" style="margin-top:8px;align-items:center" id="row-csn3">
-        <div class="opt-field" data-opt="screw" style="display:flex;align-items:center;gap:6px;flex:1;border:1.5px solid var(--g3);border-radius:10px;padding:8px 10px">
-          <div style="font-size:10px;font-weight:700;color:var(--g5);white-space:nowrap;flex-shrink:0">Ano / Ne</div>
-          <div class="cb-wrap" style="flex:1;min-width:40px">
-            <label>Kov</label>
-            <button class="cb-box" id="cb-screw">—</button>
+      <!-- Řádek 6: Ano/Ne v jednom řádku -->
+      <div class="frow" style="margin-top:8px;align-items:stretch" id="row-csn3">
+        <div class="opt-field" data-opt="screw" style="display:flex;align-items:stretch;flex:1;border:1.5px solid var(--g3);border-radius:10px;overflow:hidden">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:6px 8px;border-right:1px solid var(--g3);background:#F8F7F5;flex-shrink:0">
+            <label style="font-size:11px;font-weight:600;color:var(--g5);text-align:center;display:block">Ano / Ne</label>
+            <div style="height:36px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--g5)">—</div>
           </div>
-          <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:40px">
-            <label>Dřeň</label>
-            <button class="cb-box" id="cb-dren">—</button>
-          </div>
-          <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:40px">
-            <label>Hmyz</label>
-            <button class="cb-box" id="cb-hmyz">—</button>
+          <div style="display:flex;flex:1">
+            <div class="cb-wrap" style="flex:1;min-width:40px;padding:6px 4px;border-right:1px solid var(--g3)">
+              <label>Kov</label>
+              <button class="cb-box" id="cb-screw">—</button>
+            </div>
+            <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:40px;padding:6px 4px;border-right:1px solid var(--g3)">
+              <label>Dřeň</label>
+              <button class="cb-box" id="cb-dren">—</button>
+            </div>
+            <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:40px;padding:6px 4px">
+              <label>Hmyz</label>
+              <button class="cb-box" id="cb-hmyz">—</button>
+            </div>
           </div>
         </div>
       </div>
@@ -591,10 +596,44 @@ canvas{display:block;width:100%;height:72px}
         <!-- Znaky ČSN — jen zapnout/vypnout celý blok -->
     <div class="set-group" style="display:flex;align-items:center;padding:0">
       <div class="set-group-title" style="flex:1;cursor:default">Znaky třídění ČSN 73 2824-1</div>
-      <button class="toggle on" id="toggle-csn-all" style="margin-right:14px" onclick="(function(){var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz'];var anyOn=keys.some(function(k){return opts[k];});keys.forEach(function(k){opts[k]=!anyOn;});saveOpts();applyOpts();document.getElementById('toggle-csn-all').classList.toggle('on',!anyOn);})()"></button>
+      <button class="toggle on" id="toggle-csn-all" style="margin-right:14px" onclick="toggleAllCsn()"></button>
     </div>
 
 
+
+    <!-- ▶ Jednotky -->
+    <details class="set-group">
+      <summary class="set-group-title">Jednotky</summary>
+      <div class="setting-row">
+        <div class="setting-lbl">Hmotnost</div>
+        <select id="set-mass-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Délka</div>
+        <select id="set-length-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+          <option value="mm">mm</option>
+          <option value="cm">cm</option>
+          <option value="m">m</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Šířka</div>
+        <select id="set-width-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+          <option value="mm">mm</option>
+          <option value="cm">cm</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-lbl">Výška</div>
+        <select id="set-height-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+          <option value="mm">mm</option>
+          <option value="cm">cm</option>
+        </select>
+      </div>
+    </details>
 
     <!-- ▶ Dřevo a produkt -->
     <details class="set-group">
@@ -678,7 +717,7 @@ function gn(id){var raw=document.getElementById(id).value;var v=parseFloat(Strin
 // interně appka VŽDY počítá v mm a g (konzistentní se všemi vzorci).
 function getUnitPrefs(){
   var p = loadAppPrefs();
-  return {lengthUnit: p.lengthUnit || 'mm', massUnit: p.massUnit || 'g'};
+  return {lengthUnit: p.lengthUnit || 'mm', massUnit: p.massUnit || 'g', widthUnit: p.widthUnit || 'mm', heightUnit: p.heightUnit || 'mm'};
 }
 function gnLength(id){
   var v = gn(id);
@@ -705,6 +744,19 @@ function displayMass(g){
 }
 function lengthUnitLabel(){ return getUnitPrefs().lengthUnit==='cm' ? 'cm' : 'mm'; }
 function massUnitLabel(){ return getUnitPrefs().massUnit==='kg' ? 'kg' : 'g'; }
+function applyUnitPrefs(){
+  var p=loadAppPrefs();
+  var lu=document.getElementById('set-length-unit');
+  var mu=document.getElementById('set-mass-unit');
+  var wu=document.getElementById('set-width-unit');
+  var hu=document.getElementById('set-height-unit');
+  if(lu) p.lengthUnit=lu.value;
+  if(mu) p.massUnit=mu.value;
+  if(wu) p.widthUnit=wu.value;
+  if(hu) p.heightUnit=hu.value;
+  saveAppPrefs(p);
+  updateLengthMassLabels();
+}
 function updateLengthMassLabels(){
   var ll=document.querySelector('label[for="p-length"]'); // fallback níže pokud bez for
   var lEl=document.getElementById('lbl-p-length');
@@ -1178,6 +1230,14 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 }
 
 // ── settings UI ────────────────────────────────────────────
+function toggleAllCsn(){
+  var keys=['trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni','dren','hmyz'];
+  var anyOn=keys.some(function(k){return opts[k];});
+  keys.forEach(function(k){opts[k]=!anyOn;});
+  saveOpts();applyOpts();
+  var btn=document.getElementById('toggle-csn-all');
+  if(btn) btn.classList.toggle('on',!anyOn);
+}
 function saveOpts(){
   try{ localStorage.setItem('wg26_opts', JSON.stringify(opts)); }catch(e){}
 }
@@ -1210,6 +1270,8 @@ function openSettings(){
     var pt=document.getElementById('set-product-type'); if(pt && prefs.productType) pt.value=prefs.productType;
     var lu=document.getElementById('set-length-unit'); if(lu) lu.value=prefs.lengthUnit||'mm';
     var mu=document.getElementById('set-mass-unit'); if(mu) mu.value=prefs.massUnit||'g';
+    var wu2=document.getElementById('set-width-unit'); if(wu2) wu2.value=prefs.widthUnit||'mm';
+    var hu2=document.getElementById('set-height-unit'); if(hu2) hu2.value=prefs.heightUnit||'mm';
   }catch(e){}
 }
 function closeSettings(){document.getElementById('modal-settings').classList.remove('open');}
@@ -1281,6 +1343,7 @@ function openPicker(title, options, currentValue, onSelect){
     if(!row) return;
     onSelect(row.getAttribute('data-picker-val'));
     document.getElementById('modal-picker').classList.remove('open');
+  setTimeout(updateBlinkStates,80);
   };
   document.getElementById('modal-picker').classList.add('open');
 }
