@@ -201,6 +201,34 @@ function findPlochaRozmer(text){
   return plochaLetter + rozmerKey; // např. "as1", "al2"
 }
 
+// ── Povel smazat plochu: "smazat plochu A", "smaž plochu Dé", "vymazat B" ──
+var FACE_LETTER_MAP = {
+  'a':'a','á':'a','ah':'a',
+  'bé':'b','be':'b','bí':'b','b':'b',
+  'cé':'c','ce':'c','c':'c',
+  'dé':'d','de':'d','d':'d'
+};
+var FACE_FIELDS = {
+  'a': ['as1','as2','al1','al2'],
+  'b': ['bs1','bs2','bl1','bl2'],
+  'c': ['cs1','cs2','cl1','cl2'],
+  'd': ['ds1','ds2','dl1','dl2']
+};
+function findClearFaceCommand(text){
+  var t = text.toLowerCase();
+  if(!(t.indexOf('smaz')>=0||t.indexOf('vymaž')>=0||t.indexOf('vymaz')>=0||t.indexOf('smazat')>=0||t.indexOf('smaž')>=0)) return null;
+  for(var key in FACE_LETTER_MAP){
+    // hledáme "plochu A" nebo jen "A" v kontextu mazání
+    if(t.indexOf('plochu '+key)>=0 || t.indexOf('plochu'+key)>=0 || (t.indexOf(' '+key)>=0 && t.indexOf('ploch')>=0)){
+      return FACE_LETTER_MAP[key];
+    }
+  }
+  // fallback: hledáme písmeno kdekoliv v textu
+  for(var key2 in FACE_LETTER_MAP){
+    if(t.indexOf(key2)>=0 && key2.length>0) return FACE_LETTER_MAP[key2];
+  }
+  return null;
+}
 var FIELD_LABELS_PLOCHA = {
   'as1':'A1','as2':'A2','al1':'A3','al2':'A4',
   'bs1':'B1','bs2':'B2','bl1':'B3','bl2':'B4',
@@ -1054,6 +1082,19 @@ function processCommand(transcript, gen){
 
   // "FFT podél" / "FFT ohyb" — otevře FFT screen, nastaví typ, spustí test
   // Pokud typ nezazněl, jen otevře obrazovku a NADÁLE poslouchá na "podélné"/"ohybové"
+  // Smazat plochu: "smazat plochu A"
+  var clearFace = findClearFaceCommand(transcript);
+  if(clearFace){
+    var fields = FACE_FIELDS[clearFace];
+    if(fields && window.wgClearFace){
+      window.wgClearFace(clearFace);
+      dlog('✓ smazána plocha '+clearFace.toUpperCase(),'ok');
+      showConfirmOverlay('Plocha '+clearFace.toUpperCase()+' smazána','✓');
+      beepOk();
+      stopVoiceSession();
+      return;
+    }
+  }
   // Manuální frekvence: "podél 877", "ohyb 22"
   var manualFreq = findManualFreqCommand(transcript);
   if(manualFreq && (manualFreq.freqL || manualFreq.freqB)){
