@@ -71,14 +71,14 @@ input,select,textarea{touch-action:manipulation}
 .gs13{background:var(--grl);color:var(--gr)}.gs10{background:var(--bll);color:#0C447C}
 .gs7{background:var(--aml);color:#633806}.grej{background:var(--rl);color:var(--rd)}.gna{background:var(--g1);color:var(--g5)}.gok{background:#EAF3DE;color:#27500A}
 .vg-btn{flex:1;padding:9px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:15px;font-weight:700;cursor:pointer;-webkit-appearance:none;transition:all .15s}
-.vg-btn[data-vg="1"]{border-color:#4a9b4a;color:#2d6a2d;border-width:4px}
-.vg-btn[data-vg="2"]{border-color:#8aab2e;color:#5a7015;border-width:4px}
-.vg-btn[data-vg="3"]{border-color:#e08a00;color:#8a5200;border-width:4px}
-.vg-btn[data-vg="4"]{border-color:#c0392b;color:#8b1a13;border-width:4px}
-.vg-btn[data-vg="1"].selected{background:#4a9b4a;border-color:#4a9b4a;color:#fff}
-.vg-btn[data-vg="2"].selected{background:#8aab2e;border-color:#8aab2e;color:#fff}
-.vg-btn[data-vg="3"].selected{background:#e08a00;border-color:#e08a00;color:#fff}
-.vg-btn[data-vg="4"].selected{background:#c0392b;border-color:#c0392b;color:#fff}
+.vg-btn[data-vg="1"]{border-color:#4a9b4a;color:#2d6a2d;box-shadow:inset 0 0 0 2px #4a9b4a}
+.vg-btn[data-vg="2"]{border-color:#8aab2e;color:#5a7015;box-shadow:inset 0 0 0 2px #8aab2e}
+.vg-btn[data-vg="3"]{border-color:#e08a00;color:#8a5200;box-shadow:inset 0 0 0 2px #e08a00}
+.vg-btn[data-vg="4"]{border-color:#c0392b;color:#8b1a13;box-shadow:inset 0 0 0 2px #c0392b}
+.vg-btn[data-vg="1"].selected{background:#4a9b4a;border-color:#4a9b4a;color:#fff;box-shadow:inset 0 0 0 2px #4a9b4a}
+.vg-btn[data-vg="2"].selected{background:#8aab2e;border-color:#8aab2e;color:#fff;box-shadow:inset 0 0 0 2px #8aab2e}
+.vg-btn[data-vg="3"].selected{background:#e08a00;border-color:#e08a00;color:#fff;box-shadow:inset 0 0 0 2px #e08a00}
+.vg-btn[data-vg="4"].selected{background:#c0392b;border-color:#c0392b;color:#fff;box-shadow:inset 0 0 0 2px #c0392b}
 .vg-btn:active{opacity:.7}
 
 
@@ -96,6 +96,7 @@ canvas{display:block;width:100%;height:72px}
 
 /* face grid */
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.fgrid.lpos-on{grid-template-columns:1fr}
 .fc{background:#fff;border-radius:var(--rad);padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);border:1.5px solid transparent}
 .fc.editing{border-color:var(--blm);background:var(--bll)}
 .ft{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:8px;text-align:center}
@@ -109,6 +110,8 @@ canvas{display:block;width:100%;height:72px}
 .lbl-pair{display:flex;gap:6px;margin-bottom:2px}
 .lbl-pair .lsub{flex:1;font-size:9px;color:var(--g5);text-align:center;font-weight:600;letter-spacing:.04em}
 .lp-hide{display:none}
+@keyframes blinkGrey{0%,100%{background:#F0EFEB}50%{background:#fff}}
+.blink-empty{animation:blinkGrey 1.4s ease-in-out infinite}
 
 /* knot rows */
 .krow{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:.5px solid var(--g1)}
@@ -247,8 +250,8 @@ canvas{display:block;width:100%;height:72px}
 
 <!-- ══ ENTRY SCREEN ══════════════════════════════════════ -->
 <div class="screen active" id="s-entry">
-  <div class="topbar">
-    <h1>WoodGrader <sup>26</sup></h1>
+  <div class="topbar" style="position:relative">
+    <h1 style="position:absolute;left:0;right:0;text-align:center;pointer-events:none;margin:0">WoodGrader <sup>26</sup></h1>
     <button class="tbtn" id="btn-metodika" aria-label="Metodika" style="font-size:18px;font-weight:800">ⓘ</button>
     <span id="sync-indicator" style="display:none;font-size:16px;cursor:pointer" onclick="window.wgPullFromCloud&&window.wgPullFromCloud()" title="Cloud sync"></span>
     <button class="tbtn" id="btn-fft-open" aria-label="FFT analýza" style="font-size:12px;font-weight:800;letter-spacing:-.3px">FFT</button><button class="tbtn" id="btn-settings" aria-label="Nastavení"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -260,7 +263,7 @@ canvas{display:block;width:100%;height:72px}
     <div id="active-folder-bar" style="display:flex;gap:6px;margin-bottom:10px">
       <div data-act="openfolder" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Složka</div>
-        <div id="active-folder-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">—</div>
+        <div id="active-folder-label" style="font-size:13px;font-weight:700;color:var(--br);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">Nevybrána</div>
       </div>
       <div data-act="opensplistwood" style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);cursor:pointer;text-align:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase">Dřevo</div>
@@ -275,12 +278,12 @@ canvas{display:block;width:100%;height:72px}
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
-        <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;border:4px solid #1A1A18;border-radius:var(--rads)"></div>
-        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost (g)</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld wide"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" style="font-weight:800;font-size:17px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads)" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
+        <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass" style="display:flex;align-items:center;gap:3px;white-space:nowrap">Hmotnost <select id="set-mass-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="g">g</option><option value="kg">kg</option></select></label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
       <!-- Řádek 2: Délka + Šířka + Výška -->
       <div class="frow" style="margin-bottom:8px" id="row-lm">
-        <div class="fld opt-field" data-opt="length"><label id="lbl-p-length">Délka (mm)</label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="length"><label id="lbl-p-length" style="display:flex;align-items:center;gap:3px;white-space:nowrap">Délka <select id="set-length-unit" style="font-size:10px;padding:1px 2px;border:1px solid var(--g3);border-radius:4px;background:#fff;font-weight:600;color:var(--g5)" onchange="applyUnitPrefs()"><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></label><input id="p-length" type="text" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld"><label>Šířka (mm)</label><input id="clen" type="text" value="" min="1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld"><label>Výška (mm)</label><input id="cwid" type="text" value="" min="1" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
@@ -311,12 +314,11 @@ canvas{display:block;width:100%;height:72px}
         <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label>Zakřivení</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 6: Kov/Dřeň/Hmyz -->
-      <div class="frow" style="margin-top:8px" id="row-csn3">
-        <div style="flex:.1"></div>
-        <div class="opt-field" data-opt="screw" style="display:flex;flex-direction:column;gap:4px;flex:1.8;min-width:130px;border:1.5px solid var(--g3);border-radius:10px;padding:6px 8px">
-          <div style="font-size:10px;font-weight:600;color:var(--g5);text-align:center;margin-bottom:2px">Ano / Ne</div>
-          <div style="display:flex;gap:6px;justify-content:center">
+      <!-- Řádek 6: Ano/Ne — popisek vlevo, pole vedle sebe -->
+      <div class="frow" style="margin-top:8px;align-items:center" id="row-csn3">
+        <div class="opt-field" data-opt="screw" style="display:flex;align-items:center;gap:8px;flex:1;border:1.5px solid var(--g3);border-radius:10px;padding:7px 10px">
+          <div style="font-size:10px;font-weight:600;color:var(--g5);white-space:nowrap">Ano / Ne</div>
+          <div style="display:flex;gap:6px;flex:1">
             <div class="cb-wrap" style="flex:1;min-width:40px">
               <label>Kov</label>
               <button class="cb-box" id="cb-screw">—</button>
@@ -428,7 +430,7 @@ canvas{display:block;width:100%;height:72px}
     <div style="height:6px"></div>
   </div>
   <div class="bbar">
-    <button class="bmain" id="btn-add">+ Přidat suk</button>
+    <button class="bmain" id="btn-add">Přidat suk</button>
     <button class="bmain" id="btn-new" style="background:#fff;color:var(--br);border:1.5px solid var(--g3)">Nová deska</button>
     <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
   </div>
@@ -586,7 +588,7 @@ canvas{display:block;width:100%;height:72px}
     <details class="set-group">
       <summary class="set-group-title">Rozměry suků</summary>
       <div class="setting-row">
-        <div class="setting-lbl">Délkové pozice L<small>AL1/AL2, BL1/BL2, CL1/CL2, DL1/DL2</small></div>
+        <div class="setting-lbl">Délkové pozice (A3/A4, B3/B4...)</div>
         <button class="toggle on" data-opt="lpos"></button>
       </div>
     </details>
@@ -657,24 +659,7 @@ canvas{display:block;width:100%;height:72px}
       </div>
     </details>
 
-    <!-- ▶ Jednotky -->
-    <details class="set-group">
-      <summary class="set-group-title">Jednotky</summary>
-      <div class="setting-row">
-        <div class="setting-lbl">Délka<small>Pro pole Délka desky</small></div>
-        <select id="set-length-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-          <option value="mm">mm</option>
-          <option value="cm">cm</option>
-        </select>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Hmotnost<small>Pro pole Hmotnost desky</small></div>
-        <select id="set-mass-unit" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-        </select>
-      </div>
-    </details>
+
 
     <!-- ▶ Dřevo a produkt -->
     <details class="set-group">
@@ -1114,6 +1099,7 @@ function doRedraw(){
   paintCv('cv2','wrap2',b,d,saved,cp,true);
   updateProfileType(b,d);
   updateWoodProductLabels();
+  setTimeout(updateBlinkStates, 50);
   checkProductMismatch(b,d);
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
@@ -1257,7 +1243,7 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 
 // ── settings UI ────────────────────────────────────────────
 function applyOpts(){
-  // lpos: show/hide řádek s podélnými rozměry (X3/X4) a Podélné header
+  // lpos: show/hide řádek s podélnými rozměry, fgrid na 1 sloupec
   ['a','b','c','d'].forEach(function(f){
     var disp=opts.lpos?'flex':'none';
     var rowEl=document.getElementById('lp-'+f+'-row');
@@ -1265,6 +1251,8 @@ function applyOpts(){
     var hdrPodel=document.getElementById('lph-'+f);
     if(hdrPodel) hdrPodel.style.display=opts.lpos?'':'none';
   });
+  var fg=document.querySelector('.fgrid');
+  if(fg){ if(opts.lpos) fg.classList.add('lpos-on'); else fg.classList.remove('lpos-on'); }
   document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
 }
 function openSettings(){
@@ -1397,7 +1385,7 @@ function cancelEdit(){
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
   document.getElementById('ebanner').classList.remove('on');
   ['fc-a','fc-b','fc-c','fc-d'].forEach(function(id){document.getElementById(id).classList.remove('editing');});
-  var btn=document.getElementById('btn-add');btn.textContent='+ Přidat suk';btn.className='bmain';
+  var btn=document.getElementById('btn-add');btn.textContent='Přidat suk';btn.className='bmain';
   schedDraw();
 }
 function saveEdit(){
@@ -1432,6 +1420,7 @@ function newBoard(skipConfirm){
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
   ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
+  setTimeout(updateBlinkStates,10);
   resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
   var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
   var cbd=document.getElementById('cb-dren');if(cbd){cbd.textContent='—';cbd.classList.remove('checked');}
@@ -1642,7 +1631,7 @@ function renderDetailBody(bi){
     +(opts.lpos?'<div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D3</div><input id="dn-dl1" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div><div style="flex:1"><div style="font-size:10px;color:var(--g5)">D4</div><input id="dn-dl2" type="text" placeholder="—" inputmode="decimal" style="width:100%;font-size:16px;padding:8px;border:1.5px solid var(--g3);border-radius:8px;text-align:right"></div></div>':'')
     +'</div>'
     +'</div>'
-    +'<button style="width:100%;padding:11px;background:var(--g9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="daddknot" data-bi="'+bi+'">+ Přidat suk</button>'
+    +'<button style="width:100%;padding:11px;background:var(--g9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer" data-act="daddknot" data-bi="'+bi+'">Přidat suk</button>'
     +'</div>';
   html+='</div>';
   body.innerHTML=html;
@@ -1966,6 +1955,23 @@ function saveEdit(){
   knots[editState.ki]=k;save();cancelEdit();renderKlist();toast('Suk upraven ✓');
 }
 
+
+// ── Blikání prázdných povinných polí (ID, složka) ──────────────────────────
+function updateBlinkStates(){
+  var cidEl=document.getElementById('cid');
+  if(cidEl){
+    if(!cidEl.value.trim()) cidEl.classList.add('blink-empty');
+    else cidEl.classList.remove('blink-empty');
+  }
+  var folderEl=document.getElementById('active-folder-label');
+  var prefs=loadAppPrefs();
+  if(folderEl){
+    var hasFolder=prefs.activeFolder && prefs.activeFolder!=='';
+    if(!hasFolder) folderEl.parentElement.classList.add('blink-empty');
+    else folderEl.parentElement.classList.remove('blink-empty');
+    if(!hasFolder) folderEl.textContent='Nevybrána';
+  }
+}
 document.getElementById('btn-add').addEventListener('click',function(){editState?saveEdit():addKnot();});
 document.getElementById('btn-new').addEventListener('click',newBoard);
 document.getElementById('btn-cx').addEventListener('click',cancelEdit);
@@ -2306,6 +2312,13 @@ window.wgNewBoard = function(){
   }
   newBoard(true);
 }; // hlasové volání — vždy skipConfirm
+
+// ── Scroll na pole při hlasovém zadávání ────────────────────────────────────
+window.wgScrollToField = function(fieldId){
+  var el = document.getElementById(fieldId);
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+};
 window.wgAddKnot = function(){ addKnot(); };
 
 
