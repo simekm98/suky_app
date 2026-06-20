@@ -110,7 +110,7 @@ canvas{display:block;width:100%;height:72px}
 .lbl-pair{display:flex;gap:6px;margin-bottom:2px}
 .lbl-pair .lsub{flex:1;font-size:9px;color:var(--g5);text-align:center;font-weight:600;letter-spacing:.04em}
 .lp-hide{display:none}
-@keyframes blinkGrey{0%,100%{background:#F0EFEB}50%{background:#fff}}
+@keyframes blinkGrey{0%,100%{background:#B0AFA8}50%{background:#fff}}
 .blink-empty{animation:blinkGrey 1.4s ease-in-out infinite}
 
 /* knot rows */
@@ -149,7 +149,7 @@ canvas{display:block;width:100%;height:72px}
 #modal-picker .modal{border-radius:0 0 20px 20px !important;padding-top:max(env(safe-area-inset-top),12px)}
 .modal-title{font-size:17px;font-weight:700;padding:16px 20px 12px;border-bottom:.5px solid var(--g1);display:flex;align-items:center}
 .modal-title span{flex:1}
-.modal-close{background:none;border:none;font-size:22px;color:var(--g5);cursor:pointer;line-height:1;padding:4px;-webkit-appearance:none}
+.modal-close{background:none;border:none;font-size:30px;color:var(--g7);cursor:pointer;line-height:1;padding:4px 8px;-webkit-appearance:none;font-weight:300}
 .setting-section{padding:10px 20px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--g5)}
 .setting-row{display:flex;align-items:center;padding:14px 20px;border-bottom:.5px solid var(--g1)}
 .setting-row:last-child{border-bottom:none}
@@ -312,23 +312,25 @@ canvas{display:block;width:100%;height:72px}
       <div class="frow" style="margin-top:8px" id="row-csn2">
         <div class="fld opt-field" data-opt="oblina" style="flex:.6;min-width:50px"><label>Oblina (%)</label><input id="p-oblina" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="odklon" style="flex:.7;min-width:55px"><label style="white-space:nowrap">Odklon (%)</label><input id="p-odklon" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label style="white-space:nowrap">Letokruhy (mm)</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
-        <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label style="white-space:nowrap">Zakřivení (mm)</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="letokruh" style="flex:.65;min-width:50px"><label>Letokruhy</label><input id="p-letokruh" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
+        <div class="fld opt-field" data-opt="zakriveni" style="flex:.7;min-width:55px"><label>Zakřivení</label><input id="p-zakriveni" type="text" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
-      <!-- Řádek 6: Ano/Ne — popisek vlevo, pole vedle sebe -->
-      <div class="frow" style="margin-top:8px;align-items:center" id="row-csn3">
-        <div class="opt-field" data-opt="screw" style="display:flex;align-items:center;gap:8px;flex:1;border:1.5px solid var(--g3);border-radius:10px;padding:7px 10px">
-          <div style="font-size:10px;font-weight:600;color:var(--g5);white-space:nowrap">Ano / Ne</div>
-          <div style="display:flex;gap:6px;flex:1">
-            <div class="cb-wrap" style="flex:1;min-width:40px">
+      <!-- Řádek 6: Ano/Ne — popisek úplně vlevo, zarovnaný s cb-box -->
+      <div class="frow" style="margin-top:8px;align-items:stretch" id="row-csn3">
+        <div class="opt-field" data-opt="screw" style="display:flex;align-items:stretch;flex:1;border:1.5px solid var(--g3);border-radius:10px;overflow:hidden">
+          <div style="display:flex;align-items:center;padding:8px 10px;border-right:1px solid var(--g3);background:#FAFAF8">
+            <div style="font-size:10px;font-weight:700;color:var(--g5);white-space:nowrap;writing-mode:horizontal-tb">Ano<br>/ Ne</div>
+          </div>
+          <div style="display:flex;gap:0;flex:1">
+            <div class="cb-wrap" style="flex:1;min-width:40px;padding:6px 4px;border-right:1px solid var(--g3)">
               <label>Kov</label>
               <button class="cb-box" id="cb-screw">—</button>
             </div>
-            <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:40px">
+            <div class="cb-wrap opt-field" data-opt="dren" style="flex:1;min-width:40px;padding:6px 4px;border-right:1px solid var(--g3)">
               <label>Dřeň</label>
               <button class="cb-box" id="cb-dren">—</button>
             </div>
-            <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:40px">
+            <div class="cb-wrap opt-field" data-opt="hmyz" style="flex:1;min-width:40px;padding:6px 4px">
               <label>Hmyz</label>
               <button class="cb-box" id="cb-hmyz">—</button>
             </div>
@@ -376,10 +378,8 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>A1</span><input id="as1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>A2</span><input id="as2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div class="ipair lp-hide" id="lp-a-row" style="display:none">
-          <div class="ic" id="lp-a-l1"><span>A3</span><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic" id="lp-a-l2"><span>A4</span><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-a-l1" style="display:none"><span>A3</span><input id="al1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-a-l2" style="display:none"><span>A4</span><input id="al2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-b">
@@ -391,10 +391,8 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>B1</span><input id="bs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>B2</span><input id="bs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div class="ipair lp-hide" id="lp-b-row" style="display:none">
-          <div class="ic" id="lp-b-l1"><span>B3</span><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic" id="lp-b-l2"><span>B4</span><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-b-l1" style="display:none"><span>B3</span><input id="bl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-b-l2" style="display:none"><span>B4</span><input id="bl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-c">
@@ -406,10 +404,8 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>C1</span><input id="cs1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>C2</span><input id="cs2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div class="ipair lp-hide" id="lp-c-row" style="display:none">
-          <div class="ic" id="lp-c-l1"><span>C3</span><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic" id="lp-c-l2"><span>C4</span><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-c-l1" style="display:none"><span>C3</span><input id="cl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-c-l2" style="display:none"><span>C4</span><input id="cl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
       <div class="fc" id="fc-d">
@@ -421,10 +417,8 @@ canvas{display:block;width:100%;height:72px}
         <div class="ipair">
           <div class="ic"><span>D1</span><input id="ds1" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
           <div class="ic"><span>D2</span><input id="ds2" type="text" placeholder="—" min="0" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div class="ipair lp-hide" id="lp-d-row" style="display:none">
-          <div class="ic" id="lp-d-l1"><span>D3</span><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
-          <div class="ic" id="lp-d-l2"><span>D4</span><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-d-l1" style="display:none"><span>D3</span><input id="dl1" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
+          <div class="ic lp-hide" id="lp-d-l2" style="display:none"><span>D4</span><input id="dl2" type="text" placeholder="—" min="0" step="1" inputmode="decimal"></div>
         </div>
       </div>
     </div>
@@ -601,67 +595,28 @@ canvas{display:block;width:100%;height:72px}
     <!-- ▶ Parametry desky -->
     <details class="set-group">
       <summary class="set-group-title">Parametry desky</summary>
-      <div class="setting-row">
-        <div class="setting-lbl">Délka<small>mm — nutná pro hustotu</small></div>
-        <button class="toggle on" data-opt="length"></button>
-      </div>
+
       <div class="setting-row">
         <div class="setting-lbl">Hmotnost<small>nutná pro hustotu</small></div>
         <button class="toggle on" data-opt="mass"></button>
       </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Vlhkost (%)</div>
-        <button class="toggle on" data-opt="moisture"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Vizuál<small>Výběr 1–4</small></div>
-        <button class="toggle on" data-opt="vg"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Kov<small>Zalomený vrut v desce</small></div>
-        <button class="toggle on" data-opt="screw"></button>
-      </div>
+
+
+
     </details>
 
     <!-- ▶ Znaky třídění ČSN 73 2824-1 -->
     <details class="set-group">
       <summary class="set-group-title">Znaky třídění ČSN 73 2824-1</summary>
-      <div class="setting-row">
-        <div class="setting-lbl">Trhlina (%)<small>Hloubka trhliny / rozměr strany</small></div>
-        <button class="toggle" data-opt="trhlina"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Hniloba (%)<small>Podíl zbarvených pruhů</small></div>
-        <button class="toggle" data-opt="hniloba"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Reakční dřevo (%)<small>Tlakové dřevo — podíl</small></div>
-        <button class="toggle" data-opt="reakcni"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Oblina (%)<small>Podíl chybějící hrany</small></div>
-        <button class="toggle" data-opt="oblina"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Odklon vláken<small>Odchylka vláken v %</small></div>
-        <button class="toggle" data-opt="odklon"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Šířka letokruhů<small>Průměrná šířka v mm</small></div>
-        <button class="toggle" data-opt="letokruh"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Zakřivení podélné<small>Vzepětí na 2000mm</small></div>
-        <button class="toggle" data-opt="zakriveni"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Dřeň<small>Přítomnost dřeně v řezivu</small></div>
-        <button class="toggle" data-opt="dren"></button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-lbl">Poškození hmyzem<small>Chodbičky &gt; 2mm</small></div>
-        <button class="toggle" data-opt="hmyz"></button>
-      </div>
+
+
+
+
+
+
+
+
+
     </details>
 
 
@@ -1248,16 +1203,15 @@ function paintDetailCv(cvId,wrapId,ks,b,d){
 
 // ── settings UI ────────────────────────────────────────────
 function applyOpts(){
-  // lpos: show/hide řádek s podélnými rozměry, fgrid na 1 sloupec
+  // lpos: show/hide podélné ic buňky (X3/X4) a Podélné header
   ['a','b','c','d'].forEach(function(f){
     var disp=opts.lpos?'flex':'none';
-    var rowEl=document.getElementById('lp-'+f+'-row');
-    if(rowEl) rowEl.style.display=disp;
+    ['lp-'+f+'-l1','lp-'+f+'-l2'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.style.display=disp;
+    });
     var hdrPodel=document.getElementById('lph-'+f);
     if(hdrPodel) hdrPodel.style.display=opts.lpos?'':'none';
   });
-  var fg=document.querySelector('.fgrid');
-  if(fg){ if(opts.lpos) fg.classList.add('lpos-on'); else fg.classList.remove('lpos-on'); }
   document.querySelectorAll('.opt-field').forEach(function(el){el.style.display=opts[el.getAttribute('data-opt')]?'':'none';});
 }
 function openSettings(){
