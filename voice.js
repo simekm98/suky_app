@@ -470,9 +470,9 @@ function parseCommand(text){
       var key = WORD_FIELD_KEYS_SORTED[i];
       var found = false;
       if(key.length <= 4){
-        // Krátká slova — hledat jako celé slovo
-        var re2 = new RegExp('(^|\s)' + key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(\s|$)');
-        found = re2.test(text);
+        // Krátká slova — hledat jako celé slovo (s mezerou nebo na okraji)
+        var padded = ' ' + text + ' ';
+        found = padded.indexOf(' ' + key + ' ') >= 0;
       } else {
         found = text.indexOf(key) >= 0;
       }
