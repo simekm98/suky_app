@@ -2911,11 +2911,11 @@ function fftBeep(freq, dur, vol){
     osc.start();osc.stop(ctx.currentTime+dur);
   }catch(e){}
 }
-function fftBeepCountdown(){ fftBeep(700,0.08,0.25); }
-function fftBeepGo(){ fftBeep(1100,0.15,0.35); }
+function fftBeepCountdown(){ fftBeep(700,0.25,0.3); }
+function fftBeepGo(){ fftBeep(1100,0.45,0.4); }
 function fftBeepDone(){
-  fftBeep(900,0.1,0.3);
-  setTimeout(function(){ fftBeep(1300,0.15,0.3); },140);
+  fftBeep(900,0.35,0.3);
+  setTimeout(function(){ fftBeep(1300,0.45,0.3); },140);
 }
 
 // ── Nahrávání ─────────────────────────────────────────────
