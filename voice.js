@@ -68,11 +68,11 @@ var WORD_FIELD_MAP = {
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
   'id ':'cid','ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
-  'vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
+  'kov':'__screw__','kovu':'__screw__','kova':'__screw__','kof':'__screw__','vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
   'hniloba':'p-hniloba','hnilobu':'p-hniloba','zbarvení':'p-hniloba','zbarveni':'p-hniloba',
   'reakční dřevo':'p-reakcni','reakcni drevo':'p-reakcni','tlakové dřevo':'p-reakcni','tlakove drevo':'p-reakcni',
-  'oblina':'p-oblina','oblinu':'p-oblina',
+  'oblina':'p-oblina','oblinu':'p-oblina','obliny':'p-oblina','oblinou':'p-oblina','oblina%':'p-oblina','oblinka':'p-oblina','oblynka':'p-oblina',
   'odklon vláken':'p-odklon','odklon vlaken':'p-odklon','odklon':'p-odklon',
   'šířka letokruhů':'p-letokruh','sirka letokruhu':'p-letokruh','letokruhy':'p-letokruh','letokruh':'p-letokruh',
   'zakřivení':'p-zakriveni','zakriveni':'p-zakriveni',
@@ -468,7 +468,15 @@ function parseCommand(text){
   if(!field){
     for(var i=0;i<WORD_FIELD_KEYS_SORTED.length;i++){
       var key = WORD_FIELD_KEYS_SORTED[i];
-      if(text.indexOf(key) >= 0){ field = WORD_FIELD_MAP[key]; break; }
+      var found = false;
+      if(key.length <= 4){
+        // Krátká slova — hledat jako celé slovo
+        var re2 = new RegExp('(^|\s)' + key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(\s|$)');
+        found = re2.test(text);
+      } else {
+        found = text.indexOf(key) >= 0;
+      }
+      if(found){ field = WORD_FIELD_MAP[key]; break; }
     }
   }
 
