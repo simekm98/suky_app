@@ -66,7 +66,7 @@ var WORD_FIELD_MAP = {
   'délka':'p-length','délku':'p-length','delka':'p-length','delku':'p-length',
   'hmotnost':'p-mass','hmotnosti':'p-mass','hmotnost je':'p-mass',
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
-  'id ':'cid','ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
+  'ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
   'kov':'__screw__','kovu':'__screw__','kova':'__screw__','kof':'__screw__','vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
@@ -461,6 +461,11 @@ function parseCommand(text){
   // 1. Zkus přímý kód "AS1", "as 1", "a s jedna" (nejrychlejší, krátký formát)
   var field = findDirectFieldCode(text);
 
+  // 1b. Speciální: 'id' jako celé slovo → cid
+  if(!field){
+    var padId = ' ' + text + ' ';
+    if(padId.indexOf(' id ') >= 0 || padId.indexOf(' íd ') >= 0) field = 'cid';
+  }
   // 2. Zkus "plocha X rozměr Y" formát (delší, ale jednoznačný)
   if(!field) field = findPlochaRozmer(text);
 
@@ -1116,15 +1121,24 @@ function processCommand(transcript, gen){
       return;
     }
   }
-  // Manuální frekvence: "podél 877", "ohyb 22"
+  // Povel uložit → uložit FFT a vrátit se
+  var tLow = transcript.toLowerCase();
+  if(tLow.indexOf('uložit')>=0 || tLow.indexOf('ulozit')>=0 || tLow.indexOf('uložit')>=0){
+    if(window.wgFFTSave){ window.wgFFTSave(); }
+    showConfirmOverlay('Uloženo', '✓ návrat');
+    beepOk();
+    if(sessionActive) continueOrRefresh(gen);
+    return;
+  }
+  // Manuální frekvence: "podél 877", "ohyb 22
   var manualFreq = findManualFreqCommand(transcript);
   if(manualFreq && (manualFreq.freqL || manualFreq.freqB)){
     if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(manualFreq.freqL, manualFreq.freqB);
     var lbl=(manualFreq.freqL?'podél '+manualFreq.freqL+' Hz ':'')+(manualFreq.freqB?'ohyb '+manualFreq.freqB+' Hz':'');
     dlog('✓ manuální frekvence: '+lbl,'ok');
-    showConfirmOverlay(lbl.trim(), '✓ uloženo');
+    showConfirmOverlay(lbl.trim(), '✓ zapsáno');
     beepOk();
-    stopVoiceSession();
+    if(sessionActive) continueOrRefresh(gen);
     return;
   }
   var fftCmd = findFftCommand(transcript);
@@ -1337,6 +1351,10 @@ function writeValue(field, value, kind){
       el.dispatchEvent(new Event('input', {bubbles:true}));
       el.dispatchEvent(new Event('change', {bubbles:true}));
       dlog('✅ input#'+field+'.value nyní = "'+el.value+'"','ok');
+      // Potvrdit zápis zvukem a overlay
+      var fldLbl = FIELD_LABELS[field] || field;
+      showConfirmOverlay(fldLbl, el.value);
+      beepOk();
       // Scroll na aktivní pole při hlasovém zadávání
       if(window.wgScrollToField) window.wgScrollToField(field);
       if(field === 'p-vg'){
