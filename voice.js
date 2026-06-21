@@ -72,7 +72,7 @@ var WORD_FIELD_MAP = {
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
   'hniloba':'p-hniloba','hnilobu':'p-hniloba','zbarvení':'p-hniloba','zbarveni':'p-hniloba',
   'reakční dřevo':'p-reakcni','reakcni drevo':'p-reakcni','tlakové dřevo':'p-reakcni','tlakove drevo':'p-reakcni',
-  'oblina':'p-oblina','oblinu':'p-oblina','obliny':'p-oblina','oblinou':'p-oblina','oblina%':'p-oblina','oblinka':'p-oblina','oblynka':'p-oblina',
+  'oblina':'p-oblina','oblinu':'p-oblina','obliny':'p-oblina','oblinou':'p-oblina','oblinka':'p-oblina','oblynka':'p-oblina','lina':'p-oblina','blina':'p-oblina','oblina procent':'p-oblina','oblina %':'p-oblina',
   'odklon vláken':'p-odklon','odklon vlaken':'p-odklon','odklon':'p-odklon',
   'šířka letokruhů':'p-letokruh','sirka letokruhu':'p-letokruh','letokruhy':'p-letokruh','letokruh':'p-letokruh',
   'zakřivení':'p-zakriveni','zakriveni':'p-zakriveni',
@@ -947,8 +947,7 @@ function continueOrRefresh(gen){
 }
 
 function processCommand(transcript, gen){
-  // Ignorovat pokud uživatel právě manuálně píše
-  if(manualInputActive){ dlog('⏸ ignoruji (manuální vstup)','info'); if(sessionActive) continueOrRefresh(gen); return; }
+  // manualInputActive check odstraněn — příliš agresivní blokování
   dlog('🎤 slyšel: "'+transcript+'"');
 
   // "domů" / "hlavní stránka" — VŽDY zastaví vše a vrátí na hlavní stránku,
@@ -1142,7 +1141,8 @@ function processCommand(transcript, gen){
     awaitingFftTypeChoice = false;
     executeFftCommand(fftType);
     beepOk();
-    stopVoiceSession();
+    // Mikrofon pokračuje po FFT
+    if(sessionActive) continueOrRefresh(gen);
     return;
   }
 
