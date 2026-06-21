@@ -1029,7 +1029,7 @@ function checkProductMismatch(b,d){
     var key = manualType+'|'+auto.type+'|'+b+'|'+d;
     if(key === lastMismatchWarningKey) return; // stejné varování už bylo zobrazeno, nezahlcuj
     lastMismatchWarningKey = key;
-    showToast('Upozornění: rozměry ('+b+'×'+d+' mm) odpovídají typu "'+auto.label+'", ne zvolenému produktu');
+    // showToast - odstraněno (příliš rušivé)
   } else {
     lastMismatchWarningKey = null;
   }
@@ -2963,11 +2963,8 @@ function startRecordingWithCountdown(type, dur){
 function startRecording(type, dur){
   recordDuration=dur;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('Mikrofon nedostupný');return;}
-  // Použít cached stream z voice.js (permission již vyžádána při startu)
-  var cachedStream = window.wgGetMicStream ? window.wgGetMicStream() : null;
-  var streamPromise = (cachedStream && cachedStream.active)
-    ? Promise.resolve(cachedStream)
-    : navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  // Vždy nový getUserMedia pro nahrávání (cached stream z voice.js není vhodný pro MediaRecorder)
+  var streamPromise = navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
   streamPromise
   .then(function(stream){
     chunks=[];
@@ -2978,8 +2975,7 @@ function startRecording(type, dur){
     mediaRecorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
     mediaRecorder.onstop=function(){
       // Nezastavovat stream pokud je to cached stream (znovu použijeme)
-      var cachedS = window.wgGetMicStream ? window.wgGetMicStream() : null;
-      if(stream !== cachedS) stream.getTracks().forEach(function(t){t.stop();});
+      stream.getTracks().forEach(function(t){t.stop();});
       fftBeepDone();
       processAudioBlob(new Blob(chunks,{type:mediaRecorder.mimeType}), type);
     };
