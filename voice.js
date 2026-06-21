@@ -632,9 +632,7 @@ var WOOD_LABEL_MAP = {'SM':'Smrk','BK':'Buk','BO':'Borovice','MD':'Modřín','DB
 var PRODUCT_LABEL_MAP = {'rezivo-plocha':'Řezivo na plochu','rezivo-hrana':'Řezivo na hranu','tram':'Hranol','lat':'Lať','auto':'Automaticky'};
 function findWoodSpeciesCommand(text){
   var t = text.toLowerCase();
-  var hasTrigger = t.indexOf('dřevo')>=0 || t.indexOf('drevo')>=0
-    || t.indexOf('druh')>=0 || t.indexOf('dřevina')>=0 || t.indexOf('drevina')>=0;
-  if(!hasTrigger) return null;
+  // Funguje i bez trigger slova — samotné "smrk", "buk" atd.
   for(var key in WOOD_VOICE_MAP){
     if(t.indexOf(key)>=0) return WOOD_VOICE_MAP[key];
   }
