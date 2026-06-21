@@ -626,11 +626,15 @@ var WOOD_VOICE_MAP = {
   'buk':'BK',
   'borovice':'BO','borovici':'BO',
   'modřín':'MD','modrin':'MD',
-  'dub':'DB','dubovi':'DB','dubovi':'DB'
+  'dub':'DB','dubovi':'DB'
 };
+var WOOD_LABEL_MAP = {'SM':'Smrk','BK':'Buk','BO':'Borovice','MD':'Modřín','DB':'Dub'};
+var PRODUCT_LABEL_MAP = {'rezivo-plocha':'Řezivo na plochu','rezivo-hrana':'Řezivo na hranu','tram':'Hranol','lat':'Lať','auto':'Automaticky'};
 function findWoodSpeciesCommand(text){
   var t = text.toLowerCase();
-  if(t.indexOf('dřevo')<0 && t.indexOf('drevo')<0 && t.indexOf('druh dřeva')<0) return null;
+  var hasTrigger = t.indexOf('dřevo')>=0 || t.indexOf('drevo')>=0
+    || t.indexOf('druh')>=0 || t.indexOf('dřevina')>=0 || t.indexOf('drevina')>=0;
+  if(!hasTrigger) return null;
   for(var key in WOOD_VOICE_MAP){
     if(t.indexOf(key)>=0) return WOOD_VOICE_MAP[key];
   }
@@ -983,7 +987,7 @@ function processCommand(transcript, gen){
     var woodOk = window.wgSetWoodSpecies ? window.wgSetWoodSpecies(woodCmd) : false;
     if(woodOk){
       dlog('✓ druh dřeva: '+woodCmd,'ok');
-      showConfirmOverlay('Druh dřeva', woodCmd);
+      showConfirmOverlay('Druh dřeva', WOOD_LABEL_MAP[woodCmd]||woodCmd);
       beepOk();
     } else {
       beepErr();
@@ -999,7 +1003,7 @@ function processCommand(transcript, gen){
     var prodOk = window.wgSetProductType ? window.wgSetProductType(productCmd) : false;
     if(prodOk){
       dlog('✓ druh produktu: '+productCmd,'ok');
-      showConfirmOverlay('Druh produktu', productCmd);
+      showConfirmOverlay('Druh produktu', PRODUCT_LABEL_MAP[productCmd]||productCmd);
       beepOk();
     } else {
       beepErr();
