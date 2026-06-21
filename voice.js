@@ -68,7 +68,7 @@ var WORD_FIELD_MAP = {
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
   'ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
-  'kov':'__screw__','kovu':'__screw__','kova':'__screw__','kof':'__screw__','vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
+  'kov':'__screw__','kovu':'__screw__','kova':'__screw__','kof':'__screw__','kovy':'__screw__',
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
   'hniloba':'p-hniloba','hnilobu':'p-hniloba','zbarvení':'p-hniloba','zbarveni':'p-hniloba',
   'reakční dřevo':'p-reakcni','reakcni drevo':'p-reakcni','tlakové dřevo':'p-reakcni','tlakove drevo':'p-reakcni',
@@ -87,7 +87,7 @@ var FIELD_LABELS = {
   'bs1':'B1','bs2':'B2','bl1':'B3','bl2':'B4',
   'cs1':'C1','cs2':'C2','cl1':'C3','cl2':'C4',
   'ds1':'D1','ds2':'D2','dl1':'D3','dl2':'D4',
-  'cid':'název','p-vg':'vizuál','__screw__':'vrut',
+  'cid':'název','p-vg':'vizuál','__screw__':'kov',
   'p-trhlina':'trhlina','p-hniloba':'hniloba','p-reakcni':'reakční dřevo','p-oblina':'oblina',
   'p-odklon':'odklon vláken','p-letokruh':'šířka letokruhů','p-zakriveni':'zakřivení',
   '__dren__':'dřeň','__hmyz__':'poškození hmyzem'
@@ -435,7 +435,7 @@ var FUZZY_BASE_WORDS = [
   {word:'hmotnost', field:'p-mass'},
   {word:'vlhkost', field:'p-moist'},
   {word:'vizuál', field:'p-vg'}, {word:'vizual', field:'p-vg'},
-  {word:'vrut', field:'__screw__'}
+  {word:'kov', field:'__screw__'}
 ];
 
 function fuzzyFindField(text){
@@ -507,18 +507,18 @@ function parseCommand(text){
     // Hledat 'id' jako celé slovo
     var padT = ' ' + text + ' ';
     var idPos = padT.indexOf(' id ');
-    if(idPos >= 0){ idKeyIdx = idPos; idKeyLen = 3; } // idPos je v padded (má +1 offset)
-    // Také hledat ostatní klíče pro cid
-    WORD_FIELD_KEYS_SORTED.forEach(function(key){
-      if(WORD_FIELD_MAP[key] !== 'cid') return;
-      var idx2 = text.indexOf(key);
-      if(idx2 >= 0 && (idKeyIdx===-1 || idx2 < idKeyIdx)){ idKeyIdx = idx2; idKeyLen = key.length; }
-    });
-    if(idKeyIdx >= 0){
-      // Pokud jsme našli 'id' přes padded, musíme opravit offset
-      var startPos = (idPos >= 0) ? idPos : idKeyIdx; // padded offset
-      var actualStart = (idPos >= 0) ? idPos : idKeyIdx; // +1 kvůli paddingu
-      valueText = (idPos >= 0) ? text.substring(idPos + 2).trim() : text.substring(idKeyIdx + idKeyLen).trim();
+    // Najít 'id' jako celé slovo nebo prefix (id20, id 20A)
+    var idMatch = text.match(/^id\s*(.+)$/i) || text.match(/\bid\s+(.+)$/i);
+    if(idMatch){
+      valueText = idMatch[1].trim();
+    } else {
+      // Fallback na ostatní cid klíče (ajdý atd.)
+      WORD_FIELD_KEYS_SORTED.forEach(function(key){
+        if(WORD_FIELD_MAP[key] !== 'cid') return;
+        var idx2 = text.indexOf(key);
+        if(idx2 >= 0 && (idKeyIdx===-1 || idx2 < idKeyIdx)){ idKeyIdx = idx2; idKeyLen = key.length; }
+      });
+      if(idKeyIdx >= 0) valueText = text.substring(idKeyIdx + idKeyLen).trim();
     }
   } else if(splitIdx >= 0){
     valueText = text.substring(splitIdx+splitLen).trim();
@@ -880,7 +880,7 @@ function actuallyStartRecognition(gen){
 
   voicePhase = 'listening';
   dlog('▶ start recognition gen='+gen+' (current='+cycleGeneration+')');
-  updateVoiceUI('listening', 'A1 20 / Delka 1500 / Vrut ano');
+  updateVoiceUI('listening', 'A1 20 / Délka 1500 / Kov ano');
 
   var gotResult = false;
 
