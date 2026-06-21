@@ -1125,7 +1125,11 @@ function paintCv(cvId,wrapId,b,d,saved,cp,isUnion){
   ctx.clearRect(0,0,W,CV_H);
   ctx.strokeStyle='rgba(0,0,0,.05)';ctx.lineWidth=0.5;
   ctx.font='7px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.35)';
-  for(var v=0;v<=b;v+=20){var x=tx(v);ctx.beginPath();ctx.moveTo(x,PT);ctx.lineTo(x,PT+PH);ctx.stroke();ctx.fillText(v,x,CV_H-1);}
+  // Adaptivní krok rastru — max 8 čar, min krok 5mm
+  var gridStep=5;
+  var steps=[5,10,20,25,50,100];
+  for(var si=0;si<steps.length;si++){if(b/steps[si]<=8){gridStep=steps[si];break;}}
+  for(var v=0;v<=b;v+=gridStep){var x=tx(v);ctx.beginPath();ctx.moveTo(x,PT);ctx.lineTo(x,PT+PH);ctx.stroke();ctx.fillText(v,x,CV_H-1);}
   ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.strokeRect(tx(0),ty(d),PW,PH);
   function fp(pts,fill,stroke,lw){
     if(!pts||pts.length<3)return;
@@ -2974,12 +2978,14 @@ function startRecording(type, dur){
     mediaRecorder=new MediaRecorder(stream,options);
     mediaRecorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
     mediaRecorder.onstop=function(){
-      // Nezastavovat stream pokud je to cached stream (znovu použijeme)
       stream.getTracks().forEach(function(t){t.stop();});
       fftBeepDone();
       processAudioBlob(new Blob(chunks,{type:mediaRecorder.mimeType}), type);
+      // Obnovit voice recognition po konci nahrávání
+      setTimeout(function(){ if(window.wgVoiceResume) window.wgVoiceResume(); }, 500);
     };
     mediaRecorder.start(100);
+    if(window.wgVoicePause) window.wgVoicePause(); // pauza recognition při nahrávání
     startWaveformVis(stream);
     var rem=dur;
     var cdEl=document.getElementById('fft-countdown');
