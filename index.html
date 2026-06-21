@@ -3754,10 +3754,10 @@ function saveFftToBoard(){
     target.fft=mergeFft(target.fft);
     if(window.wgSave) window.wgSave();
     if(window.wgRefreshDetailIfOpen) window.wgRefreshDetailIfOpen(fftTargetBoardIdx);
-    showToast(msgParts.join(', ')+' uloženo do '+target.id+' ✓');
+    if(window.showConfirmOverlay) showConfirmOverlay(target.id, msgParts.join(', ')+' Hz ✓');
     fftTargetBoardIdx=null;
     if(window.updateMoedDisplay) window.updateMoedDisplay();
-    setTimeout(function(){ if(window.wgGoHome) window.wgGoHome(); },600);
+    setTimeout(function(){ if(window.wgGoHome) window.wgGoHome(); },1200);
   } else if(boards.length){
     var last=boards[boards.length-1];
     last.fft=mergeFft(last.fft);
