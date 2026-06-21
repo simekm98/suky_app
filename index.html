@@ -2956,7 +2956,8 @@ function startRecordingWithCountdown(type, dur){
       preCountdownTimer=null;
       fftBeepGo();
       if(cdEl) cdEl.textContent='';
-      startRecording(type, dur);
+      // Delay 350ms aby Go beep nespadl do záznamu
+      setTimeout(function(){ startRecording(type, dur); }, 350);
     }
   },1000);
   };
