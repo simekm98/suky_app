@@ -1089,12 +1089,7 @@ function doRedraw(){
   updateProfileType(b,d);
   updateWoodProductLabels();
   setTimeout(updateBlinkStates, 400); setTimeout(updateFolderSelect, 500);
-  // Vyžádat povolení mikrofonu hned při startu
-  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-    navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
-      s.getTracks().forEach(function(t){t.stop();}); // hned zastavit, jen permission
-    }).catch(function(){});
-  }
+  // Mikrofon permission vyžádána voice.js při inicializaci
   checkProductMismatch(b,d);
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
@@ -2968,7 +2963,12 @@ function startRecordingWithCountdown(type, dur){
 function startRecording(type, dur){
   recordDuration=dur;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('Mikrofon nedostupný');return;}
-  navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}})
+  // Použít cached stream z voice.js (permission již vyžádána při startu)
+  var cachedStream = window.wgGetMicStream ? window.wgGetMicStream() : null;
+  var streamPromise = (cachedStream && cachedStream.active)
+    ? Promise.resolve(cachedStream)
+    : navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  streamPromise
   .then(function(stream){
     chunks=[];
     var options={};
