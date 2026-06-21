@@ -504,13 +504,21 @@ function parseCommand(text){
   // jinak by se "id 20 pé" zkrátilo na pouhé "20" a písmeno "pé" by se ztratilo.
   if(field === 'cid' && splitIdx < 0){
     var idKeyIdx = -1, idKeyLen = 0;
+    // Hledat 'id' jako celé slovo
+    var padT = ' ' + text + ' ';
+    var idPos = padT.indexOf(' id ');
+    if(idPos >= 0){ idKeyIdx = idPos; idKeyLen = 3; } // idPos je v padded (má +1 offset)
+    // Také hledat ostatní klíče pro cid
     WORD_FIELD_KEYS_SORTED.forEach(function(key){
       if(WORD_FIELD_MAP[key] !== 'cid') return;
       var idx2 = text.indexOf(key);
       if(idx2 >= 0 && (idKeyIdx===-1 || idx2 < idKeyIdx)){ idKeyIdx = idx2; idKeyLen = key.length; }
     });
     if(idKeyIdx >= 0){
-      valueText = text.substring(idKeyIdx + idKeyLen).trim();
+      // Pokud jsme našli 'id' přes padded, musíme opravit offset
+      var startPos = (idPos >= 0) ? idPos : idKeyIdx; // padded offset
+      var actualStart = (idPos >= 0) ? idPos : idKeyIdx; // +1 kvůli paddingu
+      valueText = (idPos >= 0) ? text.substring(idPos + 2).trim() : text.substring(idKeyIdx + idKeyLen).trim();
     }
   } else if(splitIdx >= 0){
     valueText = text.substring(splitIdx+splitLen).trim();
@@ -764,8 +772,8 @@ function requestMicPermission(callback){
   }
   navigator.mediaDevices.getUserMedia({audio:true})
     .then(function(stream){
-      stream.getTracks().forEach(function(t){ t.stop(); });
       micPermissionGranted = true;
+      micStreamCached = stream; // Cachovat pro FFT — nežádat znovu
       callback(true);
     })
     .catch(function(err){ callback(false, 'Mikrofon odepřen: ' + err.message); });
@@ -1515,6 +1523,7 @@ if(document.readyState==='loading'){
 }
 
   window.wgVoicePause = function(){ manualInputActive = true; };
+  window.wgGetMicStream = function(){ return micStreamCached; };
   window.wgVoiceResume = function(){ manualInputActive = false; };
 
 })();
