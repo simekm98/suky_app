@@ -68,7 +68,7 @@ var WORD_FIELD_MAP = {
   'vlhkost w':'p-moist','vlhkost':'p-moist','vlhkosti':'p-moist','vlhko':'p-moist','vlhkostí':'p-moist',
   'ajdý':'cid','aj dý':'cid','ajdí':'cid','idy':'cid','ajdi':'cid',
   'vizuál':'p-vg','vizual':'p-vg','vizuální':'p-vg','vizualni':'p-vg','vizuálně':'p-vg',
-  'kov':'__screw__','kovu':'__screw__','kova':'__screw__','kof':'__screw__','vrut':'__screw__','vruty':'__screw__','vrutu':'__screw__','vrutem':'__screw__',
+  'kov':'__screw__','kovu':'__screw__','kova':'__screw__','kof':'__screw__','kovy':'__screw__',
   'trhlina':'p-trhlina','trhliny':'p-trhlina','trhlinu':'p-trhlina',
   'hniloba':'p-hniloba','hnilobu':'p-hniloba','zbarvení':'p-hniloba','zbarveni':'p-hniloba',
   'reakční dřevo':'p-reakcni','reakcni drevo':'p-reakcni','tlakové dřevo':'p-reakcni','tlakove drevo':'p-reakcni',
@@ -87,7 +87,7 @@ var FIELD_LABELS = {
   'bs1':'B1','bs2':'B2','bl1':'B3','bl2':'B4',
   'cs1':'C1','cs2':'C2','cl1':'C3','cl2':'C4',
   'ds1':'D1','ds2':'D2','dl1':'D3','dl2':'D4',
-  'cid':'název','p-vg':'vizuál','__screw__':'vrut',
+  'cid':'id','p-vg':'vizuál','__screw__':'kov',
   'p-trhlina':'trhlina','p-hniloba':'hniloba','p-reakcni':'reakční dřevo','p-oblina':'oblina',
   'p-odklon':'odklon vláken','p-letokruh':'šířka letokruhů','p-zakriveni':'zakřivení',
   '__dren__':'dřeň','__hmyz__':'poškození hmyzem'
@@ -435,7 +435,7 @@ var FUZZY_BASE_WORDS = [
   {word:'hmotnost', field:'p-mass'},
   {word:'vlhkost', field:'p-moist'},
   {word:'vizuál', field:'p-vg'}, {word:'vizual', field:'p-vg'},
-  {word:'vrut', field:'__screw__'}
+  {word:'kov', field:'__screw__'}
 ];
 
 function fuzzyFindField(text){
