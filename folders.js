@@ -59,7 +59,7 @@ window.wgCreateFolder = function(name){
   activeFolderId=newF.id;
   saveActiveFolder();
   updateActiveLabel();
-  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,50);
+  if(typeof updateFolderSelect==='function') updateFolderSelect();
   if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,80);
 };
 window.wgDeleteFolder = function(fid){
@@ -70,7 +70,7 @@ window.wgDeleteFolder = function(fid){
     saveActiveFolder();
     updateActiveLabel();
   }
-  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,50);
+  if(typeof updateFolderSelect==='function') updateFolderSelect();
   if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,80);
 };
 window.wgSetActiveFolder = function(fid){
@@ -78,7 +78,7 @@ window.wgSetActiveFolder = function(fid){
   var f=allFolders.find(function(x){return x.id===fid;});
   if(f){ activeFolderId=f.id; saveActiveFolder(); updateActiveLabel(); }
   if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,80);
-  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,100);
+  if(typeof updateFolderSelect==='function') updateFolderSelect();
 };
 window.getFolderNameSafe = getFolderName;
 window.getCurrentFilterFolderId = function(){ return filterFolderId; };
@@ -93,7 +93,7 @@ window.wgCreateAndActivateFolder = function(name){
   if(!f) return null;
   activeFolderId = f.id;
   if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,10);
-  if(typeof updateFolderSelect==='function') setTimeout(updateFolderSelect,80);
+  if(typeof updateFolderSelect==='function') updateFolderSelect();
   saveFolders();
   if(typeof updateActiveFolderBar === 'function') updateActiveFolderBar();
   if(typeof renderFolderChips === 'function') renderFolderChips();
