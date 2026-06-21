@@ -598,6 +598,7 @@ function initFolders(){
     updateActiveFolderBar();
     renderFolderChips();
     renderBlistMain();
+    if(typeof updateFolderSelect==='function') updateFolderSelect();
   }, 400);
 }
 
