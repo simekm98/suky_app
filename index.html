@@ -2131,6 +2131,8 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
     var nml=parseInt(prefs.fftNModesLong)||1;
     var nmb=parseInt(prefs.fftNModesBend)||1;
     if(window.wgApplyFftDefaultType) window.wgApplyFftDefaultType(prefs.fftDefaultType, {long:nml,bend:nmb});
+    updateWoodProductLabels();
+    if(window.wgSchedDraw) window.wgSchedDraw();
   });
 });
 ['set-length-unit','set-mass-unit'].forEach(function(id){
