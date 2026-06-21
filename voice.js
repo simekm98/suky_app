@@ -622,10 +622,11 @@ function findSelectFolderCommand(text){
 
 // ── Druh dřeva hlasem: "smrk", "buk", "borovice", "modřín" (i kódy SM/BK/BO/MD) ──
 var WOOD_VOICE_MAP = {
-  'smrk':'SM','sm':'SM',
-  'buk':'BK','bk':'BK',
-  'borovice':'BO','borovici':'BO','bo':'BO',
-  'modřín':'MD','modrin':'MD','md':'MD'
+  'smrk':'SM',
+  'buk':'BK',
+  'borovice':'BO','borovici':'BO',
+  'modřín':'MD','modrin':'MD',
+  'dub':'DB','dubovi':'DB','dubovi':'DB'
 };
 function findWoodSpeciesCommand(text){
   var t = text.toLowerCase();
