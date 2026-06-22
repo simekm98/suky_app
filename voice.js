@@ -1413,7 +1413,7 @@ function writeValue(field, value, kind){
       el.dispatchEvent(new Event('change', {bubbles:true}));
       dlog('✅ input#'+field+'.value nyní = "'+el.value+'"','ok');
       // Pro ID pole — zkontrolovat duplicitu ihned
-      if(field==='cid' && typeof checkCidDuplicate==='function') checkCidDuplicate(el.value);
+      if(field==='cid' && typeof checkCidDuplicate==='function') checkCidDuplicate(el.value, true); // okamžitě
       // Potvrdit zápis zvukem a overlay (jen pokud není duplicita)
       var fldLbl = FIELD_LABELS[field] || field;
       var dispV = (field==='cid') ? String(el.value).toUpperCase() : el.value;
