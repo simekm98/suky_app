@@ -1491,7 +1491,8 @@ function newBoard(skipConfirm){
     if(dupInFolder){
       showErrorOverlay('ID již existuje', newId);
       beepDouble();
-      return; // Návrat bez uložení — uživatel opraví ID
+      window._newBoardFailed = true; // Signal pro voice.js
+      return false; // Signalizovat selhání
     }
   }
   allBoards.push({id:newId,b:getB(),d:getD(),folderId:newFid,fft:pendFft,
