@@ -9,6 +9,8 @@
 var recognition = null;
 var sessionActive = false;
 var manualInputActive = false; // uživatel právě píše ručně — ignorovat recognition výsledky
+var pendingFftFreqL = null; // Čekající podélná frekvence (combo mode)
+var pendingFftFreqB = null; // Čekající ohybová frekvence (combo mode)
 var currentGen = 0;
 var voicePhase = 'idle';
 var lastField = null;   // pro možnost vrácení "zpět"
@@ -1077,8 +1079,7 @@ function processCommand(transcript, gen){
     dlog('✓ vytvářím složku: "'+folderName+'"','ok');
     var fid = window.wgCreateAndActivateFolder ? window.wgCreateAndActivateFolder(folderName) : null;
     if(fid){
-      showConfirmOverlay('Složka', folderName);
-      beepOk();
+      beepOk(); // Bez overlay — název se zapíše graficky do UI
     } else {
       dlog('❌ vytvoření složky selhalo','err');
       beepErr();
@@ -1101,7 +1102,7 @@ function processCommand(transcript, gen){
     if(name2){
       dlog('✓ vytvářím složku: "'+name2+'"','ok');
       var fid2 = window.wgCreateAndActivateFolder ? window.wgCreateAndActivateFolder(name2) : null;
-      if(fid2){ showConfirmOverlay('Složka', name2); beepOk(); }
+      if(fid2){ beepOk(); }
       else { beepErr(); showVoiceToast('Nepodařilo se vytvořit složku'); }
     }
     if(sessionActive) continueOrRefresh(gen);
@@ -1146,7 +1147,12 @@ function processCommand(transcript, gen){
   }
   // Povel uložit → uložit FFT a vrátit se
   var tLow = transcript.toLowerCase();
-  if(tLow.indexOf('uložit')>=0 || tLow.indexOf('ulozit')>=0 || tLow.indexOf('uložit')>=0){
+  if(tLow.indexOf('uložit')>=0 || tLow.indexOf('ulozit')>=0){
+    // Pokud jsou pending combo frekvence, uložit je nejdřív
+    if(pendingFftFreqL || pendingFftFreqB){
+      if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(pendingFftFreqL, pendingFftFreqB);
+      pendingFftFreqL = null; pendingFftFreqB = null;
+    }
     if(window.wgFFTSave){ window.wgFFTSave(); }
     showConfirmOverlay('Uloženo', '✓ návrat');
     beepOk();
@@ -1156,11 +1162,32 @@ function processCommand(transcript, gen){
   // Manuální frekvence: "podél 877", "ohyb 22
   var manualFreq = findManualFreqCommand(transcript);
   if(manualFreq && (manualFreq.freqL || manualFreq.freqB)){
-    if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(manualFreq.freqL, manualFreq.freqB);
-    var lbl=(manualFreq.freqL?'podél '+manualFreq.freqL+' Hz ':'')+(manualFreq.freqB?'ohyb '+manualFreq.freqB+' Hz':'');
-    dlog('✓ manuální frekvence: '+lbl,'ok');
-    showConfirmOverlay(lbl.trim(), '✓ zapsáno');
-    beepOk();
+    // Detekovat combo mode z nastavení
+    var isCombo = false;
+    try{ var pr=JSON.parse(localStorage.getItem('wg26_prefs')||'{}'); isCombo=(pr.fftDefaultType==='combo'); }catch(e){}
+    if(isCombo){
+      // Combo: akumulovat frekvence, uložit až jsou obě
+      if(manualFreq.freqL) pendingFftFreqL = manualFreq.freqL;
+      if(manualFreq.freqB) pendingFftFreqB = manualFreq.freqB;
+      var lblPending = (pendingFftFreqL?'podél '+pendingFftFreqL+' Hz ':'')+(pendingFftFreqB?'ohyb '+pendingFftFreqB+' Hz':'');
+      showConfirmOverlay(lblPending.trim(), pendingFftFreqL&&pendingFftFreqB?'✓ obě':'čekám…');
+      beepOk();
+      if(pendingFftFreqL && pendingFftFreqB){
+        // Máme obě — uložit
+        if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(pendingFftFreqL, pendingFftFreqB);
+        pendingFftFreqL = null; pendingFftFreqB = null;
+        // Auto-save a návrat
+        setTimeout(function(){
+          if(window.wgFFTSave) window.wgFFTSave();
+        }, 800);
+      }
+    } else {
+      // Jednoduchý mode — uložit rovnou
+      if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(manualFreq.freqL, manualFreq.freqB);
+      var lbl=(manualFreq.freqL?'podél '+manualFreq.freqL+' Hz ':'')+(manualFreq.freqB?'ohyb '+manualFreq.freqB+' Hz':'');
+      showConfirmOverlay(lbl.trim(), '✓ zapsáno');
+      beepOk();
+    }
     if(sessionActive) continueOrRefresh(gen);
     return;
   }
