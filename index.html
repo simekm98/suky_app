@@ -2425,6 +2425,11 @@ window.wgSetWoodSpecies = function(code){
   var valid = WOOD_OPTIONS.find(function(o){ return o.value===code; });
   if(!valid) return false;
   var p = loadAppPrefs(); p.woodSpecies = code; saveAppPrefs(p);
+  // Přímá aktualizace selectu v buňce
+  var ws = document.getElementById('active-wood-select');
+  if(ws){ ws.value = code; }
+  var setWs = document.getElementById('set-wood-species');
+  if(setWs){ setWs.value = code; }
   updateWoodProductLabels();
   return true;
 };
@@ -2432,6 +2437,11 @@ window.wgSetProductType = function(code){
   var valid = PRODUCT_OPTIONS.find(function(o){ return o.value===code; });
   if(!valid) return false;
   var p = loadAppPrefs(); p.productType = code; saveAppPrefs(p);
+  // Přímá aktualizace selectu v buňce
+  var ps = document.getElementById('active-product-select');
+  if(ps){ ps.value = code; }
+  var setPt = document.getElementById('set-product-type');
+  if(setPt){ setPt.value = code; }
   updateWoodProductLabels();
   if(window.wgSchedDraw) window.wgSchedDraw();
   return true;
