@@ -463,7 +463,35 @@ document.addEventListener('click',function(e){
     if(isBulkMove){
       var ids3 = Object.keys(selectedBoardIndices).map(Number);
       var boards3 = getBoards();
-      ids3.forEach(function(idx){ if(boards3[idx]) boards3[idx].folderId = fid; });
+      var folderName3 = getFolderName(fid);
+      // Najít duplicitní ID v cílové složce
+      var movedCount = 0, skippedCount = 0, renamedCount = 0;
+      ids3.forEach(function(idx){
+        var bd = boards3[idx];
+        if(!bd) return;
+        var dup = boards3.find(function(b,bi){ return bi!==idx && b.folderId===fid && b.id===bd.id; });
+        if(dup){
+          // Nabídnout: přejmenovat nebo přeskočit
+          var choice = confirm('Deska "'+bd.id+'" již ve složce "'+folderName3+'" existuje. OK = Přejmenovat (_2), Zrušit = Přeskočit');
+          if(choice){
+            // Přejmenovat
+            var baseId = bd.id.replace(/_\d+$/,'');
+            var suffix = 2;
+            var newId = baseId+'_'+suffix;
+            while(boards3.find(function(b){ return b.folderId===fid && b.id===newId; })){
+              suffix++; newId = baseId+'_'+suffix;
+            }
+            bd.id = newId;
+            bd.folderId = fid;
+            renamedCount++;
+          } else {
+            skippedCount++;
+          }
+        } else {
+          bd.folderId = fid;
+          movedCount++;
+        }
+      });
       if(window.wgSave) window.wgSave();
       modalEl.removeAttribute('data-bulk-move');
       selectedBoardIndices = {};
@@ -471,7 +499,10 @@ document.addEventListener('click',function(e){
       closeFolderModal();
       renderBlistMain();
       renderFolderChips();
-      showToast(ids3.length+' desek přesunuto do "'+getFolderName(fid)+'"');
+      var msg = movedCount+' přesunuto';
+      if(renamedCount) msg += ', '+renamedCount+' přejmenováno';
+      if(skippedCount) msg += ', '+skippedCount+' přeskočeno';
+      showToast(msg+' → "'+folderName3+'"');
       return;
     }
     activeFolderId = fid;
