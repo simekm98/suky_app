@@ -759,8 +759,11 @@ function executeAction(action){
       // Nepřerušovat session — pokračovat v nahrávání
       return;
     } else if(action === 'newboard'){
+      window._newBoardFailed = false;
       if(window.wgNewBoard) window.wgNewBoard();
       else { var btn2 = document.getElementById('btn-new'); if(btn2) btn2.click(); }
+      // Pokud newBoard selhalo (duplicitní ID), nepřidávat zelené overlay
+      if(window._newBoardFailed) return;
       return;
     }
   } catch(err){
@@ -810,9 +813,12 @@ function startVoiceSession(){
       showVoiceToast(errMsg || 'Mikrofon nedostupný');
       return;
     }
-    beepOk();
+    // Nespouštět beepOk hned — může selhat pokud AudioContext není ready na iOS
+    // Spustit recognition cycle přímo
     startSessionHeartbeat(cycleGeneration);
     runRecognitionCycle(cycleGeneration);
+    // Beep s krátkým zpožděním
+    setTimeout(function(){ try{ beepOk(); }catch(e){} }, 100);
   });
 }
 
@@ -1289,7 +1295,10 @@ function processCommand(transcript, gen){
   var actionCmd = findActionCommand(transcript);
   if(actionCmd){
     dlog('✓ akce: '+actionCmd.label,'ok');
+    window._newBoardFailed = false;
     executeAction(actionCmd.action);
+    // Nepokračovat pokud akce selhala (např. duplicitní ID)
+    if(window._newBoardFailed) return;
     showConfirmOverlay(actionCmd.label, '✓ provedeno');
     beepOk();
     // Mikrofon pokračuje
