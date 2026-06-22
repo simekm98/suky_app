@@ -92,11 +92,12 @@ window.wgCreateAndActivateFolder = function(name){
   var f = createFolder(name);
   if(!f) return null;
   activeFolderId = f.id;
-  if(typeof updateBlinkStates==='function') setTimeout(updateBlinkStates,10);
-  if(typeof updateFolderSelect==='function') updateFolderSelect();
   saveFolders();
-  if(typeof updateActiveFolderBar === 'function') updateActiveFolderBar();
+  saveActiveFolder();
+  updateActiveFolderBar(); // Okamžitě zobrazit název na hlavní straně
+  if(typeof updateFolderSelect==='function') updateFolderSelect();
   if(typeof renderFolderChips === 'function') renderFolderChips();
+  if(typeof updateBlinkStates==='function') updateBlinkStates();
   return f.id;
 };
 window.renderFolderChipsGlobal = renderFolderChips;
