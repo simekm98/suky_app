@@ -4082,5 +4082,42 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   </div>
 </div>
 
+<script>
+// ── Wake Lock — zabraňuje zamčení displeje ──────────────────────────────────
+var wakeLock = null;
+async function requestWakeLock(){
+  // Screen Wake Lock API (Chrome/Android)
+  if('wakeLock' in navigator){
+    try{
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release',function(){ wakeLock=null; });
+      return;
+    }catch(e){}
+  }
+  // iOS fallback: přehrávat tichý prázdný video loop
+  var v=document.getElementById('wakelock-video');
+  if(!v){
+    v=document.createElement('video');
+    v.id='wakelock-video';
+    v.setAttribute('playsinline','');
+    v.setAttribute('muted','');
+    v.setAttribute('loop','');
+    v.style.display='none';
+    // 1×1 px prázdné mp4 (base64)
+    v.src='data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAG21kYXQAAAGzABAHAAABthADAowdbb9/AAAC6W1vb3YAAABsbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAAAAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAIVdHJhawAAAFx0a2hkAAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAABAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAQAAAAoAAAAFgAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAAkAAAAAQABAAAAAAGNbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAAoAAAAAgBVxAAAAAAALWhkbHIAAAAAAAAAAHNvdW4AAAAAAAAAAAAAAAAlU291bmRIYW5kbGVyAAAAAThtaW5mAAAAEHNtaGQAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAQBzdGJsAAAAZHN0c2QAAAAAAAAAAQAAAFRtcDRhAAAAAAAAAAABAAAAAAAAAAAAAgAgAAAAAoAAAAFgAAAAAAxlc2RzAAAAAAOAgIAiAAIABICAgBRAFAAAAAADDUAAAAGQAASAgIACEgYAAAAYc3R0cwAAAAAAAAABAAAAAgAABAAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAIAAAABAAAAFHN0c3oAAAAAAAAAEwAAAAIAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTMuMjQuMg==';
+    document.body.appendChild(v);
+  }
+  v.play().catch(function(){});
+}
+// Spustit wake lock při prvním user gesture
+document.addEventListener('click',function wlStart(){
+  requestWakeLock();
+  document.removeEventListener('click',wlStart);
+},{once:true,passive:true});
+// Obnovit po visibility change (tab/app se vrátí do popředí)
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible' && !wakeLock) requestWakeLock();
+});
+</script>
 </body>
 </html>
