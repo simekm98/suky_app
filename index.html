@@ -2522,19 +2522,24 @@ function beepDouble(){
 }
 // ── Kontrola duplicitního ID při zadávání ────────────────────────────────────
 var _cidDupTimer = null;
-function checkCidDuplicate(val){
-  if(_cidDupTimer) clearTimeout(_cidDupTimer);
-  _cidDupTimer = setTimeout(function(){
+function checkCidDuplicate(val, immediate){
+  // immediate=true = bez debounce (pro hlasový vstup)
+  if(_cidDupTimer){ clearTimeout(_cidDupTimer); _cidDupTimer=null; }
+  function doCheck(){
     var v = val.trim().toUpperCase();
     if(!v || v === '?') return;
     var fid = window.getFolderActivId ? window.getFolderActivId() : null;
-    if(!fid) return; // Bez složky nekontrolujeme
-    var dup = allBoards.find(function(bd){ return bd.folderId===fid && bd.id===v; });
+    // Hledat duplicitu — pokud je složka, jen ve složce; jinak globálně
+    var dup = fid
+      ? allBoards.find(function(bd){ return bd.folderId===fid && bd.id===v; })
+      : allBoards.find(function(bd){ return bd.id===v; });
     if(dup){
       showErrorOverlay('ID existuje', v);
       beepDouble();
     }
-  }, 600); // 600ms debounce — upozornit po pauze psaní
+  }
+  if(immediate){ doCheck(); }
+  else { _cidDupTimer = setTimeout(doCheck, 350); }
 }
 window.wgAddKnot = function(){ addKnot(); };
 // Smazat všechna pole jedné plochy
