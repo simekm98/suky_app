@@ -1413,7 +1413,9 @@ function undoLastValue(){
 function showConfirmOverlay(label, value){
   var el = document.getElementById('voice-confirm-overlay');
   if(!el) return;
-  el.textContent = label + ': ' + value;
+  // ID pole — zobrazit hodnotu velkými písmeny
+  var dispVal = (label==='id' || label==='ID') ? String(value).toUpperCase() : value;
+  el.textContent = label + ': ' + dispVal;
   el.classList.add('show');
   if(confirmOverlayTimer) clearTimeout(confirmOverlayTimer);
   confirmOverlayTimer = setTimeout(function(){
