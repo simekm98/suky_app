@@ -1148,7 +1148,15 @@ function processCommand(transcript, gen){
   // Povel uložit → uložit FFT a vrátit se
   var tLow = transcript.toLowerCase();
   if(tLow.indexOf('uložit')>=0 || tLow.indexOf('ulozit')>=0){
-    // Pokud jsou pending combo frekvence, uložit je nejdřív
+    // Combo mode: kontrola že jsou zadány obě frekvence
+    var isComboNow = false;
+    try{ var prC=JSON.parse(localStorage.getItem('wg26_prefs')||'{}'); isComboNow=(prC.fftDefaultType==='combo'); }catch(e){}
+    if(isComboNow && !(pendingFftFreqL && pendingFftFreqB)){
+      showConfirmOverlay('Chybí '+(pendingFftFreqL?'ohyb':'podél'), '!');
+      beepErr();
+      if(sessionActive) continueOrRefresh(gen);
+      return;
+    }
     if(pendingFftFreqL || pendingFftFreqB){
       if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(pendingFftFreqL, pendingFftFreqB);
       pendingFftFreqL = null; pendingFftFreqB = null;
@@ -1404,9 +1412,12 @@ function writeValue(field, value, kind){
       el.dispatchEvent(new Event('input', {bubbles:true}));
       el.dispatchEvent(new Event('change', {bubbles:true}));
       dlog('✅ input#'+field+'.value nyní = "'+el.value+'"','ok');
-      // Potvrdit zápis zvukem a overlay
+      // Pro ID pole — zkontrolovat duplicitu ihned
+      if(field==='cid' && typeof checkCidDuplicate==='function') checkCidDuplicate(el.value);
+      // Potvrdit zápis zvukem a overlay (jen pokud není duplicita)
       var fldLbl = FIELD_LABELS[field] || field;
-      showConfirmOverlay(fldLbl, el.value);
+      var dispV = (field==='cid') ? String(el.value).toUpperCase() : el.value;
+      showConfirmOverlay(fldLbl, dispV);
       beepOk();
       // Scroll na aktivní pole při hlasovém zadávání
       if(window.wgScrollToField) window.wgScrollToField(field);
