@@ -806,20 +806,25 @@ function startVoiceSession(){
   successfulCyclesCount = 0;
   updateVoiceUI('requesting','Připravuji mikrofon…');
 
-  requestMicPermission(function(granted, errMsg){
-    if(!granted){
-      sessionActive = false;
-      updateVoiceUI('idle','');
-      showVoiceToast(errMsg || 'Mikrofon nedostupný');
-      return;
-    }
-    // Nespouštět beepOk hned — může selhat pokud AudioContext není ready na iOS
-    // Spustit recognition cycle přímo
+  if(micPermissionGranted){
+    // Permission již udělena — spustit rovnou bez dialogu
     startSessionHeartbeat(cycleGeneration);
     runRecognitionCycle(cycleGeneration);
-    // Beep s krátkým zpožděním
     setTimeout(function(){ try{ beepOk(); }catch(e){} }, 100);
-  });
+  } else {
+    // První spuštění — vyžádat permission (zobrazí systémový dialog)
+    requestMicPermission(function(granted, errMsg){
+      if(!granted){
+        sessionActive = false;
+        updateVoiceUI('idle','');
+        showVoiceToast(errMsg || 'Mikrofon nedostupný');
+        return;
+      }
+      startSessionHeartbeat(cycleGeneration);
+      runRecognitionCycle(cycleGeneration);
+      setTimeout(function(){ try{ beepOk(); }catch(e){} }, 100);
+    });
+  }
 }
 
 function stopVoiceSession(){
@@ -1480,6 +1485,17 @@ window.wgVoiceRestartAfterFft = function(){
 };
 
 function initVoice(){
+  // Vyžádat permission mikrofonu hned při startu (první a jediné vyžádání)
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true})
+      .then(function(stream){
+        micPermissionGranted = true;
+        micStreamCached = stream;
+      })
+      .catch(function(){
+        // Uživatel odmítl nebo není dostupný — oznámíme až při prvním pokusu
+      });
+  }
   document.addEventListener('click', function(e){
     // Hlasová session NEukončuje při běžné navigaci (seznam desek, nastavení,
     // metodika) — funguje napříč celou appkou. Ukončuje se jen explicitně
