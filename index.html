@@ -296,7 +296,7 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
     <div class="card">
       <!-- Řádek 1: ID + Hmotnost -->
       <div class="frow" style="margin-bottom:8px;align-items:center">
-        <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates()"></div>
+        <div class="fld" style="flex:1.4;min-width:0"><label style="font-weight:800;color:#1A1A18">ID</label><input id="cid" value="" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" style="font-weight:800;font-size:15px;box-shadow:inset 0 0 0 3px #1A1A18;border:1.5px solid #1A1A18;border-radius:var(--rads);text-transform:uppercase" oninput="this.classList.toggle('blink-empty',!this.value.trim());document.getElementById('active-folder-label')&&updateBlinkStates&&updateBlinkStates();checkCidDuplicate(this.value);"></div>
         <div class="fld opt-field" data-opt="mass"><label id="lbl-p-mass">Hmotnost</label><input id="p-mass" type="text" min="0" inputmode="decimal" placeholder="—" autocomplete="off"></div>
         <div class="fld opt-field" data-opt="moisture" style="flex:.8;min-width:0"><label style="white-space:nowrap">Vlhk. (%)</label><input id="p-moist" type="text" min="0" max="100" step="0.1" inputmode="decimal" placeholder="—" autocomplete="off"></div>
       </div>
@@ -2509,6 +2509,22 @@ function beepDouble(){
       o.start(); o.stop(ctx.currentTime+0.25);
     }, delay);
   });
+}
+// ── Kontrola duplicitního ID při zadávání ────────────────────────────────────
+var _cidDupTimer = null;
+function checkCidDuplicate(val){
+  if(_cidDupTimer) clearTimeout(_cidDupTimer);
+  _cidDupTimer = setTimeout(function(){
+    var v = val.trim().toUpperCase();
+    if(!v || v === '?') return;
+    var fid = window.getFolderActivId ? window.getFolderActivId() : null;
+    if(!fid) return; // Bez složky nekontrolujeme
+    var dup = allBoards.find(function(bd){ return bd.folderId===fid && bd.id===v; });
+    if(dup){
+      showErrorOverlay('ID existuje', v);
+      beepDouble();
+    }
+  }, 600); // 600ms debounce — upozornit po pauze psaní
 }
 window.wgAddKnot = function(){ addKnot(); };
 // Smazat všechna pole jedné plochy
