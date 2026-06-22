@@ -226,6 +226,8 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
 #voice-status{display:none;position:fixed;bottom:148px;right:16px;left:16px;background:var(--g9);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;text-align:center;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.25);line-height:1.5}
 #voice-confirm-overlay{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);background:rgba(39,174,96,.96);color:#fff;padding:36px 48px;border-radius:28px;font-size:38px;font-weight:900;z-index:300;box-shadow:0 12px 50px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;text-align:center;max-width:90vw;min-width:220px}
 #voice-confirm-overlay.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#voice-error-overlay{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);background:rgba(192,57,43,.96);color:#fff;padding:36px 48px;border-radius:28px;font-size:38px;font-weight:900;z-index:301;box-shadow:0 12px 50px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;text-align:center;max-width:90vw;min-width:220px}
+#voice-error-overlay.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #voice-debug{display:none;position:fixed;top:60px;left:8px;right:8px;max-height:40dvh;overflow-y:auto;background:rgba(0,0,0,.92);color:#0f0;border-radius:10px;padding:10px 12px;font-size:11px;font-family:monospace;z-index:160;line-height:1.6;white-space:pre-wrap}
 #voice-debug.show{display:block}
 #voice-debug .err{color:#ff6b6b}
@@ -660,6 +662,7 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
 <!-- Hlasové ovládání -->
 <div id="voice-status"></div>
 <div id="voice-confirm-overlay"></div>
+<div id="voice-error-overlay"></div>
 <div id="voice-debug"></div>
 
 <!-- Generický picker pro výběr dřeva/produktu -->
@@ -1486,10 +1489,9 @@ function newBoard(skipConfirm){
   if(newFid && newId && newId!=='?'){
     var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
     if(dupInFolder){
-      var renamed=prompt('Deska s ID "'+newId+'" v této složce již existuje. Zadejte nové ID:',newId+'_2');
-      if(!renamed||!renamed.trim()){ toast('Uložení zrušeno — duplicitní ID'); return; }
-      document.getElementById('cid').value=renamed.trim();
-      newId=renamed.trim();
+      showErrorOverlay('ID již existuje', newId);
+      beepDouble();
+      return; // Návrat bez uložení — uživatel opraví ID
     }
   }
   allBoards.push({id:newId,b:getB(),d:getD(),folderId:newFid,fft:pendFft,
@@ -2482,6 +2484,30 @@ window.wgScrollToField = function(fieldId){
   if(!el) return;
   el.scrollIntoView({behavior:'smooth', block:'center'});
 };
+// ── Červené chybové overlay ────────────────────────────────────────────────
+var errorOverlayTimer = null;
+function showErrorOverlay(label, value){
+  var el = document.getElementById('voice-error-overlay');
+  if(!el) return;
+  el.textContent = label + ': ' + value;
+  el.classList.add('show');
+  if(errorOverlayTimer) clearTimeout(errorOverlayTimer);
+  errorOverlayTimer = setTimeout(function(){ el.classList.remove('show'); }, 2500);
+}
+// ── Dvojitý chybový zvuk ─────────────────────────────────────────────────────
+function beepDouble(){
+  var ctx = getAudioCtx();
+  if(!ctx) return;
+  [0, 350].forEach(function(delay){
+    setTimeout(function(){
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.frequency.value=320; g.gain.value=0.4;
+      g.gain.setTargetAtTime(0,ctx.currentTime+0.18,0.05);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime+0.25);
+    }, delay);
+  });
+}
 window.wgAddKnot = function(){ addKnot(); };
 // Smazat všechna pole jedné plochy
 window.wgClearFace = function(face){
