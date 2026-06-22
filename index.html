@@ -1480,7 +1480,19 @@ function newBoard(skipConfirm){
   }
   var ex=getBoardExtra();
   var pendFft=window.wgPendingFft||null;window.wgPendingFft=null;
-  allBoards.push({id:getId(),b:getB(),d:getD(),folderId:window.getFolderActivId?window.getFolderActivId():null,fft:pendFft,
+  var newId=getId();
+  var newFid=window.getFolderActivId?window.getFolderActivId():null;
+  // Kontrola duplicitního ID ve stejné složce
+  if(newFid && newId && newId!=='?'){
+    var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
+    if(dupInFolder){
+      var renamed=prompt('Deska s ID "'+newId+'" v této složce již existuje. Zadejte nové ID:',newId+'_2');
+      if(!renamed||!renamed.trim()){ toast('Uložení zrušeno — duplicitní ID'); return; }
+      document.getElementById('cid').value=renamed.trim();
+      newId=renamed.trim();
+    }
+  }
+  allBoards.push({id:newId,b:getB(),d:getD(),folderId:newFid,fft:pendFft,
     length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,
     trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
     odklon:ex.odklon,letokruh:ex.letokruh,zakriveni:ex.zakriveni,dren:ex.dren,hmyz:ex.hmyz,
