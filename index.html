@@ -2476,7 +2476,8 @@ window.wgNewBoard = function(){
     showScreen('s-entry');
     return;
   }
-  newBoard(true);
+  var result = newBoard(true);
+  if(result === false) window._newBoardFailed = true;
 }; // hlasové volání — vždy skipConfirm
 
 // ── Scroll na pole při hlasovém zadávání ────────────────────────────────────
