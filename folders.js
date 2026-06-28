@@ -88,6 +88,9 @@ window.wgCreateFolderByName = function(name){
   return f ? f.id : null;
 };
 // Vytvoří složku A NASTAVÍ ji jako aktivní (pro hlasové vytvoření složky)
+function saveActiveFolder(){
+  try{ localStorage.setItem('wg26_active_folder', activeFolderId||''); }catch(e){}
+}
 window.wgCreateAndActivateFolder = function(name){
   var f = createFolder(name);
   if(!f) return null;
