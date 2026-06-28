@@ -552,6 +552,19 @@ document.addEventListener('click',function(e){
       renderBlistMain();
     }
   }
+  else if(act==='bulkselectall'){
+    // Vybrat všechny desky v aktivní složce (nebo všechny pokud není filtr)
+    var allBds2 = window.wgGetAllBoards ? window.wgGetAllBoards() : [];
+    var fid2 = window.getFolderActivId ? window.getFolderActivId() : null;
+    allBds2.forEach(function(bd,i){
+      if(!fid2 || bd.folderId===fid2) selectedBoardIndices[i]=true;
+    });
+    var count2 = Object.keys(selectedBoardIndices).length;
+    var bar2 = document.getElementById('bulk-bar');
+    if(bar2){ var sp=bar2.querySelector('span'); if(sp) sp.textContent='Vybráno: '+count2; }
+    renderBlistMain();
+    return;
+  }
   else if(act==='togglesetectmode'){
     toggleSelectMode();
   }
