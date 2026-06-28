@@ -460,6 +460,7 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
     <button class="tbtn" id="btn-back">‹</button>
     <h1>Desky</h1>
     <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="padding:8px 12px" title="Vybrat"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="14" height="14" rx="3"/><polyline points="5,9 7.5,12 13,6"/></svg></button>
+    <label class="tbtn light" style="padding:8px 10px;cursor:pointer" title="Import Excel"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg><input type="file" id="import-xlsx-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFileInput(this)"></label>
     <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="padding:8px 12px" title="Nová složka"><svg width="20" height="18" viewBox="0 0 20 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z"/><line x1="10" y1="8" x2="10" y2="14"/><line x1="7" y1="11" x2="13" y2="11"/></svg></button>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
@@ -636,9 +637,6 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       <button onclick="exportBackup()" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">⬇ Záloha</button>
       <label style="flex:1;padding:8px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
         ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
-      </label>
-      <label style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
-        ⬆ Excel<input type="file" id="import-xlsx-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFileInput(this)">
       </label>
       <button id="cloud-toggle" data-act="togglecloud" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">☁ Cloud</button>
     </div>
@@ -4237,18 +4235,22 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 
 // ── Import Excel/CSV s libovolnými sloupci ────────────────────────────────────
 window.handleImportFileInput = function(input){
+  alert('START import');
   var file = input.files[0];
-  if(!file){ toast('Žádný soubor'); return; }
-  toast('Načítám: '+file.name+'…');
-  if(typeof XLSX === 'undefined'){ toast('Chyba: XLSX knihovna není načtena'); return; }
+  if(!file){ alert('zadny soubor'); return; }
+  alert('Soubor: '+file.name+' size:'+file.size);
+  if(typeof XLSX === 'undefined'){ alert('XLSX chybi'); return; }
   var reader = new FileReader();
-  reader.onerror = function(){ toast('Chyba čtení souboru'); };
+  reader.onerror = function(){ alert('chyba cteni'); };
   reader.onload = function(e){
     try{
+      alert('onload fired, size:'+e.target.result.byteLength);
       var data = new Uint8Array(e.target.result);
       var wb = XLSX.read(data, {type:'array'});
+      alert('wb sheets:'+wb.SheetNames.join(','));
       var ws = wb.Sheets[wb.SheetNames[0]];
       var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      alert('rows:'+rows.length+' hdrs:'+JSON.stringify(rows[0]));
       if(!rows || rows.length < 2){ alert('Import: prázdný soubor'); return; }
 
       // Mapování názvů sloupců → pole desky
