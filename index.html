@@ -2562,19 +2562,24 @@ function checkCidDuplicate(val, immediate){
       if(bd.id===v && (fid ? bd.folderId===fid : true)){ if(dupIdx===-1){ dupIdx=i; dupBd=bd; } }
     });
     if(dupBd){
-      // Zjistit zda má deska prázdné parametry (import bez dat)
+      // Deska existuje v aktivní složce — vždy nabídnout načtení
       var hasEmpty = !dupBd.length || !dupBd.b || !dupBd.mass;
-      if(hasEmpty && fid){
-        // Nabídnout načtení desky do formuláře pro doplnění
-        showErrorOverlay('ID existuje', v);
-        beepDouble();
-        setTimeout(function(){
-          if(confirm('Deska "'+v+'" existuje ('+( dupBd.length?'':'bez délky, ')+(dupBd.mass?'':'bez hmotnosti, ')+'...). Načíst pro doplnění?')){
+      if(fid){
+        if(hasEmpty){
+          // Import bez dat — načíst rovnou bez potvrzení
+          showConfirmOverlay('Načtena deska', v);
+          beepOk();
+          loadBoardIntoForm(dupBd, dupIdx);
+        } else {
+          // Deska má data — nabídnout načtení
+          showErrorOverlay('ID existuje', v);
+          beepDouble();
+          if(confirm('Deska "'+v+'" již existuje. Načíst pro úpravu?')){
             loadBoardIntoForm(dupBd, dupIdx);
           }
-        }, 800);
+        }
       } else {
-        // Deska má data — jen varovat
+        // Bez složky — jen varovat
         showErrorOverlay('ID existuje', v);
         beepDouble();
       }
