@@ -4232,6 +4232,153 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 </div>
 
 <script>
+
+// ── Import Excel/CSV s libovolnými sloupci ────────────────────────────────────
+window.handleImportFileInput = function(input){
+  var file = input.files[0];
+  if(!file){ return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if(!rows || rows.length < 2){ toast('Import: prázdný soubor'); return; }
+
+      // Mapování názvů sloupců → pole desky
+      var COL_MAP = {
+        'id':'id','board':'id','deska':'id',
+        'b':'b','b_mm':'b','šířka':'b','sirka':'b','width':'b',
+        'd':'d','d_mm':'d','výška':'d','vyska':'d','height':'d',
+        'length_mm':'length','délka':'length','delka':'length','length':'length',
+        'mass_g':'mass','hmotnost_g':'mass','hmotnost':'mass','mass':'mass','weight':'mass',
+        'mass_kg':'mass_kg', // speciální — převede kg→g
+        'moisture_%':'moisture','vlhkost':'moisture','moisture':'moisture','mc_%':'moisture',
+        'vg':'vg','vizuál':'vg','vizual':'vg',
+        'screw':'screw','kov':'screw','vrut':'screw',
+        'dren':'dren','dřeň':'dren',
+        'hmyz':'hmyz',
+        'trhlina_%':'trhlina','trhlina':'trhlina',
+        'hniloba_%':'hniloba','hniloba':'hniloba',
+        'reakcni_%':'reakcni','reakcni':'reakcni','reakční':'reakcni',
+        'oblina_%':'oblina','oblina':'oblina',
+        'odklon_%':'odklon','odklon':'odklon',
+        'letokruhy_mm':'letokruh','letokruh':'letokruh','letokruhy':'letokruh',
+        'zakriveni_mm':'zakriveni','zakřivení':'zakriveni','zakriveni':'zakriveni',
+        'f1_hz':'fft0','f1_longitudinal':'fft0',
+        'f1_bending':'fft1',
+        'složka':'folderName','slozka':'folderName','folder':'folderName',
+      };
+
+      var hdrs = rows[0].map(function(h){ return String(h).trim().toLowerCase(); });
+      var colIdx = {}; // {fieldName: colIndex}
+      hdrs.forEach(function(h,i){
+        var mapped = COL_MAP[h];
+        if(mapped && colIdx[mapped]===undefined) colIdx[mapped]=i;
+      });
+
+      if(colIdx['id']===undefined){ toast('Import: chybí sloupec ID'); return; }
+
+      // Zjistit cílovou složku
+      var fid = window.getFolderActivId ? window.getFolderActivId() : null;
+      var imported=0, skipped=0, updated=0;
+
+      // Grupovat řádky podle ID (pro suky)
+      var boardMap = {}; // id → {bd data, knots:[]}
+      for(var ri=1; ri<rows.length; ri++){
+        var row = rows[ri];
+        var id = String(row[colIdx['id']]||'').trim().toUpperCase();
+        if(!id) continue;
+
+        if(!boardMap[id]){
+          // Základní parametry desky
+          var bd = {id:id, b:'', d:'', length:'', mass:'', moisture:'', vg:'',
+                    screw:false, dren:false, hmyz:false, trhlina:'', hniloba:'',
+                    reakcni:'', oblina:'', odklon:'', letokruh:'', zakriveni:'',
+                    fft:null, knots:[], folderId:fid, savedAt:Date.now()};
+          var get = function(f){ return colIdx[f]!==undefined?row[colIdx[f]]:undefined; };
+          var num = function(v){ var n=parseFloat(String(v).replace(',','.')); return isNaN(n)?'':n; };
+          var bool = function(v){ return v&&String(v).toLowerCase().match(/^(1|ano|yes|true)$/)?true:false; };
+
+          if(get('b')!==undefined) bd.b=num(get('b'));
+          if(get('d')!==undefined) bd.d=num(get('d'));
+          if(get('length')!==undefined) bd.length=num(get('length'));
+          if(get('mass')!==undefined) bd.mass=num(get('mass'));
+          if(get('mass_kg')!==undefined && bd.mass===''){ var kg=num(get('mass_kg')); bd.mass=kg!==''?Math.round(kg*1000):''; }
+          if(get('moisture')!==undefined) bd.moisture=num(get('moisture'));
+          if(get('vg')!==undefined) bd.vg=parseInt(get('vg'))||'';
+          if(get('screw')!==undefined) bd.screw=bool(get('screw'));
+          if(get('dren')!==undefined) bd.dren=bool(get('dren'));
+          if(get('hmyz')!==undefined) bd.hmyz=bool(get('hmyz'));
+          if(get('trhlina')!==undefined) bd.trhlina=num(get('trhlina'));
+          if(get('hniloba')!==undefined) bd.hniloba=num(get('hniloba'));
+          if(get('reakcni')!==undefined) bd.reakcni=num(get('reakcni'));
+          if(get('oblina')!==undefined) bd.oblina=num(get('oblina'));
+          if(get('odklon')!==undefined) bd.odklon=num(get('odklon'));
+          if(get('letokruh')!==undefined) bd.letokruh=num(get('letokruh'));
+          if(get('zakriveni')!==undefined) bd.zakriveni=num(get('zakriveni'));
+          // FFT
+          if(get('fft0')!==undefined){ var f0=num(get('fft0')); if(f0!=='') bd.fft=[f0,null,null]; }
+          if(get('fft1')!==undefined && bd.fft){ var f1=num(get('fft1')); if(f1!=='') bd.fft[1]=f1; }
+          // Složka z dat
+          if(colIdx['folderName']!==undefined && !fid){
+            var fn=String(row[colIdx['folderName']]||'').trim();
+            if(fn){ /* najít nebo vytvořit složku */
+              var fols=window.wgGetFolders?window.wgGetFolders():[];
+              var ef=fols.find(function(f){return f.name===fn;});
+              if(ef){ bd.folderId=ef.id; }
+              else if(window.wgCreateFolder){ var nf=window.wgCreateFolder(fn); if(nf&&nf.id) bd.folderId=nf.id; }
+            }
+          }
+          boardMap[id]=bd;
+        }
+
+        // Suky — sloupce AS1,AS2 atd.
+        var hasKnot=false;
+        var knotFields=['AS1','AS2','AL1','AL2','BS1','BS2','BL1','BL2','CS1','CS2','CL1','CL2','DS1','DS2','DL1','DL2'];
+        var kn={};
+        knotFields.forEach(function(kf){
+          var hi=hdrs.indexOf(kf.toLowerCase());
+          if(hi>=0 && row[hi]!==''){ kn[kf.toLowerCase()]=parseFloat(String(row[hi]).replace(',','.'))||0; hasKnot=true; }
+        });
+        if(hasKnot) boardMap[id].knots.push(kn);
+      }
+
+      // Vložit nebo aktualizovat desky
+      Object.keys(boardMap).forEach(function(id){
+        var bd = boardMap[id];
+        var existIdx = allBoards.findIndex(function(b){ return b.id===id && (fid?b.folderId===fid:true); });
+        if(existIdx>=0){
+          // Aktualizovat existující — přepsat prázdná pole
+          var ex=allBoards[existIdx];
+          ['b','d','length','mass','moisture','vg','trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni'].forEach(function(f){
+            if(bd[f]!==''&&bd[f]!=null&&(ex[f]===''||ex[f]==null)) ex[f]=bd[f];
+          });
+          if(bd.knots.length && !ex.knots.length) ex.knots=bd.knots;
+          if(bd.fft) ex.fft=bd.fft;
+          updated++;
+        } else {
+          allBoards.push(bd);
+          imported++;
+        }
+      });
+
+      save(); renderBlist(); renderFolderChips && renderFolderChips();
+      var msg='Import: '+imported+' nových';
+      if(updated) msg+=', '+updated+' aktualizováno';
+      if(skipped) msg+=', '+skipped+' přeskočeno';
+      toast(msg+' ✓');
+      input.value='';
+    } catch(err){
+      toast('Import chyba: '+err.message);
+      console.error(err);
+      input.value='';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
 // ── Wake Lock — zabraňuje zamčení displeje ──────────────────────────────────
 var wakeLock = null;
 async function requestWakeLock(){
