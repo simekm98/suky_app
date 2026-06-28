@@ -461,7 +461,7 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
     <h1>Desky</h1>
     <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="padding:8px 12px" title="Vybrat"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="14" height="14" rx="3"/><polyline points="5,9 7.5,12 13,6"/></svg></button>
     <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="padding:8px 12px" title="Nová složka"><svg width="20" height="18" viewBox="0 0 20 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z"/><line x1="10" y1="8" x2="10" y2="14"/><line x1="7" y1="11" x2="13" y2="11"/></svg></button>
-    <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls" style="display:none" onchange="window.handleImportFileInput(this)"></label>
+    <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
   <!-- Akční lišta pro hromadné operace (zobrazí se v select módu) -->
@@ -4236,8 +4236,11 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 // ── Import Excel/CSV s libovolnými sloupci ────────────────────────────────────
 window.handleImportFileInput = function(input){
   var file = input.files[0];
-  if(!file){ return; }
+  if(!file){ toast('Žádný soubor'); return; }
+  toast('Načítám: '+file.name+'…');
+  if(typeof XLSX === 'undefined'){ toast('Chyba: XLSX knihovna není načtena'); return; }
   var reader = new FileReader();
+  reader.onerror = function(){ toast('Chyba čtení souboru'); };
   reader.onload = function(e){
     try{
       var data = new Uint8Array(e.target.result);
@@ -4245,6 +4248,7 @@ window.handleImportFileInput = function(input){
       var ws = wb.Sheets[wb.SheetNames[0]];
       var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       if(!rows || rows.length < 2){ toast('Import: prázdný soubor'); return; }
+      toast('Čtu '+rows.length+' řádků…');
 
       // Mapování názvů sloupců → pole desky
       var COL_MAP = {
