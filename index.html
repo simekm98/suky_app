@@ -2549,44 +2549,34 @@ function beepDouble(){
 // ── Kontrola duplicitního ID při zadávání ────────────────────────────────────
 var _cidDupTimer = null;
 function checkCidDuplicate(val, immediate){
-  // immediate=true = bez debounce (pro hlasový vstup)
   if(_cidDupTimer){ clearTimeout(_cidDupTimer); _cidDupTimer=null; }
   function doCheck(){
     var v = val.trim().toUpperCase();
-    if(!v || v === '?') return;
+    if(!v || v === '?' || v.length < 1) return;
     var fid = window.getFolderActivId ? window.getFolderActivId() : null;
-    // Hledat duplicitu ve složce nebo globálně
-    var dupIdx = -1;
-    var dupBd = null;
+    var dupIdx = -1, dupBd = null;
     allBoards.forEach(function(bd, i){
-      if(bd.id===v && (fid ? bd.folderId===fid : true)){ if(dupIdx===-1){ dupIdx=i; dupBd=bd; } }
+      if(bd.id===v && (fid ? bd.folderId===fid : true) && dupIdx===-1){ dupIdx=i; dupBd=bd; }
     });
-    if(dupBd){
-      // Deska existuje v aktivní složce — vždy nabídnout načtení
-      var hasEmpty = !dupBd.length || !dupBd.b || !dupBd.mass;
-      if(fid){
-        if(hasEmpty){
-          // Import bez dat — načíst rovnou bez potvrzení
-          showConfirmOverlay('Načtena deska', v);
-          beepOk();
-          loadBoardIntoForm(dupBd, dupIdx);
-        } else {
-          // Deska má data — nabídnout načtení
-          showErrorOverlay('ID existuje', v);
-          beepDouble();
-          if(confirm('Deska "'+v+'" již existuje. Načíst pro úpravu?')){
-            loadBoardIntoForm(dupBd, dupIdx);
-          }
-        }
-      } else {
-        // Bez složky — jen varovat
-        showErrorOverlay('ID existuje', v);
-        beepDouble();
-      }
-    }
+    if(!dupBd) return;
+    // Načíst desku do formuláře
+    loadBoardIntoForm(dupBd, dupIdx);
+    // Vizuální potvrzení
+    showErrorOverlay('Deska načtena', v);
+    setTimeout(function(){
+      // Překrýt červené zeleným
+      var ov=document.getElementById('voice-error-overlay');
+      if(ov){ ov.classList.remove('show'); }
+      var ov2=document.getElementById('voice-confirm-overlay');
+      if(ov2){ ov2.textContent='Načtena: '+v; ov2.classList.add('show');
+        setTimeout(function(){ ov2.classList.remove('show'); },1800); }
+    }, 400);
+    // Beep pokud dostupný
+    if(typeof beepOk==='function') beepOk();
+    else if(window.wgBeepOk) window.wgBeepOk();
   }
   if(immediate){ doCheck(); }
-  else { _cidDupTimer = setTimeout(doCheck, 350); }
+  else { _cidDupTimer = setTimeout(doCheck, 400); }
 }
 // ── Načíst desku do hlavního formuláře pro doplnění dat ──────────────────────
 function loadBoardIntoForm(bd, bi){
