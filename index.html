@@ -461,7 +461,6 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
     <h1>Desky</h1>
     <button class="tbtn light" data-act="togglesetectmode" aria-label="Vybrat" style="padding:8px 12px" title="Vybrat"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="14" height="14" rx="3"/><polyline points="5,9 7.5,12 13,6"/></svg></button>
     <button class="tbtn light" onclick="if(window.openFolderModal)window.openFolderModal()" style="padding:8px 12px" title="Nová složka"><svg width="20" height="18" viewBox="0 0 20 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z"/><line x1="10" y1="8" x2="10" y2="14"/><line x1="7" y1="11" x2="13" y2="11"/></svg></button>
-    <label class="tbtn light" aria-label="Import Excel" style="cursor:pointer">⬆<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="window.handleImportFileInput(this)"></label>
     <button class="tbtn light" data-act="openstats" aria-label="Statistiky">📊</button>
   </div>
   <!-- Akční lišta pro hromadné operace (zobrazí se v select módu) -->
@@ -637,9 +636,6 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       <button onclick="exportBackup()" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">⬇ Záloha</button>
       <label style="flex:1;padding:8px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
         ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
-      </label>
-      <label style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
-        ⬆ Excel<input type="file" id="import-xlsx-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFileInputDirect(this)">
       </label>
       <button id="cloud-toggle" data-act="togglecloud" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">☁ Cloud</button>
     </div>
@@ -4237,11 +4233,6 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 <script>
 
 // ── Import Excel/CSV s libovolnými sloupci ────────────────────────────────────
-window.handleImportFileInputDirect = function(input){
-  // Přímé volání z label input (iOS compatible)
-  alert('Soubor: '+(input.files[0]?input.files[0].name:'žádný')+' | XLSX: '+(typeof XLSX));
-  window.handleImportFileInput(input);
-};
 window.handleImportFileInput = function(input){
   var file = input.files[0];
   if(!file){ toast('Žádný soubor'); return; }
@@ -4255,8 +4246,7 @@ window.handleImportFileInput = function(input){
       var wb = XLSX.read(data, {type:'array'});
       var ws = wb.Sheets[wb.SheetNames[0]];
       var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      if(!rows || rows.length < 2){ toast('Import: prázdný soubor'); return; }
-      toast('Čtu '+rows.length+' řádků…');
+      if(!rows || rows.length < 2){ alert('Import: prázdný soubor'); return; }
 
       // Mapování názvů sloupců → pole desky
       var COL_MAP = {
@@ -4382,10 +4372,12 @@ window.handleImportFileInput = function(input){
       var msg='Import: '+imported+' nových';
       if(updated) msg+=', '+updated+' aktualizováno';
       if(skipped) msg+=', '+skipped+' přeskočeno';
-      toast(msg+' ✓');
+      // Zavřít nastavení a zobrazit výsledek
+      var ms=document.getElementById('modal-settings'); if(ms) ms.classList.remove('open');
+      setTimeout(function(){ alert(msg+' ✓'); }, 300);
       input.value='';
     } catch(err){
-      toast('Import chyba: '+err.message);
+      alert('Import chyba: '+err.message);
       console.error(err);
       input.value='';
     }
