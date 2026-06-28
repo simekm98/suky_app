@@ -2549,14 +2549,16 @@ function beepDouble(){
 // ── Kontrola duplicitního ID při zadávání ────────────────────────────────────
 var _cidDupTimer = null;
 function checkCidDuplicate(val, immediate){
+  window.checkCidDuplicate = checkCidDuplicate; // self-export
   if(_cidDupTimer){ clearTimeout(_cidDupTimer); _cidDupTimer=null; }
   function doCheck(){
     var v = val.trim().toUpperCase();
     if(!v || v === '?' || v.length < 1) return;
     var fid = window.getFolderActivId ? window.getFolderActivId() : null;
     var dupIdx = -1, dupBd = null;
+    // Hledat v allBoards BEZ omezení na složku — najít cokoliv
     allBoards.forEach(function(bd, i){
-      if(bd.id===v && (fid ? bd.folderId===fid : true) && dupIdx===-1){ dupIdx=i; dupBd=bd; }
+      if(bd.id===v && dupIdx===-1){ dupIdx=i; dupBd=bd; }
     });
     if(!dupBd) return;
     // Načíst desku do formuláře
