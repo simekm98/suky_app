@@ -638,6 +638,9 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       <label style="flex:1;padding:8px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
         ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
       </label>
+      <label style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
+        ⬆ Excel<input type="file" id="import-xlsx-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFileInputDirect(this)">
+      </label>
       <button id="cloud-toggle" data-act="togglecloud" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">☁ Cloud</button>
     </div>
     <div id="cloud-panel" style="display:none;padding:0 16px 12px">
@@ -4234,6 +4237,11 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 <script>
 
 // ── Import Excel/CSV s libovolnými sloupci ────────────────────────────────────
+window.handleImportFileInputDirect = function(input){
+  // Přímé volání z label input (iOS compatible)
+  alert('Soubor: '+(input.files[0]?input.files[0].name:'žádný')+' | XLSX: '+(typeof XLSX));
+  window.handleImportFileInput(input);
+};
 window.handleImportFileInput = function(input){
   var file = input.files[0];
   if(!file){ toast('Žádný soubor'); return; }
