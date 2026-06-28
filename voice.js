@@ -1592,6 +1592,8 @@ if(document.readyState==='loading'){
 }
 
   window.wgVoicePause = function(){ manualInputActive = true; };
+  window.wgBeepOk = function(){ try{ beepOk(); }catch(e){} };
+  window.wgBeepDouble = function(){ try{ beepDouble(); }catch(e){} };
   window.wgGetMicStream = function(){ return micStreamCached; };
   window.wgVoiceResume = function(){ manualInputActive = false; };
 
