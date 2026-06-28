@@ -468,6 +468,7 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
   <div id="select-action-bar" style="display:none;background:var(--br);padding:10px 16px;display:flex;align-items:center;gap:10px">
     <span id="select-count" style="color:#fff;font-size:13px;font-weight:600;flex:1">0 vybráno</span>
     <button data-act="bulkmoveopen" style="padding:8px 14px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">📁 Přesunout</button>
+    <button data-act="bulkselectall" style="padding:8px 14px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">☑ Vše</button>
     <button data-act="bulkdelete" style="padding:8px 14px;background:var(--rl);color:var(--rd);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">🗑 Smazat</button>
   </div>
   <div class="sbody">
@@ -1830,7 +1831,7 @@ function doExport(){
   var boards=allBoards.slice();
   if(knots.length){var ex=getBoardExtra();boards.push({id:getId(),b:getB(),d:getD(),length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,knots:knots.slice()});}
   if(!boards.length){toast('Žádná data');return;}
-  var hdrs=['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','moisture_%','VG','screw','f1_Hz','f2_Hz','f3_Hz','MOED_L_MPa','MOED_B_MPa','knot',
+  var hdrs=['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','moisture_%','VG','screw','f1_podelna_Hz','f1_ohyb_Hz','MOED_L_MPa','MOED_B_MPa','knot',
     'AS1','AS2','AL1','AL2','BS1','BS2','BL1','BL2','CS1','CS2','CL1','CL2','DS1','DS2','DL1','DL2',
     'area_mm2','a_i_mm','KAR_%','DAB','třída'];
   var rows=[];
@@ -4235,22 +4236,17 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 
 // ── Import Excel/CSV s libovolnými sloupci ────────────────────────────────────
 window.handleImportFileInput = function(input){
-  alert('START import');
   var file = input.files[0];
   if(!file){ alert('zadny soubor'); return; }
-  alert('Soubor: '+file.name+' size:'+file.size);
   if(typeof XLSX === 'undefined'){ alert('XLSX chybi'); return; }
   var reader = new FileReader();
   reader.onerror = function(){ alert('chyba cteni'); };
   reader.onload = function(e){
     try{
-      alert('onload fired, size:'+e.target.result.byteLength);
       var data = new Uint8Array(e.target.result);
       var wb = XLSX.read(data, {type:'array'});
-      alert('wb sheets:'+wb.SheetNames.join(','));
       var ws = wb.Sheets[wb.SheetNames[0]];
       var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      alert('rows:'+rows.length+' hdrs:'+JSON.stringify(rows[0]));
       if(!rows || rows.length < 2){ alert('Import: prázdný soubor'); return; }
 
       // Mapování názvů sloupců → pole desky
@@ -4354,13 +4350,14 @@ window.handleImportFileInput = function(input){
         if(hasKnot) boardMap[id].knots.push(kn);
       }
 
-      // Vložit nebo aktualizovat desky
+      // Vložit nebo aktualizovat desky přes window API
+      var allBds = window.wgGetAllBoards ? window.wgGetAllBoards() : [];
       Object.keys(boardMap).forEach(function(id){
         var bd = boardMap[id];
-        var existIdx = allBoards.findIndex(function(b){ return b.id===id && (fid?b.folderId===fid:true); });
+        var existIdx = -1;
+        allBds.forEach(function(b,i){ if(b.id===id && (fid?b.folderId===fid:true) && existIdx===-1) existIdx=i; });
         if(existIdx>=0){
-          // Aktualizovat existující — přepsat prázdná pole
-          var ex=allBoards[existIdx];
+          var ex=allBds[existIdx];
           ['b','d','length','mass','moisture','vg','trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni'].forEach(function(f){
             if(bd[f]!==''&&bd[f]!=null&&(ex[f]===''||ex[f]==null)) ex[f]=bd[f];
           });
@@ -4368,12 +4365,14 @@ window.handleImportFileInput = function(input){
           if(bd.fft) ex.fft=bd.fft;
           updated++;
         } else {
-          allBoards.push(bd);
+          allBds.push(bd);
           imported++;
         }
       });
 
-      save(); renderBlist(); renderFolderChips && renderFolderChips();
+      if(window.wgSave) window.wgSave();
+      if(window.renderBlist) renderBlist(); else if(window.renderBlistMain) renderBlistMain();
+      if(window.renderFolderChips) renderFolderChips();
       var msg='Import: '+imported+' nových';
       if(updated) msg+=', '+updated+' aktualizováno';
       if(skipped) msg+=', '+skipped+' přeskočeno';
