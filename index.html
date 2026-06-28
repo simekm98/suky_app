@@ -4252,8 +4252,9 @@ window.handleImportFileInput = function(input){
         'b':'b','b_mm':'b','šířka':'b','sirka':'b','width':'b',
         'd':'d','d_mm':'d','výška':'d','vyska':'d','height':'d',
         'length_mm':'length','délka':'length','delka':'length','length':'length',
-        'mass_g':'mass','hmotnost_g':'mass','hmotnost':'mass','mass':'mass','weight':'mass',
-        'mass_kg':'mass_kg', // speciální — převede kg→g
+        'mass_g':'mass','hmotnost_g':'mass','mass':'mass','weight':'mass',
+        'mass_kg':'mass_kg','hmotnost_kg':'mass_kg', // speciální — převede kg→g
+        'hmotnost':'mass_auto', // auto-detekce kg vs g podle hodnoty
         'moisture_%':'moisture','vlhkost':'moisture','moisture':'moisture','mc_%':'moisture',
         'vg':'vg','vizuál':'vg','vizual':'vg',
         'screw':'screw','kov':'screw','vrut':'screw',
@@ -4306,6 +4307,7 @@ window.handleImportFileInput = function(input){
           if(get('length')!==undefined) bd.length=num(get('length'));
           if(get('mass')!==undefined) bd.mass=num(get('mass'));
           if(get('mass_kg')!==undefined && bd.mass===''){ var kg=num(get('mass_kg')); bd.mass=kg!==''?Math.round(kg*1000):''; }
+          if(get('mass_auto')!==undefined && bd.mass===''){ var ma=num(get('mass_auto')); if(ma!=='') bd.mass = ma < 200 ? Math.round(ma*1000) : ma; } // <200 → kg, jinak g
           if(get('moisture')!==undefined) bd.moisture=num(get('moisture'));
           if(get('vg')!==undefined) bd.vg=parseInt(get('vg'))||'';
           if(get('screw')!==undefined) bd.screw=bool(get('screw'));
