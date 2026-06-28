@@ -1495,6 +1495,31 @@ function newBoard(skipConfirm){
       return false; // Signalizovat selhání
     }
   }
+  // Pokud editujeme importovanou desku, přepsat ji
+  var editIdx = window._editingExistingBoardIdx;
+  window._editingExistingBoardIdx = null;
+  if(editIdx!=null && editIdx>=0 && allBoards[editIdx] && allBoards[editIdx].id===newId){
+    var updBd = allBoards[editIdx];
+    updBd.b=getB(); updBd.d=getD(); updBd.folderId=newFid; updBd.fft=pendFft||updBd.fft;
+    updBd.length=parseFloat(String(document.getElementById('p-length').value).replace(',','.'))||updBd.length;
+    updBd.mass=parseFloat(String(document.getElementById('p-mass').value).replace(',','.'))||updBd.mass;
+    updBd.moisture=parseFloat(String(document.getElementById('p-moist').value).replace(',','.'))||updBd.moisture;
+    updBd.trhlina=parseFloat(String(document.getElementById('p-trhlina').value).replace(',','.'))||updBd.trhlina;
+    updBd.hniloba=parseFloat(String(document.getElementById('p-hniloba').value).replace(',','.'))||updBd.hniloba;
+    updBd.reakcni=parseFloat(String(document.getElementById('p-reakcni').value).replace(',','.'))||updBd.reakcni;
+    updBd.oblina=parseFloat(String(document.getElementById('p-oblina').value).replace(',','.'))||updBd.oblina;
+    updBd.odklon=parseFloat(String(document.getElementById('p-odklon').value).replace(',','.'))||updBd.odklon;
+    updBd.letokruh=parseFloat(String(document.getElementById('p-letokruh').value).replace(',','.'))||updBd.letokruh;
+    updBd.zakriveni=parseFloat(String(document.getElementById('p-zakriveni').value).replace(',','.'))||updBd.zakriveni;
+    updBd.vg=parseInt(document.getElementById('p-vg').value)||updBd.vg;
+    updBd.knots=knots.slice();
+    save();schedDraw();renderKlist();renderBlist();toast('Deska '+newId+' aktualizována ✓');
+    // Reset formuláře
+    ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
+    knots=[];schedDraw();renderKlist();
+    if(window.wgVoiceResume) window.wgVoiceResume();
+    return;
+  }
   allBoards.push({id:newId,b:getB(),d:getD(),folderId:newFid,fft:pendFft,
     length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,
     trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
@@ -2529,17 +2554,70 @@ function checkCidDuplicate(val, immediate){
     var v = val.trim().toUpperCase();
     if(!v || v === '?') return;
     var fid = window.getFolderActivId ? window.getFolderActivId() : null;
-    // Hledat duplicitu — pokud je složka, jen ve složce; jinak globálně
-    var dup = fid
-      ? allBoards.find(function(bd){ return bd.folderId===fid && bd.id===v; })
-      : allBoards.find(function(bd){ return bd.id===v; });
-    if(dup){
-      showErrorOverlay('ID existuje', v);
-      beepDouble();
+    // Hledat duplicitu ve složce nebo globálně
+    var dupIdx = -1;
+    var dupBd = null;
+    allBoards.forEach(function(bd, i){
+      if(bd.id===v && (fid ? bd.folderId===fid : true)){ if(dupIdx===-1){ dupIdx=i; dupBd=bd; } }
+    });
+    if(dupBd){
+      // Zjistit zda má deska prázdné parametry (import bez dat)
+      var hasEmpty = !dupBd.length || !dupBd.b || !dupBd.mass;
+      if(hasEmpty && fid){
+        // Nabídnout načtení desky do formuláře pro doplnění
+        showErrorOverlay('ID existuje', v);
+        beepDouble();
+        setTimeout(function(){
+          if(confirm('Deska "'+v+'" existuje ('+( dupBd.length?'':'bez délky, ')+(dupBd.mass?'':'bez hmotnosti, ')+'...). Načíst pro doplnění?')){
+            loadBoardIntoForm(dupBd, dupIdx);
+          }
+        }, 800);
+      } else {
+        // Deska má data — jen varovat
+        showErrorOverlay('ID existuje', v);
+        beepDouble();
+      }
     }
   }
   if(immediate){ doCheck(); }
   else { _cidDupTimer = setTimeout(doCheck, 350); }
+}
+// ── Načíst desku do hlavního formuláře pro doplnění dat ──────────────────────
+function loadBoardIntoForm(bd, bi){
+  if(!bd) return;
+  // Uložit index pro přepis při "nová deska"
+  window._editingExistingBoardIdx = bi;
+  // Formulář
+  var set = function(id, v){ var el=document.getElementById(id); if(el && v!=null && v!=='') el.value=v; };
+  set('cid', bd.id);
+  set('clen', bd.b||'');
+  set('cwid', bd.d||'');
+  set('p-length', bd.length||'');
+  set('p-mass', bd.mass||'');
+  set('p-moist', bd.moisture||'');
+  set('p-trhlina', bd.trhlina||'');
+  set('p-hniloba', bd.hniloba||'');
+  set('p-reakcni', bd.reakcni||'');
+  set('p-oblina', bd.oblina||'');
+  set('p-odklon', bd.odklon||'');
+  set('p-letokruh', bd.letokruh||'');
+  set('p-zakriveni', bd.zakriveni||'');
+  // Vizuál
+  if(bd.vg){
+    document.querySelectorAll('.vg-btn').forEach(function(b){ b.classList.toggle('sel', parseInt(b.getAttribute('data-vg'))===bd.vg); });
+    var pvg=document.getElementById('p-vg'); if(pvg) pvg.value=bd.vg;
+  }
+  // Kov/Dřeň/Hmyz
+  if(bd.screw!=null){ var cs=document.getElementById('cb-screw'); if(cs){ cs.textContent=bd.screw?'Ano':'—'; cs.setAttribute('data-v',bd.screw?'1':''); } }
+  if(bd.dren!=null){ var cd=document.getElementById('cb-dren'); if(cd){ cd.textContent=bd.dren?'Ano':'—'; cd.setAttribute('data-v',bd.dren?'1':''); } }
+  if(bd.hmyz!=null){ var ch=document.getElementById('cb-hmyz'); if(ch){ ch.textContent=bd.hmyz?'Ano':'—'; ch.setAttribute('data-v',bd.hmyz?'1':''); } }
+  // Suky
+  knots = JSON.parse(JSON.stringify(bd.knots||[]));
+  syncIcHasValue();
+  var vcnt=document.getElementById('v-cnt'); if(vcnt) vcnt.textContent=String(knots.length);
+  save(); schedDraw(); renderKlist();
+  // Scroll nahoru
+  var card=document.querySelector('.card'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
 }
 window.wgAddKnot = function(){ addKnot(); };
 // Smazat všechna pole jedné plochy
