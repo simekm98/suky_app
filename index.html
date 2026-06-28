@@ -637,6 +637,9 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       <label style="flex:1;padding:8px 4px;border:1.5px solid var(--g3);border-radius:8px;background:#fff;color:var(--g7);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
         ⬆ Obnovit<input type="file" accept=".json" id="import-file" style="display:none" onchange="importBackup(this)">
       </label>
+      <label style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer;text-align:center">
+        ⬆ Excel<input type="file" id="import-xlsx-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFileInput(this)">
+      </label>
       <button id="cloud-toggle" data-act="togglecloud" style="flex:1;padding:8px 4px;border:1.5px solid var(--brm);border-radius:8px;background:var(--brl);color:var(--br);font-size:12px;font-weight:700;cursor:pointer">☁ Cloud</button>
     </div>
     <div id="cloud-panel" style="display:none;padding:0 16px 12px">
