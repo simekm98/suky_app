@@ -2553,13 +2553,13 @@ function checkCidDuplicate(val, immediate){
   if(_cidDupTimer){ clearTimeout(_cidDupTimer); _cidDupTimer=null; }
   function doCheck(){
     var v = val.trim().toUpperCase();
+    alert('checkCid: v='+v+' allBoards='+allBoards.length);
     if(!v || v === '?' || v.length < 1) return;
-    var fid = window.getFolderActivId ? window.getFolderActivId() : null;
     var dupIdx = -1, dupBd = null;
-    // Hledat v allBoards BEZ omezení na složku — najít cokoliv
     allBoards.forEach(function(bd, i){
       if(bd.id===v && dupIdx===-1){ dupIdx=i; dupBd=bd; }
     });
+    alert('found: '+(dupBd?dupBd.id:'none')+' idx='+dupIdx);
     if(!dupBd) return;
     // Načíst desku do formuláře
     loadBoardIntoForm(dupBd, dupIdx);
