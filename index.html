@@ -449,8 +449,8 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
   </div>
   <div class="bbar">
     <button class="bmain" id="btn-add">Přidat suk</button>
-    <button class="bmain" id="btn-new" style="background:#fff;color:var(--br);border:1.5px solid var(--g3)">Nová deska</button>
-    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Vrut ano, Přidat suk, Nová deska. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="26" height="28" viewBox="0 0 26 28" fill="none" style="pointer-events:none"><rect x="8" y="1" width="10" height="15" rx="5" fill="currentColor"/><path d="M10 3.5 Q9 6 9.5 9" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M5 13 Q5 20 13 20 Q21 20 21 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="13" y1="20" x2="13" y2="24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="8" y="24" width="10" height="2.5" rx="1.25" fill="currentColor"/></svg></button>
+    <button class="bmain" id="btn-new" style="background:var(--br);color:#fff;border:none">Uložit ✓</button>
+    <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Kov ano, Přidat suk, Uložit. Řekni 'zpět' pro vrácení." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="26" height="28" viewBox="0 0 26 28" fill="none" style="pointer-events:none"><rect x="8" y="1" width="10" height="15" rx="5" fill="currentColor"/><path d="M10 3.5 Q9 6 9.5 9" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M5 13 Q5 20 13 20 Q21 20 21 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="13" y1="20" x2="13" y2="24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="8" y="24" width="10" height="2.5" rx="1.25" fill="currentColor"/></svg></button>
   </div>
 </div>
 
@@ -1536,13 +1536,13 @@ function newBoard(skipConfirm){
     knots:knots.slice(),savedAt:new Date().toISOString()});
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
-  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
   setTimeout(updateBlinkStates,10);
-  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');b.classList.remove('sel');});
-  ['cb-screw','cb-dren','cb-hmyz'].forEach(function(cid){var el=document.getElementById(cid);if(el){el.textContent='—';el.classList.remove('checked');el.removeAttribute('data-v');}});
+  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
+  var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
+  var cbd=document.getElementById('cb-dren');if(cbd){cbd.textContent='—';cbd.classList.remove('checked');}
+  var cbh=document.getElementById('cb-hmyz');if(cbh){cbh.textContent='—';cbh.classList.remove('checked');}
   if(editState)cancelEdit();
-  syncIcHasValue();schedDraw();renderKlist();
-  window._editingExistingBoardIdx=null;
   save();schedDraw();renderKlist();renderBlist();toast('Deska uložena ✓');
   // Resetovat manuální vstup aby hlasové ovládání fungovalo hned
   if(window.wgVoiceResume) window.wgVoiceResume();
@@ -2651,10 +2651,9 @@ function loadBoardIntoForm(bd, bi){
   knots = JSON.parse(JSON.stringify(bd.knots||[]));
   syncIcHasValue();
   var vcnt=document.getElementById('v-cnt'); if(vcnt) vcnt.textContent=String(knots.length);
-  save();
-  setTimeout(function(){ schedDraw(); renderKlist(); }, 50);
+  save(); schedDraw(); renderKlist();
   // Scroll nahoru
-  var card=document.querySelector('.card'); if(card) setTimeout(function(){ card.scrollIntoView({behavior:'smooth',block:'start'}); },100);
+  var card=document.querySelector('.card'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
 }
 window.wgAddKnot = function(){ addKnot(); };
 // Smazat všechna pole jedné plochy
