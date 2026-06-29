@@ -448,9 +448,9 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
     <div style="height:6px"></div>
   </div>
   <div class="bbar">
+    <button class="bmain" id="btn-add" style="background:#1A1A18;color:#fff;border:none">Přidat suk</button>
+    <button class="bmain" id="btn-new" style="background:#fff;color:var(--br);border:1.5px solid var(--g3)">Uložit</button>
     <button class="voice-fab" id="btn-voice" aria-label="Hlasové zadávání" title="Řekni: A1 20, Délka 1500, Kov ano, Přidat suk, Uložit." style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none"><svg width="26" height="28" viewBox="0 0 26 28" fill="none" style="pointer-events:none"><rect x="8" y="1" width="10" height="15" rx="5" fill="currentColor"/><path d="M10 3.5 Q9 6 9.5 9" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M5 13 Q5 20 13 20 Q21 20 21 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="13" y1="20" x2="13" y2="24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="8" y="24" width="10" height="2.5" rx="1.25" fill="currentColor"/></svg></button>
-    <button class="bmain" id="btn-add" style="background:#fff;color:#1A1A18;border:1.5px solid var(--g3)">Přidat suk</button>
-    <button class="bmain" id="btn-new" style="background:var(--br);color:#fff;border:none">Uložit</button>
   </div>
 </div>
 
@@ -1486,10 +1486,9 @@ function newBoard(skipConfirm){
   var pendFft=window.wgPendingFft||null;window.wgPendingFft=null;
   var newId=getId();
   var newFid=window.getFolderActivId?window.getFolderActivId():null;
-  // Pokud editujeme importovanou desku — přeskočit duplicit check
   var editIdx = window._editingExistingBoardIdx;
-  if(!editIdx || editIdx < 0 || !allBoards[editIdx] || allBoards[editIdx].id !== newId){
-    // Kontrola duplicitního ID ve stejné složce (jen pro nové desky)
+  // Duplicit check pouze pro skutečně nové desky (ne editaci)
+  if(editIdx==null || editIdx<0){
     if(newFid && newId && newId!=='?'){
       var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
       if(dupInFolder){
@@ -1500,7 +1499,6 @@ function newBoard(skipConfirm){
       }
     }
   }
-  var editIdx = window._editingExistingBoardIdx;
   window._editingExistingBoardIdx = null;
   if(editIdx!=null && editIdx>=0 && allBoards[editIdx] && allBoards[editIdx].id===newId){
     var updBd = allBoards[editIdx];
@@ -1861,24 +1859,40 @@ function doExport(){
   var boards=allBoards.slice();
   if(knots.length){var ex=getBoardExtra();boards.push({id:getId(),b:getB(),d:getD(),length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,knots:knots.slice()});}
   if(!boards.length){toast('Žádná data');return;}
-  var hdrs=['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','moisture_%','VG','screw','f1_podelna_Hz','f1_ohyb_Hz','MOED_L_MPa','MOED_B_MPa','knot',
-    'AS1','AS2','AL1','AL2','BS1','BS2','BL1','BL2','CS1','CS2','CL1','CL2','DS1','DS2','DL1','DL2',
+  var hdrs=['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','moisture_%','VG','screw',
+    'f1_podelna_Hz','f1_ohyb_Hz','MOED_L_MPa','MOED_B_MPa',
+    'knot','AS1','AS2','AL1','AL2','BS1','BS2','BL1','BL2','CS1','CS2','CL1','CL2','DS1','DS2','DL1','DL2',
     'area_mm2','a_i_mm','KAR_%','DAB','třída'];
   var rows=[];
   boards.forEach(function(bd){
-    var ps=mkPolys(bd.knots,bd.b,bd.d);var ua=calcUA(ps,bd.b,bd.d);
-    var kar=ua/(bd.b*bd.d)*100,dv=calcDAB(bd.knots,bd.b),gr=csnEvaluate(kar/100,dv,bd.knots.length,bd.b,bd.d,bd).grade;
-    var den=calcDensity(bd.mass,bd.length,bd.b,bd.d);
+    var b=bd.b||null,d=bd.d||null;
+    var ps=b&&d?mkPolys(bd.knots,b,d):[];
+    var ua=b&&d?calcUA(ps,b,d):0;
+    var kar=b&&d&&bd.knots.length?ua/(b*d)*100:0;
+    var dv=b?calcDAB(bd.knots,b):0;
+    var gr=b&&d?csnEvaluate(kar/100,dv,bd.knots.length,b,d,bd).grade:'';
+    var den=calcDensity(bd.mass,bd.length,b,d);
+    var mr=calcMOED(bd);
+    var fL=bd.fft&&bd.fft[0]!=null?bd.fft[0]:'';
+    var fB=bd.fft&&bd.fft[1]!=null?bd.fft[1]:'';
+    // Desky bez suků — jeden řádek
+    if(!bd.knots||bd.knots.length===0){
+      rows.push([bd.id,b||'',d||'',bd.length||'',bd.mass||'',den!=null?den:'',
+        bd.moisture!=null?bd.moisture:'',bd.vg||'',bd.screw?'ano':'',
+        fL,fB,mr.moedL!=null?mr.moedL:'',mr.moedB!=null?mr.moedB:'',
+        0,'','','','','','','','','','','','','','','','',
+        '','',+kar.toFixed(2),+dv.toFixed(4),gr]);
+      return;
+    }
     bd.knots.forEach(function(k,ki){
-      var pts=kPts(k,bd.b,bd.d);var area=pts?pArea(pts):0,ai=kAi(k,bd.b);
+      var pts=b&&d?kPts(k,b,d):null;
+      var area=pts?pArea(pts):0,ai=b?kAi(k,b):0;
       var isL=ki===bd.knots.length-1;
-      rows.push([bd.id,bd.b,bd.d,
+      rows.push([bd.id,b||'',d||'',
         isL?bd.length||'':'',isL?bd.mass||'':'',isL?den!=null?den:'':'',
-        (function(){var mr=calcMOED(bd);return isL?mr.moedL!=null?mr.moedL:'':'';})(),
-        (function(){var mr=calcMOED(bd);return isL?mr.moedB!=null?mr.moedB:'':'';})(),
-        isL?bd.moisture!=null?bd.moisture:'':'',isL?bd.vg||'':'',isL?bd.screw?'ano':'':'',isL?(bd.fft&&bd.fft[0]!=null?bd.fft[0]:''):'',isL?(bd.fft&&bd.fft[1]!=null?bd.fft[1]:''):'',isL?(bd.fft&&bd.fft[2]!=null?bd.fft[2]:''):'',
-        (function(){var m=calcMOED(bd);return isL&&m.moedL!=null?m.moedL:'';})(),
-        (function(){var m=calcMOED(bd);return isL&&m.moedB!=null?m.moedB:'';})(),
+        isL?bd.moisture!=null?bd.moisture:'':'',isL?bd.vg||'':'',isL?bd.screw?'ano':'':'',
+        isL?fL:'',isL?fB:'',
+        isL?mr.moedL!=null?mr.moedL:'':'',isL?mr.moedB!=null?mr.moedB:'':'',
         ki+1,
         k.as1!=null?k.as1:'',k.as2!=null?k.as2:'',k.al1!=null?k.al1:'',k.al2!=null?k.al2:'',
         k.bs1!=null?k.bs1:'',k.bs2!=null?k.bs2:'',k.bl1!=null?k.bl1:'',k.bl2!=null?k.bl2:'',
