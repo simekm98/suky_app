@@ -1486,17 +1486,20 @@ function newBoard(skipConfirm){
   var pendFft=window.wgPendingFft||null;window.wgPendingFft=null;
   var newId=getId();
   var newFid=window.getFolderActivId?window.getFolderActivId():null;
-  // Kontrola duplicitního ID ve stejné složce
-  if(newFid && newId && newId!=='?'){
-    var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
-    if(dupInFolder){
-      showErrorOverlay('ID již existuje', newId);
-      beepDouble();
-      window._newBoardFailed = true; // Signal pro voice.js
-      return false; // Signalizovat selhání
+  // Pokud editujeme importovanou desku — přeskočit duplicit check
+  var editIdx = window._editingExistingBoardIdx;
+  if(!editIdx || editIdx < 0 || !allBoards[editIdx] || allBoards[editIdx].id !== newId){
+    // Kontrola duplicitního ID ve stejné složce (jen pro nové desky)
+    if(newFid && newId && newId!=='?'){
+      var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
+      if(dupInFolder){
+        showErrorOverlay('ID již existuje', newId);
+        beepDouble();
+        window._newBoardFailed = true;
+        return false;
+      }
     }
   }
-  // Pokud editujeme importovanou desku, přepsat ji
   var editIdx = window._editingExistingBoardIdx;
   window._editingExistingBoardIdx = null;
   if(editIdx!=null && editIdx>=0 && allBoards[editIdx] && allBoards[editIdx].id===newId){
@@ -2598,7 +2601,7 @@ function loadBoardIntoForm(bd, bi){
   set('cid', bd.id);
   set('clen', bd.b||'');
   set('cwid', bd.d||'');
-  set('p-length', bd.length||'');
+  set('p-length', (bd.length && bd.length!==0) ? bd.length : '');
   set('p-mass', bd.mass||'');
   set('p-moist', bd.moisture||'');
   set('p-trhlina', bd.trhlina||'');
@@ -4323,7 +4326,7 @@ window.handleImportFileInput = function(input){
                     reakcni:'', oblina:'', odklon:'', letokruh:'', zakriveni:'',
                     fft:null, knots:[], folderId:fid, savedAt:Date.now()};
           var get = function(f){ return colIdx[f]!==undefined?row[colIdx[f]]:undefined; };
-          var num = function(v){ var n=parseFloat(String(v).replace(',','.')); return isNaN(n)?'':n; };
+          var num = function(v){ var n=parseFloat(String(v).replace(',','.')); return (isNaN(n)||n===0)?'':n; };
           var bool = function(v){ return v&&String(v).toLowerCase().match(/^(1|ano|yes|true)$/)?true:false; };
 
           if(get('b')!==undefined) bd.b=num(get('b'));
@@ -4331,7 +4334,13 @@ window.handleImportFileInput = function(input){
           if(get('length')!==undefined) bd.length=num(get('length'));
           if(get('mass')!==undefined) bd.mass=num(get('mass'));
           if(get('mass_kg')!==undefined && bd.mass===''){ var kg=num(get('mass_kg')); bd.mass=kg!==''?Math.round(kg*1000):''; }
-          if(get('mass_auto')!==undefined && bd.mass===''){ var ma=num(get('mass_auto')); if(ma!=='') bd.mass = ma < 200 ? Math.round(ma*1000) : ma; } // <200 → kg, jinak g
+          if(get('mass_auto')!==undefined && bd.mass===''){
+            var ma=num(get('mass_auto'));
+            if(ma!==''){
+              // Auto-detekce: pokud < 100 → pravděpodobně kg, jinak g
+              bd.mass = (ma > 0 && ma < 100) ? Math.round(ma*1000) : ma;
+            }
+          }
           if(get('moisture')!==undefined) bd.moisture=num(get('moisture'));
           if(get('vg')!==undefined) bd.vg=parseInt(get('vg'))||'';
           if(get('screw')!==undefined) bd.screw=bool(get('screw'));
