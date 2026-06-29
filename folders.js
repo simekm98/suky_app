@@ -259,7 +259,12 @@ function renderBlistMain(){
   // 3. Řazení
   filtered = filtered.slice(); // kopie
   if(boardSortMode==='name'){
-    filtered.sort(function(a,b){ return (a.id||'').localeCompare(b.id||'','cs'); });
+    filtered.sort(function(a,b){
+      var ia=a.id||'', ib=b.id||'';
+      var na=parseFloat(ia), nb=parseFloat(ib);
+      if(!isNaN(na)&&!isNaN(nb)) return na-nb;
+      return ia.localeCompare(ib,'cs',{numeric:true,sensitivity:'base'});
+    });
   } else {
     filtered.sort(function(a,b){
       var ta=a.savedAt||'', tb=b.savedAt||'';
