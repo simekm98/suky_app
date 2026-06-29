@@ -773,9 +773,9 @@ function updateLengthMassLabels(){
 }
 function gs(id){var v=document.getElementById(id).value;return v||null;}
 function getWidthMM(v){var u=getUnitPrefs().widthUnit; return u==='cm'?v*10:v;}
-function getB(){var v=parseFloat(String(document.getElementById('clen').value).replace(',','.'))||157; return getWidthMM(v);}
+function getB(){var s=document.getElementById('clen').value; var v=parseFloat(String(s).replace(',','.')); return (isNaN(v)||!s.trim()) ? null : getWidthMM(v);}
 function getHeightMM(v){var u=getUnitPrefs().heightUnit||'mm'; return u==='cm'?v*10:v;}
-function getD(){var v=parseFloat(String(document.getElementById('cwid').value).replace(',','.'))||50; return getHeightMM(v);}
+function getD(){var s=document.getElementById('cwid').value; var v=parseFloat(String(s).replace(',','.')); return (isNaN(v)||!s.trim()) ? null : getHeightMM(v);}
 function getId(){return document.getElementById('cid').value||'?';}
 
 function setVGDisplay(val){
@@ -1504,7 +1504,7 @@ function newBoard(skipConfirm){
   window._editingExistingBoardIdx = null;
   if(editIdx!=null && editIdx>=0 && allBoards[editIdx] && allBoards[editIdx].id===newId){
     var updBd = allBoards[editIdx];
-    updBd.b=getB(); updBd.d=getD(); updBd.folderId=newFid; updBd.fft=pendFft||updBd.fft;
+    var bU=getB(), dU=getD(); if(bU!==null) updBd.b=bU; if(dU!==null) updBd.d=dU; updBd.folderId=newFid; updBd.fft=pendFft||updBd.fft;
     updBd.length=parseFloat(String(document.getElementById('p-length').value).replace(',','.'))||updBd.length;
     updBd.mass=parseFloat(String(document.getElementById('p-mass').value).replace(',','.'))||updBd.mass;
     updBd.moisture=parseFloat(String(document.getElementById('p-moist').value).replace(',','.'))||updBd.moisture;
@@ -1519,12 +1519,17 @@ function newBoard(skipConfirm){
     updBd.knots=knots.slice();
     save();schedDraw();renderKlist();renderBlist();toast('Deska '+newId+' aktualizována ✓');
     // Reset formuláře
-    ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
-    knots=[];schedDraw();renderKlist();
+    ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+    ['cb-screw','cb-dren','cb-hmyz'].forEach(function(id){var el=document.getElementById(id);if(el){el.textContent='—';el.removeAttribute('data-v');}});
+    document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('sel');});
+    var pvg=document.getElementById('p-vg');if(pvg)pvg.value='';
+    knots=[];syncIcHasValue();schedDraw();renderKlist();
+    window._editingExistingBoardIdx=null;
     if(window.wgVoiceResume) window.wgVoiceResume();
     return;
   }
-  allBoards.push({id:newId,b:getB(),d:getD(),folderId:newFid,fft:pendFft,
+  var bVal=getB(), dVal=getD();
+  allBoards.push({id:newId,b:bVal,d:dVal,folderId:newFid,fft:pendFft,
     length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,
     trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
     odklon:ex.odklon,letokruh:ex.letokruh,zakriveni:ex.zakriveni,dren:ex.dren,hmyz:ex.hmyz,
@@ -1552,6 +1557,9 @@ function showScreen(id){
   if(id==='s-list'){renderKlist();renderBlist();}
 }
 function openBoardDetail(bi){
+  // Otevřít desku v hlavním formuláři pro úpravu
+  var bd = allBoards[bi];
+  if(bd){ loadBoardIntoForm(bd, bi); showScreen('s-entry'); return; }
   detailBi=bi;
   detailOpenedViaVoiceSearch=false; // safe default — přepíše se na true jen z wgFindAndOpenBoard
   var bd=allBoards[bi];
@@ -1807,7 +1815,13 @@ function renderBlist(){
   // Sestavit indexy dle řazení
   var indices=allBoards.map(function(_,i){return i;});
   if(boardSortMode==='name'){
-    indices.sort(function(a,b){return allBoards[a].id.localeCompare(allBoards[b].id,'cs');});
+    indices.sort(function(a,b){
+      var ia=allBoards[a].id, ib=allBoards[b].id;
+      // Numerické řazení: pokud obě jsou čísla, porovnat jako čísla
+      var na=parseFloat(ia), nb=parseFloat(ib);
+      if(!isNaN(na)&&!isNaN(nb)) return na-nb;
+      return ia.localeCompare(ib,'cs',{numeric:true,sensitivity:'base'});
+    });
   } else {
     indices.sort(function(a,b){
       var ta=allBoards[a].savedAt||'';var tb=allBoards[b].savedAt||'';
