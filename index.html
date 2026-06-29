@@ -83,7 +83,7 @@ input,select,textarea{touch-action:manipulation}
 
 
 /* canvas */
-.crow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;align-items:stretch}
+.crow{display:flex;gap:8px;margin-bottom:10px;align-items:stretch}
 .cvc{background:#fff;border-radius:var(--rads);padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05)}
 .cvl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--g5);margin-bottom:4px}
 canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;box-sizing:border-box}
@@ -1488,7 +1488,8 @@ function newBoard(skipConfirm){
   var newFid=window.getFolderActivId?window.getFolderActivId():null;
   var editIdx = window._editingExistingBoardIdx;
   // Duplicit check pouze pro skutečně nové desky (ne editaci)
-  if(editIdx==null || editIdx<0){
+  var isEditMode = (editIdx!=null && editIdx>=0 && allBoards[editIdx]);
+  if(!isEditMode){
     if(newFid && newId && newId!=='?'){
       var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
       if(dupInFolder){
@@ -1500,7 +1501,7 @@ function newBoard(skipConfirm){
     }
   }
   window._editingExistingBoardIdx = null;
-  if(editIdx!=null && editIdx>=0 && allBoards[editIdx] && allBoards[editIdx].id===newId){
+  if(isEditMode){
     var updBd = allBoards[editIdx];
     var bU=getB(), dU=getD(); if(bU!==null) updBd.b=bU; if(dU!==null) updBd.d=dU; updBd.folderId=newFid; updBd.fft=pendFft||updBd.fft;
     updBd.length=parseFloat(String(document.getElementById('p-length').value).replace(',','.'))||updBd.length;
@@ -1540,13 +1541,13 @@ function newBoard(skipConfirm){
     knots:knots.slice(),savedAt:new Date().toISOString()});
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
-  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
+  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   setTimeout(updateBlinkStates,10);
-  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
-  var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
-  var cbd=document.getElementById('cb-dren');if(cbd){cbd.textContent='—';cbd.classList.remove('checked');}
-  var cbh=document.getElementById('cb-hmyz');if(cbh){cbh.textContent='—';cbh.classList.remove('checked');}
+  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');b.classList.remove('sel');});
+  ['cb-screw','cb-dren','cb-hmyz'].forEach(function(cid){var el=document.getElementById(cid);if(el){el.textContent='—';el.classList.remove('checked');el.removeAttribute('data-v');}});
   if(editState)cancelEdit();
+  var vcntN=document.getElementById('v-cnt');if(vcntN)vcntN.textContent='0';
+  syncIcHasValue();
   save();schedDraw();renderKlist();renderBlist();toast('Deska uložena ✓');
   // Přidat scroll nahoru a reset canvas
   knots=[];
@@ -1805,7 +1806,7 @@ function renderKlist(){
   var el=document.getElementById('klist');
   document.getElementById('cur-lbl').textContent=getId()+' — '+knots.length+' suk'+(knots.length===1?'':'ů');
   if(!knots.length){el.innerHTML='<div class="emp">Žádné suky</div>';return;}
-  var b=getB(),html='';
+  var b=getB()||157,html='';
   knots.forEach(function(k,i){
     var ai=kAi(k,b);
     var vals=[];if(k.as1!=null)vals.push('A:'+k.as1);if(k.cs1!=null)vals.push('C:'+k.cs1);
