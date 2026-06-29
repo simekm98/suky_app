@@ -584,7 +584,7 @@ function isStopCommand(text){
 function findActionCommand(text){
   text = text.toLowerCase();
   if(text.indexOf('přidat suk')>=0 || text.indexOf('přidej suk')>=0) return {action:'addknot', label:'Přidat suk'};
-  if(text.indexOf('nová deska')>=0 || text.indexOf('novou desku')>=0 || text.indexOf('nova deska')>=0) return {action:'newboard', label:'Nová deska'};
+  if(text.indexOf('uložit')>=0 || text.indexOf('ulozit')>=0 || text.indexOf('ulož')>=0 || text.indexOf('nová deska')>=0 || text.indexOf('novou desku')>=0 || text.indexOf('nova deska')>=0) return {action:'saveboard', label:'Uložit'};
   return null;
 }
 
@@ -751,7 +751,11 @@ function findFftTypeChoice(text){
 
 function executeAction(action){
   try{
-    if(action === 'addknot'){
+    if(action === 'saveboard'){
+      if(window.wgNewBoard) window.wgNewBoard();
+      else { var btn2 = document.getElementById('btn-new'); if(btn2) btn2.click(); }
+      return;
+    } else if(action === 'addknot'){
       if(window.wgAddKnot) window.wgAddKnot();
       else { var btn = document.getElementById('btn-add'); if(btn) btn.click(); }
       setTimeout(function(){
