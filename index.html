@@ -2594,10 +2594,23 @@ function checkCidDuplicate(val, immediate){
 // ── Načíst desku do hlavního formuláře pro doplnění dat ──────────────────────
 function loadBoardIntoForm(bd, bi){
   if(!bd) return;
-  // Uložit index pro přepis při "nová deska"
   window._editingExistingBoardIdx = bi;
-  // Formulář
-  var set = function(id, v){ var el=document.getElementById(id); if(el && v!=null && v!=='') el.value=v; };
+  // Nejdřív vyprázdnit všechna pole formuláře
+  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba',
+   'p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  // Reset cb-box
+  ['cb-screw','cb-dren','cb-hmyz'].forEach(function(id){
+    var el=document.getElementById(id); if(el){ el.textContent='—'; el.removeAttribute('data-v'); }
+  });
+  // Reset vizuál
+  document.querySelectorAll('.vg-btn').forEach(function(b){ b.classList.remove('sel'); });
+  var pvg=document.getElementById('p-vg'); if(pvg) pvg.value='';
+  // Reset suků
+  knots=[];
+  // Pak zapsat jen hodnoty které deska má
+  var set = function(id, v){ var el=document.getElementById(id); if(el && v!=null && v!=='' && v!==0) el.value=v; };
   set('cid', bd.id);
   set('clen', bd.b||'');
   set('cwid', bd.d||'');
