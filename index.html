@@ -1477,86 +1477,76 @@ function delKnot(ki){
   save();schedDraw();renderKlist();toast('Suk smazán');
 }
 function newBoard(skipConfirm){
-  // Deska může být uložena i bez suků
-  if(!knots.length && !skipConfirm){
-    // Potvrzení pro prázdnou desku — jen při ručním kliknutí (confirm() blokuje a kazí hlasovou session)
-    if(!confirm('Deska nemá žádné suky. Uložit i tak?')) return;
-  }
   var ex=getBoardExtra();
-  var pendFft=window.wgPendingFft||null;window.wgPendingFft=null;
+  var pendFft=window.wgPendingFft||null; window.wgPendingFft=null;
   var newId=getId();
-  var newFid=window.getFolderActivId?window.getFolderActivId():null;
-  var editIdx = window._editingExistingBoardIdx;
-  // Duplicit check pouze pro skutečně nové desky (ne editaci)
-  var isEditMode = (editIdx!=null && editIdx>=0 && allBoards[editIdx]);
-  if(!isEditMode){
-    if(newFid && newId && newId!=='?'){
-      var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
-      if(dupInFolder){
-        showErrorOverlay('ID již existuje', newId);
-        beepDouble();
-        window._newBoardFailed = true;
-        return false;
-      }
+  var newFid=window.getFolderActivId ? window.getFolderActivId() : null;
+  var editIdx=window._editingExistingBoardIdx;
+  var isEditMode=(editIdx!=null && editIdx>=0 && allBoards[editIdx]);
+
+  // Duplicit check jen pro nové desky
+  if(!isEditMode && newFid && newId && newId!=='?'){
+    var dupInFolder=allBoards.find(function(bd){ return bd.folderId===newFid && bd.id===newId; });
+    if(dupInFolder){
+      showErrorOverlay('ID již existuje', newId);
+      beepDouble();
+      window._newBoardFailed=true;
+      return false;
     }
   }
-  window._editingExistingBoardIdx = null;
+
   if(isEditMode){
-    var updBd = allBoards[editIdx];
-    var bU=getB(), dU=getD(); if(bU!==null) updBd.b=bU; if(dU!==null) updBd.d=dU; updBd.folderId=newFid; updBd.fft=pendFft||updBd.fft;
-    updBd.length=parseFloat(String(document.getElementById('p-length').value).replace(',','.'))||updBd.length;
-    updBd.mass=parseFloat(String(document.getElementById('p-mass').value).replace(',','.'))||updBd.mass;
-    updBd.moisture=parseFloat(String(document.getElementById('p-moist').value).replace(',','.'))||updBd.moisture;
-    updBd.trhlina=parseFloat(String(document.getElementById('p-trhlina').value).replace(',','.'))||updBd.trhlina;
-    updBd.hniloba=parseFloat(String(document.getElementById('p-hniloba').value).replace(',','.'))||updBd.hniloba;
-    updBd.reakcni=parseFloat(String(document.getElementById('p-reakcni').value).replace(',','.'))||updBd.reakcni;
-    updBd.oblina=parseFloat(String(document.getElementById('p-oblina').value).replace(',','.'))||updBd.oblina;
-    updBd.odklon=parseFloat(String(document.getElementById('p-odklon').value).replace(',','.'))||updBd.odklon;
-    updBd.letokruh=parseFloat(String(document.getElementById('p-letokruh').value).replace(',','.'))||updBd.letokruh;
-    updBd.zakriveni=parseFloat(String(document.getElementById('p-zakriveni').value).replace(',','.'))||updBd.zakriveni;
+    // Editace existující desky
+    var updBd=allBoards[editIdx];
+    var bU=getB(),dU=getD();
+    if(bU!==null) updBd.b=bU;
+    if(dU!==null) updBd.d=dU;
+    updBd.folderId=newFid;
+    if(pendFft) updBd.fft=pendFft;
+    var gn2=function(id){ var v=parseFloat(String(document.getElementById(id).value).replace(',','.')); return isNaN(v)?null:v; };
+    ['length','mass','moisture','trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni'].forEach(function(f){
+      var elId=f==='length'?'p-length':f==='mass'?'p-mass':f==='moisture'?'p-moist':'p-'+f;
+      var v=gn2(elId); if(v!==null) updBd[f]=v;
+    });
     updBd.vg=parseInt(document.getElementById('p-vg').value)||updBd.vg;
     updBd.knots=knots.slice();
-    save();schedDraw();renderKlist();renderBlist();toast('Deska '+newId+' aktualizována ✓');
-    // Reset formuláře
-    ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-    ['cb-screw','cb-dren','cb-hmyz'].forEach(function(id){var el=document.getElementById(id);if(el){el.textContent='—';el.removeAttribute('data-v');}});
-    document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('sel');});
-    var pvg=document.getElementById('p-vg');if(pvg)pvg.value='';
-    knots=[];
-    var vcntE=document.getElementById('v-cnt');if(vcntE)vcntE.textContent='0';
-    syncIcHasValue();schedDraw();renderKlist();
-    window._editingExistingBoardIdx=null;
-    setTimeout(function(){
-      var card=document.querySelector('.card');
-      if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
-    },100);
-    if(window.wgVoiceResume) window.wgVoiceResume();
-    return;
+    updBd.savedAt=new Date().toISOString();
+    save(); renderBlist(); toast('Deska '+newId+' aktualizována ✓');
+  } else {
+    // Nová deska
+    allBoards.push({id:newId,b:getB(),d:getD(),folderId:newFid,fft:pendFft,
+      length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,
+      screw:ex.screw,dren:ex.dren,hmyz:ex.hmyz,
+      trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
+      odklon:ex.odklon,letokruh:ex.letokruh,zakriveni:ex.zakriveni,
+      knots:knots.slice(),savedAt:new Date().toISOString()});
+    save(); renderBlist(); toast('Deska uložena ✓');
   }
-  var bVal=getB(), dVal=getD();
-  allBoards.push({id:newId,b:bVal,d:dVal,folderId:newFid,fft:pendFft,
-    length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,
-    trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
-    odklon:ex.odklon,letokruh:ex.letokruh,zakriveni:ex.zakriveni,dren:ex.dren,hmyz:ex.hmyz,
-    knots:knots.slice(),savedAt:new Date().toISOString()});
-  knots=[];boardScrew=false;
-  ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
-  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  setTimeout(updateBlinkStates,10);
-  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');b.classList.remove('sel');});
-  ['cb-screw','cb-dren','cb-hmyz'].forEach(function(cid){var el=document.getElementById(cid);if(el){el.textContent='—';el.classList.remove('checked');el.removeAttribute('data-v');}});
-  if(editState)cancelEdit();
-  var vcntN=document.getElementById('v-cnt');if(vcntN)vcntN.textContent='0';
+  // ── Plný reset formuláře ───────────────────────────────────────────────────
+  knots = [];
+  ['cid','clen','cwid','p-length','p-mass','p-moist',
+   'p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ALLK.forEach(function(f){ var el=document.getElementById(f); if(el) el.value=''; });
+  ['cb-screw','cb-dren','cb-hmyz'].forEach(function(cid){
+    var el=document.getElementById(cid);
+    if(el){ el.textContent='—'; el.classList.remove('checked'); el.removeAttribute('data-v'); }
+  });
+  document.querySelectorAll('.vg-btn').forEach(function(b){
+    b.classList.remove('sel'); b.classList.remove('selected');
+  });
+  var pvg=document.getElementById('p-vg'); if(pvg) pvg.value='';
+  var vcnt=document.getElementById('v-cnt'); if(vcnt) vcnt.textContent='0';
+  boardScrew=false;
+  if(editState) cancelEdit();
+  window._editingExistingBoardIdx=null;
   syncIcHasValue();
-  save();schedDraw();renderKlist();renderBlist();toast('Deska uložena ✓');
-  // Přidat scroll nahoru a reset canvas
-  knots=[];
-  var vcntS=document.getElementById('v-cnt');if(vcntS)vcntS.textContent='0';
-  schedDraw();
+  setTimeout(updateBlinkStates,10);
+  schedDraw(); renderKlist();
   setTimeout(function(){
     var card=document.querySelector('.card');
     if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
-  },100);
+  },120);
   if(window.wgVoiceResume) window.wgVoiceResume();
 }
 function delBoard(bi){allBoards.splice(bi,1);save();renderBlist();toast('Deska smazána');}
