@@ -1149,9 +1149,10 @@ function processCommand(transcript, gen){
       return;
     }
   }
-  // Povel uložit → uložit FFT a vrátit se
+  // Povel uložit → uložit FFT a vrátit se (jen na FFT screenu)
   var tLow = transcript.toLowerCase();
-  if(tLow.indexOf('uložit')>=0 || tLow.indexOf('ulozit')>=0){
+  var isFftScreen = document.getElementById('s-fft') && document.getElementById('s-fft').classList.contains('active');
+  if(isFftScreen && (tLow.indexOf('uložit')>=0 || tLow.indexOf('ulozit')>=0)){
     // Combo mode: kontrola že jsou zadány obě frekvence
     var isComboNow = false;
     try{ var prC=JSON.parse(localStorage.getItem('wg26_prefs')||'{}'); isComboNow=(prC.fftDefaultType==='combo'); }catch(e){}
@@ -1277,20 +1278,14 @@ function processCommand(transcript, gen){
     return;
   }
 
-  // "Uložit" — uloží rozpracovanou desku (detail screen) nebo FFT data (FFT screen)
-  if(/^ulož|^uloz/.test(transcript.toLowerCase().trim())){
-    var isDetailActive = document.getElementById('s-detail') && document.getElementById('s-detail').classList.contains('active');
-    if(isDetailActive && window.wgSaveDetailBoard){
-      dlog('✓ ukládám desku','ok');
-      window.wgSaveDetailBoard();
-      showConfirmOverlay('Uloženo', '✓');
-      beepOk();
-    } else {
-      dlog('✓ ukládám FFT','ok');
-      if(window.wgFFTSave) window.wgFFTSave();
-      showConfirmOverlay('Uloženo', '✓');
-      beepOk();
-    }
+  // "Uložit" na hlavní straně — uložit desku
+  var isEntryActive = !document.getElementById('s-fft').classList.contains('active');
+  if(isEntryActive && (tLow.indexOf('uložit')>=0 || tLow.indexOf('ulozit')>=0 || /^ulož/.test(tLow.trim()))){
+    if(window.wgNewBoard) window.wgNewBoard();
+    else { var btnN=document.getElementById('btn-new'); if(btnN) btnN.click(); }
+    if(window._newBoardFailed){ if(sessionActive) continueOrRefresh(gen); return; }
+    showConfirmOverlay('Uloženo', '✓');
+    beepOk();
     if(sessionActive) continueOrRefresh(gen);
     return;
   }
