@@ -1536,13 +1536,13 @@ function newBoard(skipConfirm){
     knots:knots.slice(),savedAt:new Date().toISOString()});
   knots=[];boardScrew=false;
   ALLK.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
-  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){document.getElementById(id).value='';});
+  ['cid','clen','cwid','p-length','p-mass','p-moist','p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   setTimeout(updateBlinkStates,10);
-  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');});
-  var cb=document.getElementById('cb-screw');cb.textContent='—';cb.classList.remove('checked');
-  var cbd=document.getElementById('cb-dren');if(cbd){cbd.textContent='—';cbd.classList.remove('checked');}
-  var cbh=document.getElementById('cb-hmyz');if(cbh){cbh.textContent='—';cbh.classList.remove('checked');}
+  resetVG();document.querySelectorAll('.vg-btn').forEach(function(b){b.classList.remove('selected');b.classList.remove('sel');});
+  ['cb-screw','cb-dren','cb-hmyz'].forEach(function(cid){var el=document.getElementById(cid);if(el){el.textContent='—';el.classList.remove('checked');el.removeAttribute('data-v');}});
   if(editState)cancelEdit();
+  syncIcHasValue();schedDraw();renderKlist();
+  window._editingExistingBoardIdx=null;
   save();schedDraw();renderKlist();renderBlist();toast('Deska uložena ✓');
   // Resetovat manuální vstup aby hlasové ovládání fungovalo hned
   if(window.wgVoiceResume) window.wgVoiceResume();
@@ -2651,9 +2651,10 @@ function loadBoardIntoForm(bd, bi){
   knots = JSON.parse(JSON.stringify(bd.knots||[]));
   syncIcHasValue();
   var vcnt=document.getElementById('v-cnt'); if(vcnt) vcnt.textContent=String(knots.length);
-  save(); schedDraw(); renderKlist();
+  save();
+  setTimeout(function(){ schedDraw(); renderKlist(); }, 50);
   // Scroll nahoru
-  var card=document.querySelector('.card'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+  var card=document.querySelector('.card'); if(card) setTimeout(function(){ card.scrollIntoView({behavior:'smooth',block:'start'}); },100);
 }
 window.wgAddKnot = function(){ addKnot(); };
 // Smazat všechna pole jedné plochy
