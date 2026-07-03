@@ -3173,14 +3173,10 @@ function startRecordingWithCountdown(type, dur){
 function startRecording(type, dur){
   recordDuration=dur;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('Mikrofon nedostupný');return;}
-  // Reuse cached stream pokud je aktivní — nezobrazí se dialog povolení
-  var _fftStreamCache = window._fftStreamCache;
-  var streamPromise = (_fftStreamCache && _fftStreamCache.active)
-    ? Promise.resolve(_fftStreamCache)
-    : navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  // Vždy nový getUserMedia pro nahrávání (cached stream z voice.js není vhodný pro MediaRecorder)
+  var streamPromise = navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
   streamPromise
   .then(function(stream){
-    window._fftStreamCache = stream; // Cache pro příští spuštění
     chunks=[];
     var options={};
     if(MediaRecorder.isTypeSupported('audio/webm;codecs=pcm')) options.mimeType='audio/webm;codecs=pcm';
@@ -3188,8 +3184,7 @@ function startRecording(type, dur){
     mediaRecorder=new MediaRecorder(stream,options);
     mediaRecorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
     mediaRecorder.onstop=function(){
-      // Nezastavovat stream — cachujeme pro příští nahrávání
-      // stream.getTracks().forEach(function(t){t.stop();});
+      stream.getTracks().forEach(function(t){t.stop();});
       fftBeepDone();
       processAudioBlob(new Blob(chunks,{type:mediaRecorder.mimeType}), type);
       // Obnovit voice recognition po konci nahrávání
@@ -3845,6 +3840,10 @@ function setupChartInteractionFor(type){
     if(!touchMoved&&e.changedTouches.length===1){
       var touch=e.changedTouches[0];
       handleTapFor(touch.clientX,cv,type);
+    } else {
+      // Při posunu - vymazat kurzor
+      if(!window._fftCursorHz) window._fftCursorHz={};
+      delete window._fftCursorHz[type];
     }
     isDragging=false;pinchStartDist=null;lastTouchX=null;touchMoved=false;
   });
@@ -3908,22 +3907,42 @@ function setupChartInteractionFor(type){
 
 function handleTapFor(clientX,cv,type){
   var fftData=fftDataByType[type];
-  var detectedModes=detectedModesByType[type];
-  if(!fftData||!detectedModes||detectedModes.length===0) return;
+  if(!fftData) return;
   var rect=cv.getBoundingClientRect();
   var PL=38,PW=cv.offsetWidth-48;
   var x=clientX-rect.left-PL;
   if(x<0||x>PW) return;
   var hz=zoomStart+(x/PW)*(zoomEnd-zoomStart);
   var snappedHz=snapToNearestPeakFor(hz,type);
-  var idx=selectedModeIdxByType[type]||0;
-  if(idx<detectedModes.length){
-    detectedModes[idx].hz=snappedHz;
-    detectedModes[idx].userEdited=true;
-    var inp=document.getElementById('fft-hz-'+type+'-'+idx);
-    if(inp) inp.value=snappedHz.toFixed(1);
-    drawFFTFor(type);
+
+  // Uložit vybranou frekvenci — i bez předchozí detekce
+  if(!detectedModesByType[type]) detectedModesByType[type]=[];
+  var modes=detectedModesByType[type];
+  if(modes.length===0){
+    modes.push({hz:snappedHz,amp:1,bw:0,damping:0,userEdited:true,label:'Manuální'});
+  } else {
+    var idx=selectedModeIdxByType[type]||0;
+    if(idx>=modes.length) idx=0;
+    modes[idx].hz=snappedHz;
+    modes[idx].userEdited=true;
   }
+  selectedModeIdxByType[type]=0;
+
+  // Aktualizovat input a zobrazit kurzor
+  var inp=document.getElementById('fft-hz-'+type+'-0');
+  if(inp) inp.value=snappedHz.toFixed(1);
+
+  // Zobrazit info
+  var infoId=type==='bending'?'fft-cursor-info-bend':'fft-cursor-info-long';
+  var info=document.getElementById(infoId);
+  if(info){ info.style.display=''; info.textContent='✓ '+snappedHz.toFixed(0)+' Hz'; }
+
+  // Uložit do wgFFTSetManualFreq
+  var freqL=type==='longitudinal'?snappedHz:null;
+  var freqB=type==='bending'?snappedHz:null;
+  if(window.wgFFTSetManualFreq) window.wgFFTSetManualFreq(freqL,freqB);
+
+  drawFFTFor(type);
 }
 
 function snapToNearestPeakFor(hz,type){
