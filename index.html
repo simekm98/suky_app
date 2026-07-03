@@ -3173,10 +3173,14 @@ function startRecordingWithCountdown(type, dur){
 function startRecording(type, dur){
   recordDuration=dur;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('Mikrofon nedostupný');return;}
-  // Vždy nový getUserMedia pro nahrávání (cached stream z voice.js není vhodný pro MediaRecorder)
-  var streamPromise = navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  // Reuse cached stream pokud je aktivní — nezobrazí se dialog povolení
+  var _fftStreamCache = window._fftStreamCache;
+  var streamPromise = (_fftStreamCache && _fftStreamCache.active)
+    ? Promise.resolve(_fftStreamCache)
+    : navigator.mediaDevices.getUserMedia({audio:{sampleRate:44100,channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
   streamPromise
   .then(function(stream){
+    window._fftStreamCache = stream; // Cache pro příští spuštění
     chunks=[];
     var options={};
     if(MediaRecorder.isTypeSupported('audio/webm;codecs=pcm')) options.mimeType='audio/webm;codecs=pcm';
@@ -3184,7 +3188,8 @@ function startRecording(type, dur){
     mediaRecorder=new MediaRecorder(stream,options);
     mediaRecorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
     mediaRecorder.onstop=function(){
-      stream.getTracks().forEach(function(t){t.stop();});
+      // Nezastavovat stream — cachujeme pro příští nahrávání
+      // stream.getTracks().forEach(function(t){t.stop();});
       fftBeepDone();
       processAudioBlob(new Blob(chunks,{type:mediaRecorder.mimeType}), type);
       // Obnovit voice recognition po konci nahrávání
