@@ -786,7 +786,8 @@ function requestMicPermission(callback){
   navigator.mediaDevices.getUserMedia({audio:true})
     .then(function(stream){
       micPermissionGranted = true;
-      micStreamCached = stream; // Cachovat pro FFT — nežádat znovu
+      micStreamCached = stream;
+      window._fftStreamCache = stream; // Sdílet s FFT nahráváním
       callback(true);
     })
     .catch(function(err){ callback(false, 'Mikrofon odepřen: ' + err.message); });
