@@ -3797,7 +3797,7 @@ function setupChartInteractionFor(type){
     if(fftVibType!==type) return; // zoom/pan jen pro aktuálně vybraný typ
     if(e.touches.length===1){
       isDragging=true;lastTouchX=e.touches[0].clientX;
-      touchStartX=e.touches[0].clientX; touchMoved=false;
+      touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; touchMoved=false;
     }
     else if(e.touches.length===2){
       pinchStartDist=Math.abs(e.touches[0].clientX-e.touches[1].clientX);
@@ -3835,18 +3835,17 @@ function setupChartInteractionFor(type){
   },{passive:false});
 
   cv.addEventListener('touchend',function(e){
+    e.preventDefault(); // iOS PWA — zabrání ghost click
     if(fftVibType!==type) return;
-    // Pouze SKUTEČNÝ tap (malý pohyb) vybere/přepíše pík — posun grafu hodnotu nezmění.
     if(!touchMoved&&e.changedTouches.length===1){
       var touch=e.changedTouches[0];
       handleTapFor(touch.clientX,cv,type);
     } else {
-      // Při posunu - vymazat kurzor
       if(!window._fftCursorHz) window._fftCursorHz={};
       delete window._fftCursorHz[type];
     }
     isDragging=false;pinchStartDist=null;lastTouchX=null;touchMoved=false;
-  });
+  },{passive:false});
 
   var mDown=false,mLastX=null,mMoved=false,mStartX=null;
   cv.addEventListener('mousedown',function(e){if(fftVibType!==type)return;mDown=true;mLastX=e.clientX;mStartX=e.clientX;mMoved=false;e.preventDefault();});
