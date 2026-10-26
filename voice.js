@@ -19,6 +19,7 @@ var lastKind = null;
 var lastElement = null;
 var lastPrevValue = null; // hodnota PŘED zápisem, pro vrácení
 var micPermissionGranted = false;
+var micStreamCached = null; // drží se jen krátce — otevřený stream blokuje rozpoznávání řeči na iOS
 var restartTimer = null;
 var watchdogTimer = null;
 var cycleGeneration = 0;
@@ -81,6 +82,8 @@ var WORD_FIELD_MAP = {
   'dřeň':'__dren__','dren':'__dren__',
   'hmyz':'__hmyz__','poškození hmyzem':'__hmyz__','poskozeni hmyzem':'__hmyz__'
 };
+// Zkomolené výslovnosti "oblina" pro fuzzy fallback
+var OBLINA_FUZZY = ['oblin','oblín','oblyn','oblýn'];
 var WORD_FIELD_KEYS_SORTED = Object.keys(WORD_FIELD_MAP).sort(function(a,b){ return b.length - a.length; });
 
 var FIELD_LABELS = {
@@ -139,6 +142,8 @@ function findDirectFieldCode(text){
   // Případ A: písmeno a číslo jsou oddělená slova: "á", "2:30", "30" → words[0]="á", words[1]="2:30"
   if(words.length >= 2 && PLOCHA_MAP.hasOwnProperty(words[0])){
     var dig = leadingDigit1to4(words[1]);
+    // "á 130" — STT slil číslo plochy s hodnotou (A1 30)
+    if(!dig && words.length === 2 && /^[1234]\d{1,4}$/.test(words[1])) dig = words[1][0];
     if(dig) m4 = [PLOCHA_MAP[words[0]], dig];
   }
   // Případ B: písmeno a číslo slita v jednom slově: "a1", "30" → words[0]="a1"
@@ -147,6 +152,10 @@ function findDirectFieldCode(text){
     m4 = [words[0][0], words[0][1]];
   }
   else if(words.length >= 1 && /^[abcd][1234]:/.test(words[0])){
+    m4 = [words[0][0], words[0][1]];
+  }
+  // Případ C: vše slité do jednoho slova "a130" (= A1 30)
+  else if(words.length === 1 && /^[abcd][1234]\d{1,4}$/.test(words[0])){
     m4 = [words[0][0], words[0][1]];
   }
   if(m4){
@@ -549,6 +558,8 @@ function parseCommand(text){
         var words0 = text.split(/\s+/);
         if(words0.length>=2 && PLOCHA_MAP.hasOwnProperty(words0[0]) && /^[1234]/.test(words0[1])){
           textForValue = words0.slice(2).join(' ');
+          // "á 130" — hodnota je slitá za číslem plochy
+          if(!textForValue && /^[1234]\d+$/.test(words0[1])) textForValue = words0[1].slice(1);
         }
       }
       var allNums = textForValue.match(/-?\d+[.,]?\d*/g);
@@ -786,11 +797,28 @@ function requestMicPermission(callback){
   navigator.mediaDevices.getUserMedia({audio:true})
     .then(function(stream){
       micPermissionGranted = true;
-      micStreamCached = stream;
-      window._fftStreamCache = stream; // Sdílet s FFT nahráváním
+      // Stream hned uvolnit — dokud je otevřený, iOS posílá rozpoznávání řeči ticho
+      stopStream(stream);
       callback(true);
     })
     .catch(function(err){ callback(false, 'Mikrofon odepřen: ' + err.message); });
+}
+
+function stopStream(stream){
+  try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+}
+
+// Uvolní mikrofon držený FFT nahráváním (window._fftStreamCache). Na iOS
+// otevřený getUserMedia stream blokuje SpeechRecognition — povely pak
+// vůbec nereagují, i když mikrofon "běží".
+function releaseHeldMic(){
+  if(window.wgFFTIsRecording && window.wgFFTIsRecording()) return;
+  var s = window._fftStreamCache;
+  if(s && s.active){
+    stopStream(s);
+    dlog('🔓 uvolněn mikrofon držený FFT');
+  }
+  window._fftStreamCache = null;
 }
 
 // ── Session control ────────────────────────────────────────
@@ -954,6 +982,7 @@ function actuallyStartRecognition(gen){
     }
   }, 12000);
 
+  releaseHeldMic();
   try{ recognition.start(); dlog('✓ recognition.start() OK'); }
   catch(e){ dlog('❌ recognition.start() THREW: '+e.message,'err'); if(sessionActive && gen===cycleGeneration) runRecognitionCycle(gen); }
 }
@@ -1528,7 +1557,7 @@ function initVoice(){
     navigator.mediaDevices.getUserMedia({audio:true})
       .then(function(stream){
         micPermissionGranted = true;
-        micStreamCached = stream;
+        stopStream(stream);
       })
       .catch(function(){
         // Uživatel odmítl nebo není dostupný — oznámíme až při prvním pokusu
