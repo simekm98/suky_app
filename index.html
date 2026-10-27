@@ -787,7 +787,7 @@ function setVGDisplay(val){
 function getBoardExtra(){
   var dr=document.getElementById('cb-dren');
   var hm=document.getElementById('cb-hmyz');
-  return{length:opts.length?gnLength('p-length'):null,mass:opts.mass?gnMass('p-mass'):null,
+  return{length:gnLength('p-length'),mass:gnMass('p-mass'),
     moisture:opts.moisture?gn('p-moist'):null,vg:opts.vg?boardVG:null,screw:opts.screw?boardScrew:false,
     trhlina:opts.trhlina?gn('p-trhlina'):null,hniloba:opts.hniloba?gn('p-hniloba'):null,
     reakcni:opts.reakcni?gn('p-reakcni'):null,oblina:opts.oblina?gn('p-oblina'):null,
@@ -1509,8 +1509,11 @@ function newBoard(skipConfirm){
     updBd.folderId=newFid;
     if(pendFft) updBd.fft=pendFft;
     var gn2=function(id){ var v=parseFloat(String(document.getElementById(id).value).replace(',','.')); return isNaN(v)?null:v; };
-    ['length','mass','moisture','trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni'].forEach(function(f){
-      var elId=f==='length'?'p-length':f==='mass'?'p-mass':f==='moisture'?'p-moist':'p-'+f;
+    // length a mass s jednotkovou konverzí (cm→mm, kg→g)
+    var lv=gnLength('p-length'); if(lv!==null) updBd.length=lv;
+    var mv=gnMass('p-mass'); if(mv!==null) updBd.mass=mv;
+    ['moisture','trhlina','hniloba','reakcni','oblina','odklon','letokruh','zakriveni'].forEach(function(f){
+      var elId=f==='moisture'?'p-moist':'p-'+f;
       var v=gn2(elId); if(v!==null) updBd[f]=v;
     });
     updBd.vg=parseInt(document.getElementById('p-vg').value)||updBd.vg;
