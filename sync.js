@@ -82,7 +82,8 @@ function supaFetch(path, method, body){
 
 // ── Push — odešli data na cloud ───────────────────────────
 function pushToCloud(){
-  if(!syncEnabled || !SUPABASE_URL || !SUPABASE_KEY) return;
+  if(!syncEnabled || !SUPABASE_URL || !SUPABASE_KEY) return Promise.resolve(false);
+  clearTimeout(window._syncDebounce);
   var boards = window.wgGetAllBoards ? window.wgGetAllBoards() : [];
   var knots  = window.wgGetKnots   ? window.wgGetKnots()    : [];
 
@@ -106,19 +107,23 @@ function pushToCloud(){
 
   updateSyncStatus('syncing');
 
-  // Upsert — pokud záznam pro toto zařízení existuje, aktualizuj
-  supaFetch('wg_devices?device_id=eq.' + DEVICE_ID, 'DELETE')
-    .catch(function(){}) // ignoruj chybu pokud neexistuje
+  // Nejdřív zapsat novou zálohu, teprve pak smazat starší záznamy tohoto
+  // zařízení — při výpadku sítě v cloudu nikdy nezůstane prázdno
+  return supaFetch('wg_devices', 'POST', payload)
     .then(function(){
-      return supaFetch('wg_devices', 'POST', payload);
+      return supaFetch('wg_devices?device_id=eq.' + DEVICE_ID +
+        '&synced_at=lt.' + encodeURIComponent(payload.synced_at), 'DELETE')
+        .catch(function(){}); // starý záznam zůstane, nevadí
     })
     .then(function(){
       syncPending = false;
       lastSyncAt = new Date();
       updateSyncStatus('ok');
+      return true;
     })
     .catch(function(err){
       updateSyncStatus('error', err.message);
+      return false;
     });
 }
 
@@ -190,6 +195,28 @@ function markDirty(){
   }
 }
 window.wgMarkDirty = markDirty;
+
+// ── Automatická záloha po uložení desky ───────────────────
+var backupHintShown = false;
+function backupAfterSave(){
+  syncPending = true;
+  if(!syncEnabled || !SUPABASE_URL || !SUPABASE_KEY){
+    if(!backupHintShown){
+      backupHintShown = true;
+      setTimeout(function(){ showSyncToast('☁ Cloud záloha není nastavená (Nastavení → ☁ Cloud)'); }, 2600);
+    }
+    return;
+  }
+  if(!navigator.onLine){
+    // Odešle se automaticky po návratu online (listener 'online')
+    setTimeout(function(){ showSyncToast('✈ Offline — záloha se odešle po připojení'); }, 2600);
+    return;
+  }
+  pushToCloud().then(function(ok){
+    setTimeout(function(){ showSyncToast(ok ? '☁ Zálohováno do cloudu' : '☁! Záloha selhala — zkusím znovu'); }, 2600);
+  });
+}
+window.wgBackupAfterSave = backupAfterSave;
 
 // ── UI ────────────────────────────────────────────────────
 function updateSyncUI(){

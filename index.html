@@ -363,8 +363,8 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
     <!-- Řada 2: Hustota, MOED_L, MOED_B -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px" class="mrow">
       <div class="met" id="met-den"><div class="ml">Hustota</div><div class="mv den" id="v-den">—</div><div class="ms">kg/m³</div></div>
-      <div class="met"><div class="ml">MOED<sub style="font-size:8px">L</sub></div><div class="mv" style="color:var(--br);font-size:14px" id="v-moedl">—</div><div class="ms">MPa</div></div>
-      <div class="met"><div class="ml">MOED<sub style="font-size:8px">B</sub></div><div class="mv" style="color:var(--bl);font-size:14px" id="v-moedb">—</div><div class="ms">MPa</div></div>
+      <div class="met"><div class="ml">MOED<sub style="font-size:8px">L</sub></div><div class="mv" style="color:var(--br);font-size:14px" id="v-moedl">—</div><div class="ms">MPa</div><div class="ms" id="v-fl"></div></div>
+      <div class="met"><div class="ml">MOED<sub style="font-size:8px">B</sub></div><div class="mv" style="color:var(--bl);font-size:14px" id="v-moedb">—</div><div class="ms">MPa</div><div class="ms" id="v-fb"></div></div>
     </div>
     <!-- MOED metriky - zobrazí se po FFT měření -->
     
@@ -1001,6 +1001,11 @@ function updateMOEDDisplay(board){
   var elB=document.getElementById('v-moedb');
   if(elL) elL.textContent=res.moedL!=null?String(res.moedL):'—';
   if(elB) elB.textContent=res.moedB!=null?String(res.moedB):'—';
+  // Zvolená frekvence z FFT i na hlavní straně
+  var fft=board&&board.fft||[];
+  var fl=document.getElementById('v-fl'), fb=document.getElementById('v-fb');
+  if(fl) fl.textContent=fft[0]?'f₁ '+fft[0]+' Hz':'';
+  if(fb) fb.textContent=fft[1]?'f₁ '+fft[1]+' Hz':'';
 }
 function calcDensity(mass,length,b,d){
   if(!mass||!length||!b||!d)return null;
@@ -1102,7 +1107,7 @@ function doRedraw(){
   var gr=csnEvaluate(kar/100,dv,allK.length,b,d,ex).grade;
   document.getElementById('v-kar').textContent=kar.toFixed(1)+'%';
   document.getElementById('v-dab').textContent=dv.toFixed(2);
-  document.getElementById('v-dabs').textContent=(dv*2*b).toFixed(1)+'/(2×'+b+')';
+  var vdabs=document.getElementById('v-dabs'); if(vdabs) vdabs.textContent=(dv*2*b).toFixed(1)+'/(2×'+b+')';
   var vcnt=document.getElementById('v-cnt'); if(vcnt) vcnt.textContent=String(knots.length+(cp?1:0));
   document.getElementById('v-grade').innerHTML=gr==='—'?'<span class="gp gna">—</span>':'<span class="gp '+gcls(gr)+'">'+gr+'</span>';
   // hustota
@@ -1477,7 +1482,6 @@ function delKnot(ki){
   save();schedDraw();renderKlist();toast('Suk smazán');
 }
 function newBoard(skipConfirm){
-  alert("newBoard start id="+getId()+" fid="+(window.getFolderActivId?window.getFolderActivId():"none")+" editIdx="+window._editingExistingBoardIdx);
   var ex=getBoardExtra();
   var pendFft=window.wgPendingFft||null; window.wgPendingFft=null;
   var newId=getId();
@@ -1523,6 +1527,8 @@ function newBoard(skipConfirm){
       knots:knots.slice(),savedAt:new Date().toISOString()});
     save(); renderBlist(); toast('Deska uložena ✓');
   }
+  // až po resetu formuláře níže, ať se uložené suky neodešlou dvakrát
+  if(window.wgBackupAfterSave) setTimeout(window.wgBackupAfterSave,0);
   // ── Plný reset formuláře ───────────────────────────────────────────────────
   knots = [];
   ['cid','clen','cwid','p-length','p-mass','p-moist',
@@ -1809,7 +1815,8 @@ function renderKlist(){
   el.innerHTML=html;
 }
 
-// boardSortMode handled by folders.js
+// Řazení seznamu v tomto skriptu (folders.js má vlastní kopii)
+var boardSortMode='date';
 
 function renderBlist(){
   var el=document.getElementById('blist');
@@ -2380,11 +2387,7 @@ function updateMoedDisplay(){
     b:getB(),d:getD(),
     fft:window.wgPendingFft||(board?board.fft:null)
   };
-  var r=calcMOED(tmpBoard);
-  var elL=document.getElementById('v-moedl');
-  var elB=document.getElementById('v-moedb');
-  if(elL) elL.textContent=r.moedL!=null?String(r.moedL):'—';
-  if(elB) elB.textContent=r.moedB!=null?String(r.moedB):'—';
+  updateMOEDDisplay(tmpBoard);
 }
 window.updateMoedDisplay=updateMoedDisplay;
 
@@ -3966,8 +3969,15 @@ function snapToNearestPeakFor(hz,type){
 var fftTargetBoardIdx = null; // pokud nastaveno, ukládá se do TÉTO desky (z detailu), ne do poslední
 
 function saveFftToBoard(){
-  var modesL=(detectedModesByType.longitudinal||[]).map(function(m){return Math.round(m.hz*10)/10;});
-  var modesB=(detectedModesByType.bending||[]).map(function(m){return Math.round(m.hz*10)/10;});
+  // Zvolený mód (klik na řádek) jde na první místo — ukládá se modes[0]
+  function selectedFirst(type){
+    var arr=(detectedModesByType[type]||[]).map(function(m){return Math.round(m.hz*10)/10;});
+    var si=selectedModeIdxByType[type]||0;
+    if(si>0&&si<arr.length) arr.unshift(arr.splice(si,1)[0]);
+    return arr;
+  }
+  var modesL=selectedFirst('longitudinal');
+  var modesB=selectedFirst('bending');
   if(!modesL.length && !modesB.length){showToast('Nejsou data k uložení');return;}
 
   var boards=window.wgGetAllBoards?window.wgGetAllBoards():[];
@@ -4077,6 +4087,20 @@ function initFFT(){
     var hidden=body.style.display==='none';
     body.style.display=hidden?'':'none';
     if(chev) chev.textContent=hidden?'▾':'▸';
+  });
+
+  // Ručně přepsaná frekvence v řádku módu — zapsat a zvolit tento mód
+  document.addEventListener('change',function(e){
+    var inp=e.target;
+    if(!inp.matches||!inp.matches('.fft-mode-hz input')) return;
+    var mtype=inp.getAttribute('data-mtype');
+    var midx=parseInt(inp.getAttribute('data-midx'));
+    var hz=parseFloat(String(inp.value).replace(',','.'));
+    var modes=detectedModesByType[mtype];
+    if(!modes||!modes[midx]||isNaN(hz)||hz<=0) return;
+    modes[midx].hz=hz; modes[midx].userEdited=true;
+    selectedModeIdxByType[mtype]=midx;
+    drawFFTFor(mtype);renderModesFor(mtype);
   });
 
   // Klik na řádek módu = výběr módu (delegace, funguje pro oba typy)
