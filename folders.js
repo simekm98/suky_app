@@ -423,7 +423,14 @@ function doFolderExport(){
     shBoards.forEach(function(bd){
       var knots = bd.knots||[];
       if(!knots.length){
-        rows.push([bd.id,bd.b,bd.d,'','','','','','',bd.vg||'',bd.screw?'ano':'','','','',0].concat(new Array(21).fill('')));
+        var den0 = calcDen(bd.mass,bd.length,bd.b,bd.d);
+        var mr0  = calcMOED(bd);
+        var fft0 = bd.fft||[];
+        rows.push([bd.id,bd.b,bd.d,
+          bd.length||'',bd.mass||'',den0!=null?den0:'',
+          mr0.moedL||'',mr0.moedB||'',
+          bd.moisture!=null?bd.moisture:'',bd.vg||'',bd.screw?'ano':'',
+          fft0[0]||'',fft0[1]||'',fft0[2]||'',0].concat(new Array(21).fill('')));
         return;
       }
       var ps  = mkPolys(knots,bd.b,bd.d);
@@ -438,7 +445,7 @@ function doFolderExport(){
         var pts=kPts(k,bd.b,bd.d); var area=pts?pArea(pts):0; var ai=kAi(k,bd.b);
         var isL=ki===knots.length-1;
         rows.push([bd.id,bd.b,bd.d,
-          isL?bd.length||'':'',isL?bd.mass||'':'',isL?den!=null?den:'':'',
+          isL?(bd.length!=null?bd.length:''):'',isL?(bd.mass!=null?bd.mass:''):'',isL?den!=null?den:'':'',
           isL?mr.moedL||'':'',isL?mr.moedB||'':'',
           isL?bd.moisture!=null?bd.moisture:'':'',isL?bd.vg||'':'',isL?bd.screw?'ano':'':'',
           isL?fft[0]||'':'',isL?fft[1]||'':'',isL?fft[2]||'':'',ki+1,
