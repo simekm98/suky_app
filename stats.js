@@ -32,6 +32,8 @@ function collectStats(folderId){
     var dab = calcDAB(knots,bd.b||0);
     var den = calcDen(bd.mass,bd.length,bd.b,bd.d);
     var mr  = calcMOED(bd);
+    // Dočasně: místo MOED statistiky naměřených frekvencí
+    if(window.WG_FREQ_ONLY){ var _f=bd.fft||[]; mr={moedL:_f[0]||null, moedB:_f[1]||null}; }
     var gr  = grade(kar,dab,knots.length);
     return { id:bd.id, kar:kar, dab:dab, density:den, moedL:mr.moedL, moedB:mr.moedB, grade:gr, savedAt:bd.savedAt, knotCount:knots.length };
   });
@@ -223,8 +225,10 @@ function renderStatsModal(folderId){
   html += statRow('KAR', karVals, '%');
   html += statRow('DAB', dabVals, '');
   html += statRow('Hustota', denVals, ' kg/m³');
-  html += statRow('MOED_L', moedLVals, ' MPa');
-  html += statRow('MOED_B', moedBVals, ' MPa');
+  var FO = !!window.WG_FREQ_ONLY;
+  var LBL_L = FO?'f podélná':'MOED_L', LBL_B = FO?'f ohybová':'MOED_B', UNIT = FO?'Hz':'MPa';
+  html += statRow(LBL_L, moedLVals, ' '+UNIT);
+  html += statRow(LBL_B, moedBVals, ' '+UNIT);
   html += '</div>';
 
   // Histogramy
@@ -232,17 +236,17 @@ function renderStatsModal(folderId){
   html += '<div class="stats-chart-card"><div class="stats-chart-label">KAR (%)</div><canvas id="hist-kar"></canvas></div>';
   html += '<div class="stats-chart-card"><div class="stats-chart-label">DAB</div><canvas id="hist-dab"></canvas></div>';
   if(denVals.length) html += '<div class="stats-chart-card"><div class="stats-chart-label">Hustota (kg/m³)</div><canvas id="hist-den"></canvas></div>';
-  if(moedLVals.length) html += '<div class="stats-chart-card"><div class="stats-chart-label">MOED_L (MPa)</div><canvas id="hist-moedl"></canvas></div>';
-  if(moedBVals.length) html += '<div class="stats-chart-card"><div class="stats-chart-label">MOED_B (MPa)</div><canvas id="hist-moedb"></canvas></div>';
+  if(moedLVals.length) html += '<div class="stats-chart-card"><div class="stats-chart-label">'+LBL_L+' ('+UNIT+')</div><canvas id="hist-moedl"></canvas></div>';
+  if(moedBVals.length) html += '<div class="stats-chart-card"><div class="stats-chart-label">'+LBL_B+' ('+UNIT+')</div><canvas id="hist-moedb"></canvas></div>';
 
   // Korelace
   html += '<div class="stats-section-title">Korelace</div>';
   var pairs = [
     {a:'kar', b:'dab', la:'KAR', lb:'DAB'},
     {a:'kar', b:'density', la:'KAR', lb:'Hustota'},
-    {a:'density', b:'moedL', la:'Hustota', lb:'MOED_L'},
-    {a:'kar', b:'moedL', la:'KAR', lb:'MOED_L'},
-    {a:'density', b:'moedB', la:'Hustota', lb:'MOED_B'}
+    {a:'density', b:'moedL', la:'Hustota', lb:LBL_L},
+    {a:'kar', b:'moedL', la:'KAR', lb:LBL_L},
+    {a:'density', b:'moedB', la:'Hustota', lb:LBL_B}
   ];
   pairs.forEach(function(p,pi){
     var xs=[], ys=[];

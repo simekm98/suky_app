@@ -355,16 +355,16 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
 
     <!-- Metrics -->
     <!-- Řada 1: KAR, DAB, Třída -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+    <div id="row-kar" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
       <div class="met"><div class="ml">KAR</div><div class="mv kar" id="v-kar">—</div></div>
       <div class="met"><div class="ml">DAB</div><div class="mv dab" id="v-dab">—</div></div>
-      <div class="met"><div class="ml">Třída</div><div id="v-grade"><span class="gp gna">—</span></div></div>
+      <div class="met" id="met-grade"><div class="ml">Třída</div><div id="v-grade"><span class="gp gna">—</span></div></div>
     </div>
     <!-- Řada 2: Hustota, MOED_L, MOED_B -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px" class="mrow">
       <div class="met" id="met-den"><div class="ml">Hustota</div><div class="mv den" id="v-den">—</div><div class="ms">kg/m³</div></div>
-      <div class="met"><div class="ml">MOED<sub style="font-size:8px">L</sub></div><div class="mv" style="color:var(--br);font-size:14px" id="v-moedl">—</div><div class="ms">MPa</div><div class="ms" id="v-fl"></div></div>
-      <div class="met"><div class="ml">MOED<sub style="font-size:8px">B</sub></div><div class="mv" style="color:var(--bl);font-size:14px" id="v-moedb">—</div><div class="ms">MPa</div><div class="ms" id="v-fb"></div></div>
+      <div class="met"><div class="ml" id="l-moedl">MOED<sub style="font-size:8px">L</sub></div><div class="mv" style="color:var(--br);font-size:14px" id="v-moedl">—</div><div class="ms" id="u-moedl">MPa</div><div class="ms" id="v-fl"></div></div>
+      <div class="met"><div class="ml" id="l-moedb">MOED<sub style="font-size:8px">B</sub></div><div class="mv" style="color:var(--bl);font-size:14px" id="v-moedb">—</div><div class="ms" id="u-moedb">MPa</div><div class="ms" id="v-fb"></div></div>
     </div>
     <!-- MOED metriky - zobrazí se po FFT měření -->
     
@@ -681,6 +681,12 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+// ── DOČASNÝ PŘEPÍNAČ ─────────────────────────────────────────
+// true  = skrýt určení třídy a MOED, místo nich zobrazit naměřenou frekvenci
+// false = původní zobrazení (třída + MOED_L / MOED_B)
+window.WG_FREQ_ONLY = true;
+</script>
+<script>
 (function(){
 'use strict';
 var SIDS=['as1','as2','bs1','bs2','cs1','cs2','ds1','ds2'];
@@ -965,6 +971,13 @@ function grade(kar,dv,nKnots){
   var r=kar/100;
   if(r<=.2&&dv<=.2)return'S13';if(r<=1/3&&dv<=1/3)return'S10';if(r<=.5&&dv<=.5)return'S7';return'Reject';
 }
+// Dočasně místo třídy: štítek s naměřenou frekvencí (podélná, příp. ohybová)
+function freqPill(bd){
+  var f=bd&&bd.fft||[];
+  var t=f[0]?f[0]+' Hz':(f[1]?f[1]+' Hz':'—');
+  return '<span class="gp gna" style="white-space:nowrap">'+t+'</span>';
+}
+window.freqPill=freqPill;
 function gcls(g){return{S13:'gs13',S10:'gs10',S7:'gs7',Reject:'grej',OK:'gok'}[g]||'gna';}
 
 // ── MOED výpočet dle rovnic (1) a (2) ────────────────────
@@ -1004,9 +1017,28 @@ function updateMOEDDisplay(board){
   // Zvolená frekvence z FFT i na hlavní straně
   var fft=board&&board.fft||[];
   var fl=document.getElementById('v-fl'), fb=document.getElementById('v-fb');
+  if(window.WG_FREQ_ONLY){
+    // Dočasně: místo MOED zobrazit přímo naměřenou frekvenci
+    if(elL) elL.textContent=fft[0]?String(fft[0]):'—';
+    if(elB) elB.textContent=fft[1]?String(fft[1]):'—';
+    if(fl) fl.textContent='';
+    if(fb) fb.textContent='';
+    return;
+  }
   if(fl) fl.textContent=fft[0]?'f₁ '+fft[0]+' Hz':'';
   if(fb) fb.textContent=fft[1]?'f₁ '+fft[1]+' Hz':'';
 }
+// Přepne popisky na hlavní straně (třída skrytá, MOED → frekvence)
+function applyFreqOnlyLayout(){
+  if(!window.WG_FREQ_ONLY) return;
+  var g=document.getElementById('met-grade'); if(g) g.style.display='none';
+  var r=document.getElementById('row-kar'); if(r) r.style.gridTemplateColumns='1fr 1fr';
+  var ll=document.getElementById('l-moedl'); if(ll) ll.textContent='f podélná';
+  var lb=document.getElementById('l-moedb'); if(lb) lb.textContent='f ohybová';
+  var ul=document.getElementById('u-moedl'); if(ul) ul.textContent='Hz';
+  var ub=document.getElementById('u-moedb'); if(ub) ub.textContent='Hz';
+}
+applyFreqOnlyLayout();
 function calcDensity(mass,length,b,d){
   if(!mass||!length||!b||!d)return null;
   var vol=(length/1000)*(b/1000)*(d/1000);
@@ -1601,17 +1633,28 @@ function renderDetailBody(bi){
   html+='<div class="detail-stat">';
   html+='<div class="ds"><div class="ds-lbl">KAR</div><div class="ds-val" style="color:var(--bl)">'+kar.toFixed(1)+'%</div></div>';
   html+='<div class="ds"><div class="ds-lbl">DAB</div><div class="ds-val" style="color:var(--am)">'+dv.toFixed(2)+'</div></div>';
-  html+='<div class="ds"><div class="ds-lbl">Třída</div><div><span class="gp '+gcls(gr)+'" style="font-size:16px">'+gr+'</span></div></div>';
+  if(!window.WG_FREQ_ONLY) html+='<div class="ds"><div class="ds-lbl">Třída</div><div><span class="gp '+gcls(gr)+'" style="font-size:16px">'+gr+'</span></div></div>';
   html+='</div>';
+  var _fft=bd.fft||[];
+  if(window.WG_FREQ_ONLY){
+    // Dočasně: Hustota + naměřené frekvence místo MOED
+    if(den!=null || _fft[0] || _fft[1]){
+      html+='<div class="detail-stat" style="margin-top:6px">';
+      if(den!=null) html+='<div class="ds"><div class="ds-lbl">Hustota</div><div class="ds-val">'+den+' <span style="font-size:11px">kg/m³</span></div></div>';
+      if(_fft[0]) html+='<div class="ds"><div class="ds-lbl" style="color:var(--brm)">f podélná</div><div class="ds-val" style="color:var(--br)">'+_fft[0]+'<span style="font-size:10px"> Hz</span></div></div>';
+      if(_fft[1]) html+='<div class="ds"><div class="ds-lbl" style="color:var(--blm)">f ohybová</div><div class="ds-val" style="color:var(--bl)">'+_fft[1]+'<span style="font-size:10px"> Hz</span></div></div>';
+      html+='</div>';
+    }
+  }
   // Řada 2: Hustota + MOED (pokud dostupné)
-  if(den!=null || moedRes.moedL || moedRes.moedB){
+  else if(den!=null || moedRes.moedL || moedRes.moedB){
     html+='<div class="detail-stat" style="margin-top:6px">';
     if(den!=null) html+='<div class="ds"><div class="ds-lbl">Hustota</div><div class="ds-val">'+den+' <span style="font-size:11px">kg/m³</span></div></div>';
     if(moedRes.moedL) html+='<div class="ds"><div class="ds-lbl" style="color:var(--brm)">MOED<sub>L</sub></div><div class="ds-val" style="color:var(--br)">'+moedRes.moedL+'<span style="font-size:10px"> MPa</span></div></div>';
     if(moedRes.moedB) html+='<div class="ds"><div class="ds-lbl" style="color:var(--blm)">MOED<sub>B</sub></div><div class="ds-val" style="color:var(--bl)">'+moedRes.moedB+'<span style="font-size:10px"> MPa</span></div></div>';
     html+='</div>';
   }
-  if(csnRes.reasons && csnRes.reasons.length){
+  if(!window.WG_FREQ_ONLY && csnRes.reasons && csnRes.reasons.length){
     html+='<div style="margin-top:8px;padding:8px 10px;background:#FFF4E5;border-radius:8px;font-size:12px;color:var(--g7)">';
     html+='<strong>Důvod nedosažení vyšší třídy (skupina '+(csnRes.group==='lat'?'lať':(csnRes.group==='rezivo'?'řezivo':'hranol'))+'):</strong><br>';
     csnRes.reasons.forEach(function(r){
@@ -1850,7 +1893,7 @@ function renderBlist(){
     html+='<div class="bitem" data-act="openboard" data-bi="'+bi+'">'
       +'<div class="binfo"><strong>'+escH(bd.id)+(tags.length?' <span style="font-size:11px;color:var(--g5);font-weight:500">'+tags.join(' ')+'</span>':'')+'</strong>'
       +'<span>'+bd.knots.length+' suky · KAR '+kar.toFixed(1)+'% · '+dt+'</span></div>'
-      +'<span class="gp '+gcls(gr)+'">'+gr+'</span>'
+      +(window.WG_FREQ_ONLY?freqPill(bd):'<span class="gp '+gcls(gr)+'">'+gr+'</span>')
       +'<button class="bdel" data-act="delb" data-bi="'+bi+'">🗑</button></div>';
   }
   el.innerHTML=html;
