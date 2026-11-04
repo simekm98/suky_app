@@ -26,8 +26,8 @@
  * VÝSTUP
  *   KAR [%] = plocha sjednocení průmětů suků / (b·d) · 100
  *   DAB     = Σ šířek suků na všech plochách / (2·b)
- *   třída   = S13 / S10 / S7 / Reject, určuje se jen z DAB (DAB ≤ 1/5 → S13, ≤ 1/3 → S10,
- *             ≤ 1/2 → S7, jinak Reject). KAR se jen vypisuje. Plné hodnocení dle ČSN 73 2824-1
+ *   třída   = S13 / S10 / S7 / Reject, určuje se jen z DAB (DAB ≤ 1/3 → S13, ≤ 1/2 → S10,
+ *             ≤ 2/3 → S7, jinak Reject; meze skupinových suků z tabulky 3 pro prkna/fošny). KAR se jen vypisuje. Plné hodnocení dle ČSN 73 2824-1
  *             s dalšími znaky zůstává v aplikaci.
  */
 
@@ -91,9 +91,9 @@ function calcDAB(knots, b) {
 // Třída se určuje pouze z DAB.
 function grade(dab, nKnots) {
   if (nKnots === 0) return 'OK';
-  if (dab <= 1 / 5) return 'S13';
-  if (dab <= 1 / 3) return 'S10';
-  if (dab <= 1 / 2) return 'S7';
+  if (dab <= 1 / 3) return 'S13';
+  if (dab <= 1 / 2) return 'S10';
+  if (dab <= 2 / 3) return 'S7';
   return 'Reject';
 }
 
