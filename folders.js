@@ -300,7 +300,7 @@ function renderBlistMain(){
     if(bd.vg)              tags.push('VG'+bd.vg);
     if(bd.moisture!=null)  tags.push('w:'+bd.moisture+'%');
     if(bd.screw)           tags.push('Vrut');
-    if(bd.fft&&bd.fft[0]) tags.push('f:'+bd.fft[0]+'Hz');
+    if(bd.fft&&bd.fft[0]&&!window.WG_FREQ_ONLY) tags.push('f:'+bd.fft[0]+'Hz');
 
     var checked = selectedBoardIndices[realBi] ? 'checked' : '';
     var checkboxHtml = selectMode
@@ -314,7 +314,7 @@ function renderBlistMain(){
       +'<strong>'+escH(bd.id||'')+(tags.length?' <span style="font-size:11px;color:var(--g5)">'+tags.join(' ')+'</span>':'')+'</strong>'
       +'<span>'+folderTag+knots.length+' suků · KAR '+kar.toFixed(1)+'% · '+dt+'</span>'
       +'</div>'
-      +'<span class="gp '+gcls(gr)+'">'+gr+'</span>'
+      +((window.WG_FREQ_ONLY&&window.freqPill)?window.freqPill(bd):'<span class="gp '+gcls(gr)+'">'+gr+'</span>')
       +(selectMode ? '' : '<button class="bdel" data-act="delb" data-bi="'+realBi+'">🗑</button>')
       +'</div>';
   });
