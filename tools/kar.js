@@ -26,9 +26,9 @@
  * VÝSTUP
  *   KAR [%] = plocha sjednocení průmětů suků / (b·d) · 100
  *   DAB     = Σ šířek suků na všech plochách / (2·b)
- *   třída   = S13 / S10 / S7 / Reject (zjednodušená klasifikace jen podle KAR a DAB,
- *             stejná jako v přehledu desek a statistikách; plné hodnocení dle ČSN 73 2824-1
- *             s dalšími znaky zůstává v aplikaci)
+ *   třída   = S13 / S10 / S7 / Reject, určuje se jen z DAB (DAB ≤ 1/3 → S13, ≤ 1/2 → S10,
+ *             ≤ 2/3 → S7, jinak Reject; meze skupinových suků z tabulky 3 pro prkna/fošny). KAR se jen vypisuje. Plné hodnocení dle ČSN 73 2824-1
+ *             s dalšími znaky zůstává v aplikaci.
  */
 
 // Polygon suku v průřezu (souřadnice x ∈ [0,b], y ∈ [0,d], počátek vlevo dole)
@@ -88,12 +88,12 @@ function calcDAB(knots, b) {
   return sum / (2 * b);
 }
 
-function grade(karPct, dab, nKnots) {
+// Třída se určuje pouze z DAB.
+function grade(dab, nKnots) {
   if (nKnots === 0) return 'OK';
-  const r = karPct / 100;
-  if (r <= 1 / 5 && dab <= 1 / 5) return 'S13';
-  if (r <= 1 / 3 && dab <= 1 / 3) return 'S10';
-  if (r <= 1 / 2 && dab <= 1 / 2) return 'S7';
+  if (dab <= 1 / 3) return 'S13';
+  if (dab <= 1 / 2) return 'S10';
+  if (dab <= 2 / 3) return 'S7';
   return 'Reject';
 }
 
@@ -105,7 +105,7 @@ function evaluateBoard(board) {
   const kar = (area / (b * d)) * 100;
   const dab = calcDAB(knots, b);
   return { id: board.id ?? null, b, d, knots: knots.length, unionArea_mm2: +area.toFixed(2),
-           KAR_pct: +kar.toFixed(2), DAB: +dab.toFixed(4), grade: grade(kar, dab, knots.length) };
+           KAR_pct: +kar.toFixed(2), DAB: +dab.toFixed(4), grade: grade(dab, knots.length) };
 }
 
 // ── CLI ───────────────────────────────────────────────
