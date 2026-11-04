@@ -23,6 +23,7 @@ var micStreamCached = null; // drží se jen krátce — otevřený stream bloku
 var restartTimer = null;
 var watchdogTimer = null;
 var cycleGeneration = 0;
+var hardErrorCount = 0; // po sobě jdoucí chyby jiné než no-speech/aborted
 var successfulCyclesCount = 0; // periodický refresh session po N úspěších proti degradaci
 var audioCtxBeep = null;
 var confirmOverlayTimer = null;
@@ -837,6 +838,7 @@ function startVoiceSession(){
   }
 
   sessionActive = true;
+  hardErrorCount = 0;
   cycleGeneration++;
   successfulCyclesCount = 0;
   updateVoiceUI('requesting','Připravuji mikrofon…');
@@ -941,6 +943,7 @@ function actuallyStartRecognition(gen){
       return;
     }
     gotResult = true;
+    hardErrorCount = 0;
     clearAllTimers();
     var transcript = event.results[0][0].transcript;
     dlog('📥 onresult: "' + transcript + '"');
@@ -962,7 +965,21 @@ function actuallyStartRecognition(gen){
     if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
       sessionActive = false;
       updateVoiceUI('idle','');
-      showVoiceToast('Mikrofon zablokován v nastavení prohlížeče');
+      showVoiceToast(event.error === 'service-not-allowed'
+        ? 'Tento prohlížeč nepovoluje rozpoznávání řeči — použij Chrome, Edge nebo Safari'
+        : 'Mikrofon zablokován v nastavení prohlížeče');
+      return;
+    }
+    // Opakující se chyby dřív běžely dokola potichu — appka pak "vůbec nereagovala"
+    hardErrorCount++;
+    if(hardErrorCount >= 3){
+      var why = event.error === 'network'
+        ? 'Rozpoznávání řeči nemá spojení se serverem. Chrome/Edge potřebují internet; Brave, Opera a Firefox povely nepodporují.'
+        : event.error === 'audio-capture'
+          ? 'Nenalezen mikrofon — zkontroluj vstup zvuku v systému'
+          : 'Rozpoznávání řeči selhává ('+event.error+')';
+      stopVoiceSession();
+      showVoiceToast(why);
       return;
     }
     runRecognitionCycle(gen);
@@ -1529,7 +1546,7 @@ function showVoiceToast(msg){
   var t=document.getElementById('toast');
   if(!t) return;
   t.textContent=msg; t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show');},1600);
+  setTimeout(function(){t.classList.remove('show');},Math.max(1600, msg.length*60));
 }
 
 function updateVoiceFabVisibility(){
