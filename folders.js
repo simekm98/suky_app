@@ -394,7 +394,7 @@ function doFolderExport(){
   var hdrs = ['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','MOED_L_MPa','MOED_B_MPa',
               'moisture_%','VG','screw','f1_Hz','f2_Hz','f3_Hz','knot',
               'AS1','AS2','AL1','AL2','BS1','BS2','BL1','BL2','CS1','CS2','CL1','CL2','DS1','DS2','DL1','DL2',
-              'area_mm2','a_i_mm','KAR_%','DAB','třída'];
+              'area_mm2','a_i_mm','KAR_%','DAB','třída'].concat(window.wgExportExtraHdrs);
 
   var groups = {};
   allFolders.forEach(function(f){
@@ -422,6 +422,7 @@ function doFolderExport(){
     var rows = [];
     shBoards.forEach(function(bd){
       var knots = bd.knots||[];
+      var extras = window.wgExportExtras(bd);
       if(!knots.length){
         var den0 = calcDen(bd.mass,bd.length,bd.b,bd.d);
         var mr0  = calcMOED(bd);
@@ -430,7 +431,7 @@ function doFolderExport(){
           bd.length||'',bd.mass||'',den0!=null?den0:'',
           mr0.moedL||'',mr0.moedB||'',
           bd.moisture!=null?bd.moisture:'',bd.vg||'',bd.screw?'ano':'',
-          fft0[0]||'',fft0[1]||'',fft0[2]||'',0].concat(new Array(21).fill('')));
+          fft0[0]||'',fft0[1]||'',fft0[2]||'',0].concat(new Array(21).fill(''),extras));
         return;
       }
       var ps  = mkPolys(knots,bd.b,bd.d);
@@ -453,11 +454,11 @@ function doFolderExport(){
           k.bs1!=null?k.bs1:'',k.bs2!=null?k.bs2:'',k.bl1!=null?k.bl1:'',k.bl2!=null?k.bl2:'',
           k.cs1!=null?k.cs1:'',k.cs2!=null?k.cs2:'',k.cl1!=null?k.cl1:'',k.cl2!=null?k.cl2:'',
           k.ds1!=null?k.ds1:'',k.ds2!=null?k.ds2:'',k.dl1!=null?k.dl1:'',k.dl2!=null?k.dl2:'',
-          +area.toFixed(1),ai>0?+ai.toFixed(1):'',isL?+kar.toFixed(2):'',isL?+dab.toFixed(4):'',isL?gr:'']);
+          +area.toFixed(1),ai>0?+ai.toFixed(1):'',isL?+kar.toFixed(2):'',isL?+dab.toFixed(4):'',isL?gr:''].concat(extras));
       });
     });
     if(rows.length){
-      var ws=XLSX.utils.aoa_to_sheet([hdrs].concat(rows));
+      var ws=window.wgExportSheet(hdrs,rows);
       XLSX.utils.book_append_sheet(wb,ws,shName.substr(0,31).replace(/[\\\/\?\*\[\]]/g,'_'));
     }
   });

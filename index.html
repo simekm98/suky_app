@@ -271,7 +271,7 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       </div>
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Dřevo</div>
-        <select id="active-wood-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="(function(v){var p=loadAppPrefs();p.woodSpecies=v;saveAppPrefs(p);updateWoodProductLabels();})(this.value)">
+        <select id="active-wood-select" style="border:none;background:transparent;font-size:13px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="window.wgSetWoodSpecies(this.value)">
           <option value="">—</option>
           <option value="SM">Smrk</option>
           <option value="BK">Buk</option>
@@ -282,8 +282,8 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       </div>
       <div style="flex:1;min-width:0;background:#fff;border-radius:10px;padding:5px 8px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;justify-content:center">
         <div style="font-size:9px;color:var(--g5);font-weight:600;text-transform:uppercase;margin-bottom:2px">Produkt</div>
-        <select id="active-product-select" style="border:none;background:transparent;font-size:12px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="(function(v){var p=loadAppPrefs();p.productType=v;saveAppPrefs(p);updateWoodProductLabels();if(window.wgSchedDraw)window.wgSchedDraw();})(this.value)">
-          <option value="auto">Auto</option>
+        <select id="active-product-select" style="border:none;background:transparent;font-size:12px;font-weight:700;color:var(--br);text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%;outline:none" onchange="window.wgSetProductType(this.value)">
+          <option value="" disabled selected>Vyberte</option>
           <option value="rezivo-plocha">Řezivo P</option>
           <option value="rezivo-hrana">Řezivo H</option>
           <option value="tram">Hranol</option>
@@ -578,14 +578,14 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       <summary class="set-group-title">Jednotky</summary>
       <div class="setting-row">
         <div class="setting-lbl">Hmotnost</div>
-        <select id="set-mass-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+        <select id="set-mass-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="g">g</option>
           <option value="kg">kg</option>
         </select>
       </div>
       <div class="setting-row">
         <div class="setting-lbl">Délka</div>
-        <select id="set-length-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+        <select id="set-length-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="mm">mm</option>
           <option value="cm">cm</option>
           <option value="m">m</option>
@@ -593,14 +593,14 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       </div>
       <div class="setting-row">
         <div class="setting-lbl">Šířka</div>
-        <select id="set-width-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+        <select id="set-width-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="mm">mm</option>
           <option value="cm">cm</option>
         </select>
       </div>
       <div class="setting-row">
         <div class="setting-lbl">Výška</div>
-        <select id="set-height-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff" onchange="applyUnitPrefs()">
+        <select id="set-height-unit" style="font-size:15px;padding:6px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
           <option value="mm">mm</option>
           <option value="cm">cm</option>
         </select>
@@ -624,7 +624,7 @@ canvas{display:block;width:100%;height:72px}.cvc canvas{width:100%;height:72px;b
       <div class="setting-row">
         <div class="setting-lbl">Druh produktu</div>
         <select id="set-product-type" style="font-size:15px;padding:8px 10px;border:1.5px solid var(--g3);border-radius:8px;background:#fff">
-          <option value="auto" selected>Automaticky</option>
+          <option value="" disabled selected>Vyberte</option>
           <option value="rezivo-plocha">Řezivo P</option>
           <option value="rezivo-hrana">Řezivo H</option>
           <option value="tram">Hranol</option>
@@ -749,17 +749,33 @@ function displayMass(g){
 function lengthUnitLabel(){ return getUnitPrefs().lengthUnit==='cm' ? 'cm' : 'mm'; }
 function massUnitLabel(){ return getUnitPrefs().massUnit==='kg' ? 'kg' : 'g'; }
 function applyUnitPrefs(){
+  // Interně se počítá v mm a g. Po změně jednotky se přepočítá i hodnota v poli,
+  // aby se její fyzický význam nezměnil.
   var p=loadAppPrefs();
-  var lu=document.getElementById('set-length-unit');
-  var mu=document.getElementById('set-mass-unit');
-  var wu=document.getElementById('set-width-unit');
-  var hu=document.getElementById('set-height-unit');
-  if(lu && lu.value) p.lengthUnit=lu.value;
-  if(mu && mu.value) p.massUnit=mu.value;
-  if(wu && wu.value) p.widthUnit=wu.value;
-  if(hu && hu.value) p.heightUnit=hu.value;
+  var defs=[
+    {sel:'set-length-unit',key:'lengthUnit',base:'mm',big:'cm',f:10,ids:['p-length','d-len']},
+    {sel:'set-mass-unit',key:'massUnit',base:'g',big:'kg',f:1000,ids:['p-mass','d-mass']},
+    {sel:'set-width-unit',key:'widthUnit',base:'mm',big:'cm',f:10,ids:['clen']},
+    {sel:'set-height-unit',key:'heightUnit',base:'mm',big:'cm',f:10,ids:['cwid']}
+  ];
+  var changed=[];
+  defs.forEach(function(u){
+    var el=document.getElementById(u.sel);
+    if(!el||!el.value) return;
+    var oldU=p[u.key]||u.base, newU=el.value;
+    p[u.key]=newU;
+    if(oldU===newU) return;
+    var k=(oldU===u.big?u.f:1)/(newU===u.big?u.f:1);
+    u.ids.forEach(function(id){
+      var inp=document.getElementById(id); if(!inp||!String(inp.value).trim()) return;
+      var v=parseFloat(String(inp.value).replace(',','.')); if(isNaN(v)) return;
+      inp.value=+(v*k).toFixed(6);
+      changed.push(inp);
+    });
+  });
   saveAppPrefs(p);
   updateLengthMassLabels();
+  changed.forEach(function(inp){ inp.dispatchEvent(new Event('input',{bubbles:true})); });
 }
 function updateLengthMassLabels(){
   var lEl=document.getElementById('lbl-p-length');
@@ -1045,46 +1061,15 @@ function calcDensity(mass,length,b,d){
   return Math.round((mass/1000)/vol);
 }
 
-// ── Klasifikace typu profilu dle geometrie (trám / řezivo / lať) ──
-// Lať: min. rozměr ≤ 60mm a poměr stran ≤ 2 (malý čtvercovitý profil)
-// Řezivo (prkno/deska): poměr stran > 2 — jeden rozměr výrazně menší (zatěžování na plocho)
-// Trám/hranol: min. rozměr > 60mm a poměr stran ≤ 2 (masivní, blízko čtvercový profil)
-// Čistě geometrická klasifikace BEZ ohledu na manuální volbu — pro porovnání
-function autoClassifyByGeometry(b,d){
-  if(!b||!d||b<=0||d<=0) return null;
-  var maxDim=Math.max(b,d), minDim=Math.min(b,d);
-  var ratio=maxDim/minDim;
-  if(minDim<=60 && ratio<=2.5) return {type:'lat', label:'Lať'};
-  if(ratio>2) return {type:'rezivo', label:'Řezivo'};
-  return {type:'tram', label:'Hranol'};
-}
-
-var lastMismatchWarningKey = null; // proti opakovanému zobrazení stejného varování
-function checkProductMismatch(b,d){
-  var prefs = loadAppPrefs();
-  if(!prefs.productType || prefs.productType==='auto') { lastMismatchWarningKey=null; return; }
-  var auto = autoClassifyByGeometry(b,d);
-  if(!auto) return;
-  var manualType = (prefs.productType==='rezivo-plocha'||prefs.productType==='rezivo-hrana') ? 'rezivo' : prefs.productType;
-  if(auto.type !== manualType){
-    var key = manualType+'|'+auto.type+'|'+b+'|'+d;
-    if(key === lastMismatchWarningKey) return; // stejné varování už bylo zobrazeno, nezahlcuj
-    lastMismatchWarningKey = key;
-    // showToast - odstraněno (příliš rušivé)
-  } else {
-    lastMismatchWarningKey = null;
-  }
-}
 function showToast(msg){ toast(msg); }
 
 function classifyProfile(b,d){
   if(!b||!d||b<=0||d<=0) return null;
 
   // Respektuj manuální nastavení produktu, pokud uživatel zvolil konkrétní typ
-  // (jinak "auto" = odhad podle geometrie níže)
   try{
     var prefs = JSON.parse(localStorage.getItem('wg26_prefs')||'{}');
-    if(prefs.productType && prefs.productType!=='auto'){
+    if(prefs.productType){
       var manualMap = {
         'rezivo-plocha': {type:'rezivo', label:'Řezivo P', desc:'zatěžováno na plochu'},
         'rezivo-hrana':  {type:'rezivo', label:'Řezivo H', desc:'zatěžováno na hranu'},
@@ -1095,15 +1080,7 @@ function classifyProfile(b,d){
     }
   }catch(e){}
 
-  var maxDim=Math.max(b,d), minDim=Math.min(b,d);
-  var ratio=maxDim/minDim;
-  if(minDim<=60 && ratio<=2.5){
-    return {type:'lat', label:'Lať', desc:'malý profil'};
-  }
-  if(ratio>2){
-    return {type:'rezivo', label:'Řezivo', desc:'zatěžováno na plochu'};
-  }
-  return {type:'tram', label:'Hranol', desc:'zatěžováno na hranu'};
+  return null; // produkt určuje uživatel, podle rozměrů se neodhaduje
 }
 
 function updateProfileType(b,d){
@@ -1131,7 +1108,6 @@ function doRedraw(){
   updateWoodProductLabels();
   setTimeout(updateBlinkStates, 400); setTimeout(updateFolderSelect, 500);
   // Mikrofon permission vyžádána voice.js při inicializaci
-  checkProductMismatch(b,d);
   var ua=calcUA(cp?saved.concat([cp]):saved,b,d);
   var kar=b*d>0?(ua/(b*d))*100:0;
   var dv=calcDAB(allK,b);
@@ -1326,7 +1302,7 @@ function openSettings(){
     if(dnmL && prefs.fftNModesLong) dnmL.value=prefs.fftNModesLong;
     if(dnmB && prefs.fftNModesBend) dnmB.value=prefs.fftNModesBend;
     var ws=document.getElementById('set-wood-species'); if(ws && prefs.woodSpecies) ws.value=prefs.woodSpecies;
-    var pt=document.getElementById('set-product-type'); if(pt && prefs.productType) pt.value=prefs.productType;
+    var pt=document.getElementById('set-product-type'); if(pt && prefs.productType && prefs.productType!=='auto') pt.value=prefs.productType;
     var lu=document.getElementById('set-length-unit'); if(lu) lu.value=prefs.lengthUnit||'mm';
     var mu=document.getElementById('set-mass-unit'); if(mu) mu.value=prefs.massUnit||'g';
     var wu2=document.getElementById('set-width-unit'); if(wu2) wu2.value=prefs.widthUnit||'mm';
@@ -1351,7 +1327,6 @@ var WOOD_OPTIONS = [
   {value:'DB', label:'Dub'}
 ];
 var PRODUCT_OPTIONS = [
-  {value:'auto', label:'Automaticky (dle rozměrů)'},
   {value:'rezivo-plocha', label:'Řezivo — na plochu'},
   {value:'rezivo-hrana', label:'Řezivo — na hranu'},
   {value:'tram', label:'Hranol'},
@@ -1407,29 +1382,13 @@ function updateWoodProductLabels(){
   if(woodLbl){
     var w = WOOD_OPTIONS.find(function(o){return o.value===prefs.woodSpecies;});
     woodLbl.textContent = (w && w.value) ? w.label : '—';
-    var ws2=document.getElementById('active-wood-select'); if(ws2) ws2.value=prefs.woodSpecies||'';
   }
+  var ws2=document.getElementById('active-wood-select'); if(ws2) ws2.value=prefs.woodSpecies||'';
   if(prodLbl){
-    if(prefs.productType && prefs.productType!=='auto'){
-      var cls2 = (typeof classifyProfile==='function') ? classifyProfile(157,50) : null; // b/d nevadí, manuální volba je nezávislá na geometrii
-      prodLbl.textContent = cls2 ? cls2.label : '—';
-    } else {
-      // Auto — pokud rozměry NEJSOU vyplněné, zobraz přímo "Auto" (appka
-      // jinak vždy dostane fallback hodnoty z getB/getD, takže zde
-      // kontrolujeme přímo obsah polí, ne výsledek getB()/getD()).
-      var bRaw = document.getElementById('clen') ? document.getElementById('clen').value : '';
-      var dRaw = document.getElementById('cwid') ? document.getElementById('cwid').value : '';
-      if(!bRaw && !dRaw){
-        prodLbl.textContent = 'Auto';
-      } else {
-        var b = (typeof getB==='function') ? getB() : null;
-        var d = (typeof getD==='function') ? getD() : null;
-        var cls = (typeof classifyProfile==='function') ? classifyProfile(b,d) : null;
-        prodLbl.textContent = cls ? cls.label : 'Auto';
-      }
-    }
+    var cls2 = (typeof classifyProfile==='function') ? classifyProfile(157,50) : null; // b/d nevadí, volba je nezávislá na geometrii
+    prodLbl.textContent = cls2 ? cls2.label : 'Vyberte';
   }
-  var ps3=document.getElementById('active-product-select'); if(ps3) ps3.value=prefs.productType||'auto';
+  var ps3=document.getElementById('active-product-select'); if(ps3) ps3.value=(prefs.productType&&prefs.productType!=='auto')?prefs.productType:'';
 }
 
 function openPicker(title, options, currentValue, onSelect){
@@ -1463,7 +1422,7 @@ function openWoodPicker(){
 }
 function openProductPicker(){
   var prefs = loadAppPrefs();
-  openPicker('Druh produktu', PRODUCT_OPTIONS, prefs.productType||'auto', function(val){
+  openPicker('Druh produktu', PRODUCT_OPTIONS, prefs.productType||'', function(val){
     var p = loadAppPrefs();
     p.productType = val;
     saveAppPrefs(p);
@@ -1549,12 +1508,17 @@ function newBoard(skipConfirm){
       var v=gn2(elId); if(v!==null) updBd[f]=v;
     });
     updBd.vg=parseInt(document.getElementById('p-vg').value)||updBd.vg;
+    updBd.dren=ex.dren; updBd.hmyz=ex.hmyz;
+    var editPrefs=loadAppPrefs();
+    updBd.productType=editPrefs.productType||''; updBd.woodSpecies=editPrefs.woodSpecies||'';
     updBd.knots=knots.slice();
     updBd.savedAt=new Date().toISOString();
     save(); renderBlist(); toast('Deska '+newId+' aktualizována ✓');
   } else {
     // Nová deska
+    var newPrefs=loadAppPrefs();
     allBoards.push({id:newId,b:getB(),d:getD(),folderId:newFid,fft:pendFft,
+      productType:newPrefs.productType||'',woodSpecies:newPrefs.woodSpecies||'',
       length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,
       screw:ex.screw,dren:ex.dren,hmyz:ex.hmyz,
       trhlina:ex.trhlina,hniloba:ex.hniloba,reakcni:ex.reakcni,oblina:ex.oblina,
@@ -1565,6 +1529,9 @@ function newBoard(skipConfirm){
   // až po resetu formuláře níže, ať se uložené suky neodešlou dvakrát
   if(window.wgBackupAfterSave) setTimeout(window.wgBackupAfterSave,0);
   // ── Plný reset formuláře ───────────────────────────────────────────────────
+  // Produkt a dřevina se určují pro každý kus znovu
+  var resetPrefs=loadAppPrefs(); resetPrefs.productType=''; resetPrefs.woodSpecies=''; saveAppPrefs(resetPrefs);
+  updateWoodProductLabels();
   knots = [];
   ['cid','clen','cwid','p-length','p-mass','p-moist',
    'p-trhlina','p-hniloba','p-reakcni','p-oblina','p-odklon','p-letokruh','p-zakriveni'
@@ -1656,7 +1623,7 @@ function renderDetailBody(bi){
   }
   if(!window.WG_FREQ_ONLY && csnRes.reasons && csnRes.reasons.length){
     html+='<div style="margin-top:8px;padding:8px 10px;background:#FFF4E5;border-radius:8px;font-size:12px;color:var(--g7)">';
-    html+='<strong>Důvod nedosažení vyšší třídy (skupina '+(csnRes.group==='lat'?'lať':(csnRes.group==='rezivo'?'řezivo':'hranol'))+'):</strong><br>';
+    html+='<strong>Důvod nedosažení vyšší třídy:</strong><br>';
     csnRes.reasons.forEach(function(r){
       var isMm = (r.znak==='letokruh' || r.znak==='zakriveni_podelne');
       var isBool = (typeof r.limit === 'boolean');
@@ -1900,16 +1867,33 @@ function renderBlist(){
 }
 
 // ── export ────────────────────────────────────────────────────
+// Sloupce, které se propisují do všech řádků každého kusu
+window.wgExportExtraHdrs=['produkt','drevina','trhlina_%','hniloba_%','reakcni_drevo_%','oblina_%','odklon_%','letokruhy_mm','zakriveni_mm','dren','hmyz'];
+window.wgExportExtras=function(bd){
+  var val=function(v){ return v!=null?v:''; };
+  var pr=PRODUCT_OPTIONS.find(function(o){ return o.value===bd.productType; });
+  var wo=WOOD_OPTIONS.find(function(o){ return o.value&&o.value===bd.woodSpecies; });
+  return [pr?pr.label:'',wo?wo.label:'',val(bd.trhlina),val(bd.hniloba),val(bd.reakcni),val(bd.oblina),
+    val(bd.odklon),val(bd.letokruh),val(bd.zakriveni),bd.dren?'ano':'ne',bd.hmyz?'ano':'ne'];
+};
+// V režimu WG_FREQ_ONLY se do exportu nedostane modul ani třída
+window.wgExportSheet=function(hdrs,rows){
+  var hidden=window.WG_FREQ_ONLY?['MOED_L_MPa','MOED_B_MPa','třída']:[];
+  var keep=hdrs.map(function(h,i){ return hidden.indexOf(h)<0?i:-1; }).filter(function(i){ return i>=0; });
+  var pick=function(r){ return keep.map(function(i){ return r[i]; }); };
+  return XLSX.utils.aoa_to_sheet([pick(hdrs)].concat(rows.map(pick)));
+};
 function doExport(){
   var boards=allBoards.slice();
-  if(knots.length){var ex=getBoardExtra();boards.push({id:getId(),b:getB(),d:getD(),length:ex.length,mass:ex.mass,moisture:ex.moisture,vg:ex.vg,screw:ex.screw,knots:knots.slice()});}
+  if(knots.length){var ex=getBoardExtra();var pf=loadAppPrefs();boards.push(Object.assign({},ex,{id:getId(),b:getB(),d:getD(),productType:pf.productType||'',woodSpecies:pf.woodSpecies||'',knots:knots.slice()}));}
   if(!boards.length){toast('Žádná data');return;}
   var hdrs=['board','b_mm','d_mm','length_mm','mass_g','density_kgm3','moisture_%','VG','screw',
     'f1_podelna_Hz','f1_ohyb_Hz','MOED_L_MPa','MOED_B_MPa',
     'knot','AS1','AS2','AL1','AL2','BS1','BS2','BL1','BL2','CS1','CS2','CL1','CL2','DS1','DS2','DL1','DL2',
-    'area_mm2','a_i_mm','KAR_%','DAB','třída'];
+    'area_mm2','a_i_mm','KAR_%','DAB','třída'].concat(window.wgExportExtraHdrs);
   var rows=[];
   boards.forEach(function(bd){
+    var extras=window.wgExportExtras(bd);
     var b=bd.b||null,d=bd.d||null;
     var ps=b&&d?mkPolys(bd.knots,b,d):[];
     var ua=b&&d?calcUA(ps,b,d):0;
@@ -1926,7 +1910,7 @@ function doExport(){
         bd.moisture!=null?bd.moisture:'',bd.vg||'',bd.screw?'ano':'',
         fL,fB,mr.moedL!=null?mr.moedL:'',mr.moedB!=null?mr.moedB:'',
         0,'','','','','','','','','','','','','','','','',
-        '','',+kar.toFixed(2),+dv.toFixed(4),gr]);
+        '','',+kar.toFixed(2),+dv.toFixed(4),gr].concat(extras));
       return;
     }
     bd.knots.forEach(function(k,ki){
@@ -1944,10 +1928,10 @@ function doExport(){
         k.cs1!=null?k.cs1:'',k.cs2!=null?k.cs2:'',k.cl1!=null?k.cl1:'',k.cl2!=null?k.cl2:'',
         k.ds1!=null?k.ds1:'',k.ds2!=null?k.ds2:'',k.dl1!=null?k.dl1:'',k.dl2!=null?k.dl2:'',
         +area.toFixed(1),ai>0?+ai.toFixed(1):'',
-        isL?+kar.toFixed(2):'',isL?+dv.toFixed(4):'',isL?gr:'']);
+        isL?+kar.toFixed(2):'',isL?+dv.toFixed(4):'',isL?gr:''].concat(extras));
     });
   });
-  var ws=XLSX.utils.aoa_to_sheet([hdrs].concat(rows));
+  var ws=window.wgExportSheet(hdrs,rows);
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Suky');
   XLSX.writeFile(wb,'woodgrader_export.xlsx');toast('Excel stažen ✓');
 }
@@ -2217,26 +2201,10 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
   document.addEventListener('touchend',function(){dragging=false;},{passive:true});
 })();
 
-// Width/height unit — přímý event listener
+// Změna jednotek: jediné místo, které ukládá volbu a přepočítává pole
 ['set-width-unit','set-height-unit','set-length-unit','set-mass-unit'].forEach(function(id){
   var el=document.getElementById(id);
-  if(el) el.addEventListener('change',function(){
-    var p=loadAppPrefs();
-    var wu=document.getElementById('set-width-unit');
-    var hu=document.getElementById('set-height-unit');
-    var lu=document.getElementById('set-length-unit');
-    var mu=document.getElementById('set-mass-unit');
-    if(wu && wu.value) p.widthUnit=wu.value;
-    if(hu && hu.value) p.heightUnit=hu.value;
-    if(lu && lu.value) p.lengthUnit=lu.value;
-    if(mu && mu.value) p.massUnit=mu.value;
-    saveAppPrefs(p);
-    updateLengthMassLabels();
-    var sLbl=document.querySelector('label[data-unit="width"]');
-    var hLbl=document.querySelector('label[data-unit="height"]');
-    if(sLbl) sLbl.textContent='Šířka ('+(p.widthUnit||'mm')+')';
-    if(hLbl) hLbl.textContent='Výška ('+(p.heightUnit||'mm')+')';
-  });
+  if(el) el.addEventListener('change',applyUnitPrefs);
 });
 ['set-fft-dur-long','set-fft-dur-bend'].forEach(function(id){
   var el=document.getElementById(id);
@@ -2263,31 +2231,6 @@ document.getElementById('modal-settings').addEventListener('click',function(e){i
     if(window.wgApplyFftDefaultType) window.wgApplyFftDefaultType(prefs.fftDefaultType, {long:nml,bend:nmb});
     updateWoodProductLabels();
     if(window.wgSchedDraw) window.wgSchedDraw();
-  });
-});
-['set-length-unit','set-mass-unit'].forEach(function(id){
-  var el=document.getElementById(id);
-  if(el) el.addEventListener('change',function(){
-    var prefs=loadAppPrefs();
-    var oldLengthUnit=prefs.lengthUnit||'mm', oldMassUnit=prefs.massUnit||'g';
-    var newLengthUnit=document.getElementById('set-length-unit').value;
-    var newMassUnit=document.getElementById('set-mass-unit').value;
-    // Přepočti AKTUÁLNĚ zobrazenou hodnotu v hlavním formuláři, aby se
-    // skutečný fyzický význam (mm/g) zachoval i po přepnutí jednotky.
-    var lenInput=document.getElementById('p-length');
-    if(lenInput && lenInput.value){
-      var curMm = oldLengthUnit==='cm' ? parseFloat(lenInput.value)*10 : parseFloat(lenInput.value);
-      if(!isNaN(curMm)) lenInput.value = newLengthUnit==='cm' ? (curMm/10) : curMm;
-    }
-    var massInput=document.getElementById('p-mass');
-    if(massInput && massInput.value){
-      var curG = oldMassUnit==='kg' ? parseFloat(massInput.value)*1000 : parseFloat(massInput.value);
-      if(!isNaN(curG)) massInput.value = newMassUnit==='kg' ? (curG/1000) : curG;
-    }
-    prefs.lengthUnit=newLengthUnit;
-    prefs.massUnit=newMassUnit;
-    saveAppPrefs(prefs);
-    updateLengthMassLabels();
   });
 });
 document.getElementById('btn-detail-back').addEventListener('click',function(){detailOpenedViaVoiceSearch=false;showScreen('s-list');});
@@ -2711,10 +2654,13 @@ function loadBoardIntoForm(bd, bi){
     document.querySelectorAll('.vg-btn').forEach(function(b){ b.classList.toggle('sel', parseInt(b.getAttribute('data-vg'))===bd.vg); });
     var pvg=document.getElementById('p-vg'); if(pvg) pvg.value=bd.vg;
   }
+  // Produkt a dřevina kusu
+  var editLoadPrefs=loadAppPrefs(); editLoadPrefs.productType=bd.productType||''; editLoadPrefs.woodSpecies=bd.woodSpecies||''; saveAppPrefs(editLoadPrefs);
+  updateWoodProductLabels();
   // Kov/Dřeň/Hmyz
   if(bd.screw!=null){ var cs=document.getElementById('cb-screw'); if(cs){ cs.textContent=bd.screw?'Ano':'—'; cs.setAttribute('data-v',bd.screw?'1':''); } }
-  if(bd.dren!=null){ var cd=document.getElementById('cb-dren'); if(cd){ cd.textContent=bd.dren?'Ano':'—'; cd.setAttribute('data-v',bd.dren?'1':''); } }
-  if(bd.hmyz!=null){ var ch=document.getElementById('cb-hmyz'); if(ch){ ch.textContent=bd.hmyz?'Ano':'—'; ch.setAttribute('data-v',bd.hmyz?'1':''); } }
+  if(bd.dren!=null){ var cd=document.getElementById('cb-dren'); if(cd){ cd.classList.toggle('checked',!!bd.dren); cd.textContent=bd.dren?'Ano':'—'; cd.setAttribute('data-v',bd.dren?'1':''); } }
+  if(bd.hmyz!=null){ var ch=document.getElementById('cb-hmyz'); if(ch){ ch.classList.toggle('checked',!!bd.hmyz); ch.textContent=bd.hmyz?'Ano':'—'; ch.setAttribute('data-v',bd.hmyz?'1':''); } }
   // Suky
   knots = JSON.parse(JSON.stringify(bd.knots||[]));
   syncIcHasValue();

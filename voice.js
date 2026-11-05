@@ -667,7 +667,7 @@ var WOOD_VOICE_MAP = {
   'dub':'DB','dubovi':'DB'
 };
 var WOOD_LABEL_MAP = {'SM':'Smrk','BK':'Buk','BO':'Borovice','MD':'Modřín','DB':'Dub'};
-var PRODUCT_LABEL_MAP = {'rezivo-plocha':'Řezivo na plochu','rezivo-hrana':'Řezivo na hranu','tram':'Hranol','lat':'Lať','auto':'Automaticky'};
+var PRODUCT_LABEL_MAP = {'rezivo-plocha':'Řezivo na plochu','rezivo-hrana':'Řezivo na hranu','tram':'Hranol','lat':'Lať'};
 function findWoodSpeciesCommand(text){
   var t = text.toLowerCase();
   // Funguje i bez trigger slova — samotné "smrk", "buk" atd.
@@ -686,7 +686,6 @@ function findProductTypeCommand(text){
   if(t.indexOf('na hranu')>=0) return 'rezivo-hrana';
   if(t.indexOf('hranol')>=0 || t.indexOf('trám')>=0 || t.indexOf('tram')>=0) return 'tram';
   if(t.indexOf('lať')>=0 || t.indexOf('lat')>=0) return 'lat';
-  if(t.indexOf('automatick')>=0) return 'auto';
   return null;
 }
 
